@@ -3,7 +3,9 @@ import '../models/repair.dart';
 class PriorityService {
   static Repair? getNextRepair(List<Repair> repairs) {
     final pendingRepairs = repairs
-        .where((repair) => repair.progress < 1)
+        .where(
+          (repair) => repair.progress.clamp(0.0, 1.0) < 1,
+        )
         .toList();
 
     if (pendingRepairs.isEmpty) {
@@ -20,16 +22,25 @@ class PriorityService {
         return priorityCompare;
       }
 
-      final impactA =
-          a.weight * (1 - a.progress.clamp(0.0, 1.0));
+      // Ante igual prioridad, se recomienda primero
+      // la reparación con menor progreso.
+      final progressCompare = a.progress
+          .clamp(0.0, 1.0)
+          .compareTo(
+            b.progress.clamp(0.0, 1.0),
+          );
 
-      final impactB =
-          b.weight * (1 - b.progress.clamp(0.0, 1.0));
+      if (progressCompare != 0) {
+        return progressCompare;
+      }
 
-      final impactCompare = impactB.compareTo(impactA);
+      final categoryCompare =
+          a.category.toLowerCase().compareTo(
+        b.category.toLowerCase(),
+      );
 
-      if (impactCompare != 0) {
-        return impactCompare;
+      if (categoryCompare != 0) {
+        return categoryCompare;
       }
 
       return a.name.toLowerCase().compareTo(

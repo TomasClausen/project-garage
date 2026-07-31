@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../core/formatters/money_formatter.dart';
 import '../models/repair.dart';
 
 class NextGoalCard extends StatelessWidget {
@@ -15,7 +16,8 @@ class NextGoalCard extends StatelessWidget {
   static const Color _cardColor = Color(0xFF18181C);
   static const Color _surfaceColor = Color(0xFF222228);
   static const Color _primaryColor = Color(0xFF9F2436);
-  static const Color _secondaryTextColor = Color(0xFF9A9AA2);
+  static const Color _secondaryTextColor =
+      Color(0xFF9A9AA2);
 
   @override
   Widget build(BuildContext context) {
@@ -25,9 +27,8 @@ class NextGoalCard extends StatelessWidget {
       return const _EmptyNextGoalCard();
     }
 
-    final progress = currentRepair.progress.clamp(0.0, 1.0);
-    final impact =
-        currentRepair.weight * (1 - currentRepair.progress) * 100;
+    final progress =
+        currentRepair.progress.clamp(0.0, 1.0);
 
     return Material(
       color: Colors.transparent,
@@ -41,13 +42,16 @@ class NextGoalCard extends StatelessWidget {
             color: _cardColor,
             borderRadius: BorderRadius.circular(24),
             border: Border.all(
-              color: _primaryColor.withValues(alpha: 0.25),
+              color:
+                  _primaryColor.withValues(alpha: 0.25),
             ),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const _GoalHeader(),
+              _GoalHeader(
+                priority: currentRepair.priority,
+              ),
               const SizedBox(height: 20),
               Text(
                 currentRepair.name,
@@ -94,7 +98,7 @@ class NextGoalCard extends StatelessWidget {
                     child: _GoalMetric(
                       icon: Icons.payments_outlined,
                       label: 'Costo estimado',
-                      value: _formatCurrency(
+                      value: MoneyFormatter.format(
                         currentRepair.estimatedCost,
                       ),
                     ),
@@ -102,9 +106,10 @@ class NextGoalCard extends StatelessWidget {
                   const SizedBox(width: 10),
                   Expanded(
                     child: _GoalMetric(
-                      icon: Icons.trending_up_rounded,
-                      label: 'Impacto',
-                      value: '+${impact.toStringAsFixed(1)}%',
+                      icon:
+                          Icons.priority_high_rounded,
+                      label: 'Prioridad',
+                      value: currentRepair.priority,
                     ),
                   ),
                 ],
@@ -118,10 +123,12 @@ class NextGoalCard extends StatelessWidget {
                   ),
                   decoration: BoxDecoration(
                     color: _primaryColor,
-                    borderRadius: BorderRadius.circular(15),
+                    borderRadius:
+                        BorderRadius.circular(15),
                   ),
                   child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisAlignment:
+                        MainAxisAlignment.center,
                     children: [
                       Text(
                         'Ver reparación',
@@ -147,27 +154,14 @@ class NextGoalCard extends StatelessWidget {
       ),
     );
   }
-
-  String _formatCurrency(num value) {
-    final roundedValue = value.round().toString();
-    final buffer = StringBuffer();
-
-    for (var index = 0; index < roundedValue.length; index++) {
-      final positionFromEnd = roundedValue.length - index;
-
-      buffer.write(roundedValue[index]);
-
-      if (positionFromEnd > 1 && positionFromEnd % 3 == 1) {
-        buffer.write('.');
-      }
-    }
-
-    return '\$$buffer';
-  }
 }
 
 class _GoalHeader extends StatelessWidget {
-  const _GoalHeader();
+  final String priority;
+
+  const _GoalHeader({
+    required this.priority,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -177,7 +171,9 @@ class _GoalHeader extends StatelessWidget {
           width: 42,
           height: 42,
           decoration: BoxDecoration(
-            color: NextGoalCard._primaryColor.withValues(alpha: 0.15),
+            color: NextGoalCard._primaryColor.withValues(
+              alpha: 0.15,
+            ),
             borderRadius: BorderRadius.circular(14),
           ),
           child: const Icon(
@@ -203,7 +199,8 @@ class _GoalHeader extends StatelessWidget {
                 'La siguiente tarea recomendada',
                 style: TextStyle(
                   fontSize: 12,
-                  color: NextGoalCard._secondaryTextColor,
+                  color:
+                      NextGoalCard._secondaryTextColor,
                 ),
               ),
             ],
@@ -215,12 +212,14 @@ class _GoalHeader extends StatelessWidget {
             vertical: 6,
           ),
           decoration: BoxDecoration(
-            color: NextGoalCard._primaryColor.withValues(alpha: 0.14),
+            color: NextGoalCard._primaryColor.withValues(
+              alpha: 0.14,
+            ),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: const Text(
-            'PRIORIDAD',
-            style: TextStyle(
+          child: Text(
+            priority.toUpperCase(),
+            style: const TextStyle(
               fontSize: 10,
               letterSpacing: 0.7,
               fontWeight: FontWeight.w700,
@@ -253,7 +252,8 @@ class _ProgressSection extends StatelessWidget {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: NextGoalCard._secondaryTextColor,
+                color:
+                    NextGoalCard._secondaryTextColor,
               ),
             ),
             const Spacer(),
@@ -273,8 +273,10 @@ class _ProgressSection extends StatelessWidget {
           child: LinearProgressIndicator(
             value: progress,
             minHeight: 8,
-            backgroundColor: Colors.white.withValues(alpha: 0.07),
-            valueColor: const AlwaysStoppedAnimation<Color>(
+            backgroundColor:
+                Colors.white.withValues(alpha: 0.07),
+            valueColor:
+                const AlwaysStoppedAnimation<Color>(
               NextGoalCard._primaryColor,
             ),
           ),
@@ -318,7 +320,8 @@ class _GoalMetric extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               fontSize: 11,
-              color: NextGoalCard._secondaryTextColor,
+              color:
+                  NextGoalCard._secondaryTextColor,
             ),
           ),
           const SizedBox(height: 4),
@@ -359,7 +362,8 @@ class _EmptyNextGoalCard extends StatelessWidget {
           SizedBox(width: 14),
           Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment:
+                  CrossAxisAlignment.start,
               children: [
                 Text(
                   'Próximo objetivo',
@@ -374,7 +378,8 @@ class _EmptyNextGoalCard extends StatelessWidget {
                   'Sin datos',
                   style: TextStyle(
                     fontSize: 13,
-                    color: NextGoalCard._secondaryTextColor,
+                    color:
+                        NextGoalCard._secondaryTextColor,
                   ),
                 ),
               ],
