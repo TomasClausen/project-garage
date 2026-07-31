@@ -1,15 +1,17 @@
-# Project Garage v0.4.1 — RepairCard V2
+# Changelog
 
-## Modificado
+## v0.5.0
 
-- `lib/widgets/repair_card.dart`
+### Added
+- Evidencias fotográficas por reparación.
+- Clasificación Antes, Durante, Después, Comprobante y Otro.
+- Captura desde cámara o selección desde galería.
+- Notas opcionales por evidencia.
+- Galería agrupada por etapa.
+- Visor de imágenes con zoom.
+- Eliminación de evidencias con borrado del archivo local.
+- Persistencia con Hive mediante RepairMedia.
 
-## Cambios
-
-- Rediseño visual completo de la tarjeta de reparación.
-- Integración con `AppCard`, `AppProgressBar`, `StatusChip` y `PriorityChip`.
-- Formato centralizado de dinero y progreso.
-- Estados y prioridades resistentes a valores inesperados.
-- Confirmación segura antes de eliminar.
-- Conserva la navegación a `RepairDetailScreen`.
-- Muestra costos estimado y real, estado de pago y progreso.
+### Changed
+- RepairDetail incluye acceso y contador de evidencias.
+- Nombre visible de la app actualizado a Project Garage.

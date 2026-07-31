@@ -66,5 +66,10 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>Project Garage usa la cámara para registrar evidencias de reparaciones.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Project Garage accede a tus fotos para agregar evidencias al proyecto.</string>
+
 </dict>
 </plist>

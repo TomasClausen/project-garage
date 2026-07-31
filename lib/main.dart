@@ -8,6 +8,7 @@ import 'providers/repair_provider.dart';
 import 'providers/vehicle_provider.dart';
 import 'providers/maintenance_provider.dart';
 import 'providers/gallery_provider.dart';
+import 'providers/repair_media_provider.dart';
 
 
 
@@ -57,6 +58,12 @@ void main() async {
 
         ),
 
+        ChangeNotifierProvider(
+
+          create: (_) => RepairMediaProvider(),
+
+        ),
+
 
       ],
 
@@ -93,7 +100,7 @@ class LancerApp extends StatelessWidget {
       debugShowCheckedModeBanner:false,
 
 
-      title:"Lancer Restoration",
+      title:"Project Garage",
 
 
 

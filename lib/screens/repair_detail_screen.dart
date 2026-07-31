@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../core/formatters/money_formatter.dart';
 import '../core/formatters/progress_formatter.dart';
 import '../models/repair.dart';
+import '../providers/repair_media_provider.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
@@ -12,6 +14,7 @@ import '../widgets/common/app_progress_bar.dart';
 import '../widgets/common/priority_chip.dart';
 import '../widgets/common/status_chip.dart';
 import 'edit_repair_screen.dart';
+import 'repair_media_screen.dart';
 
 class RepairDetailScreen extends StatefulWidget {
   final Repair repair;
@@ -232,6 +235,55 @@ class _RepairDetailScreenState
                   ),
                 ],
               ),
+            ),
+            const SizedBox(height: AppSpacing.xxl),
+            Consumer<RepairMediaProvider>(
+              builder: (context, mediaProvider, _) {
+                final count = mediaProvider.countForRepair(repair.id);
+                return AppCard(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => RepairMediaScreen(repair: repair),
+                      ),
+                    );
+                  },
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.14),
+                          borderRadius: BorderRadius.circular(AppRadius.small),
+                        ),
+                        child: const Icon(
+                          Icons.photo_library_outlined,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.md),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('Evidencias', style: AppTextStyles.cardTitle),
+                            const SizedBox(height: AppSpacing.xs),
+                            Text(
+                              count == 0
+                                  ? 'Sin fotos todavía'
+                                  : '$count ${count == 1 ? 'archivo' : 'archivos'}',
+                              style: AppTextStyles.caption,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(Icons.chevron_right_rounded),
+                    ],
+                  ),
+                );
+              },
             ),
             const SizedBox(height: AppSpacing.xxl),
             SizedBox(

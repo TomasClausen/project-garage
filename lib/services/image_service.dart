@@ -161,6 +161,27 @@ class ImageService {
 
 
 
+  static Future<File?> pickAndSaveImage({
+    required ImageSource source,
+    required String prefix,
+  }) async {
+    final image = await _picker.pickImage(
+      source: source,
+      imageQuality: 90,
+    );
+
+    if (image == null) {
+      return null;
+    }
+
+    final directory = await getApplicationDocumentsDirectory();
+    final extension = _getExtension(image.path);
+    final file = File(
+      "${directory.path}/${prefix}_${DateTime.now().microsecondsSinceEpoch}.$extension",
+    );
+
+    return File(image.path).copy(file.path);
+  }
 
 
   static String _getExtension(
