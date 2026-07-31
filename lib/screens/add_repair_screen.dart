@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../models/repair.dart';
@@ -9,13 +10,13 @@ import '../theme/app_spacing.dart';
 import '../theme/app_text_styles.dart';
 import '../utils/id_generator.dart';
 import '../widgets/common/app_card.dart';
+import '../widgets/common/app_unsaved_changes_guard.dart';
 
 class AddRepairScreen extends StatefulWidget {
   const AddRepairScreen({super.key});
 
   @override
-  State<AddRepairScreen> createState() =>
-      _AddRepairScreenState();
+  State<AddRepairScreen> createState() => _AddRepairScreenState();
 }
 
 class _AddRepairScreenState extends State<AddRepairScreen> {
@@ -26,6 +27,19 @@ class _AddRepairScreenState extends State<AddRepairScreen> {
   String _category = 'Motor';
   String _priority = 'Media';
   bool _saving = false;
+
+  bool get _canSave =>
+      _nameController.text.trim().isNotEmpty &&
+      int.tryParse(_costController.text.trim()) != null;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController.addListener(_refreshForm);
+    _costController.addListener(_refreshForm);
+  }
+
+  void _refreshForm() => setState(() {});
 
   static const _categories = [
     'Motor',
@@ -38,11 +52,7 @@ class _AddRepairScreenState extends State<AddRepairScreen> {
     'Otros',
   ];
 
-  static const _priorities = [
-    'Alta',
-    'Media',
-    'Baja',
-  ];
+  static const _priorities = ['Alta', 'Media', 'Baja'];
 
   @override
   void dispose() {
@@ -52,6 +62,7 @@ class _AddRepairScreenState extends State<AddRepairScreen> {
   }
 
   Future<void> _save() async {
+    FocusManager.instance.primaryFocus?.unfocus();
     if (_saving || !_formKey.currentState!.validate()) {
       return;
     }
@@ -59,6 +70,7 @@ class _AddRepairScreenState extends State<AddRepairScreen> {
     setState(() {
       _saving = true;
     });
+    HapticFeedback.lightImpact();
 
     final repair = Repair(
       id: IdGenerator.generate(),
@@ -66,8 +78,7 @@ class _AddRepairScreenState extends State<AddRepairScreen> {
       category: _category,
       priority: _priority,
       progress: 0,
-      estimatedCost:
-          int.tryParse(_costController.text.trim()) ?? 0,
+      estimatedCost: int.tryParse(_costController.text.trim()) ?? 0,
       status: 'Pendiente',
 
       // Campo legacy conservado para no modificar el adaptador
@@ -99,180 +110,164 @@ class _AddRepairScreenState extends State<AddRepairScreen> {
       filled: true,
       fillColor: AppColors.surfaceLight,
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(
-          AppRadius.medium,
-        ),
+        borderRadius: BorderRadius.circular(AppRadius.medium),
         borderSide: BorderSide.none,
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(
-          AppRadius.medium,
-        ),
-        borderSide: BorderSide(
-          color: Colors.white.withValues(alpha: 0.06),
-        ),
+        borderRadius: BorderRadius.circular(AppRadius.medium),
+        borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(
-          AppRadius.medium,
-        ),
-        borderSide: const BorderSide(
-          color: AppColors.primary,
-          width: 1.4,
-        ),
+        borderRadius: BorderRadius.circular(AppRadius.medium),
+        borderSide: const BorderSide(color: AppColors.primary, width: 1.4),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
+    return AppUnsavedChangesGuard(
+      hasChanges:
+          !_saving &&
+          (_nameController.text.isNotEmpty || _costController.text.isNotEmpty),
+      child: Scaffold(
         backgroundColor: AppColors.background,
-        title: const Text('Nueva reparación'),
-      ),
-      body: SafeArea(
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.xl,
-              AppSpacing.lg,
-              AppSpacing.xl,
-              AppSpacing.xxxl,
-            ),
-            children: [
-              const Text(
-                'Datos del trabajo',
-                style: AppTextStyles.sectionTitle,
+        appBar: AppBar(
+          backgroundColor: AppColors.background,
+          title: const Text('Nueva reparación'),
+        ),
+        body: SafeArea(
+          child: Form(
+            key: _formKey,
+            autovalidateMode: AutovalidateMode.onUserInteraction,
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.xl,
+                AppSpacing.lg,
+                AppSpacing.xl,
+                AppSpacing.xxxl,
               ),
-              const SizedBox(height: AppSpacing.xs),
-              const Text(
-                'El progreso se calculará automáticamente según las reparaciones de cada categoría.',
-                style: AppTextStyles.subtitle,
-              ),
-              const SizedBox(height: AppSpacing.xxl),
-              AppCard(
-                child: Column(
-                  children: [
-                    TextFormField(
-                      controller: _nameController,
-                      textCapitalization:
-                          TextCapitalization.sentences,
-                      decoration: _inputDecoration(
-                        label: 'Nombre del trabajo',
-                        hint:
-                            'Ej. Amortiguadores delanteros',
-                        icon: Icons.build_outlined,
-                      ),
-                      validator: (value) {
-                        if (value == null ||
-                            value.trim().isEmpty) {
-                          return 'Ingresá un nombre';
-                        }
-
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-                    DropdownButtonFormField<String>(
-                      value: _category,
-                      decoration: _inputDecoration(
-                        label: 'Categoría',
-                        icon: Icons.category_outlined,
-                      ),
-                      items: _categories
-                          .map(
-                            (item) => DropdownMenuItem(
-                              value: item,
-                              child: Text(item),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (value) {
-                        if (value != null) {
-                          setState(() {
-                            _category = value;
-                          });
-                        }
-                      },
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-                    DropdownButtonFormField<String>(
-                      value: _priority,
-                      decoration: _inputDecoration(
-                        label: 'Prioridad',
-                        icon:
-                            Icons.priority_high_rounded,
-                      ),
-                      items: _priorities
-                          .map(
-                            (item) => DropdownMenuItem(
-                              value: item,
-                              child: Text(item),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (value) {
-                        if (value != null) {
-                          setState(() {
-                            _priority = value;
-                          });
-                        }
-                      },
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-                    TextFormField(
-                      controller: _costController,
-                      keyboardType: TextInputType.number,
-                      decoration: _inputDecoration(
-                        label: 'Costo estimado',
-                        hint: '0',
-                        icon: Icons.payments_outlined,
-                      ),
-                      validator: (value) {
-                        if (value == null ||
-                            value.trim().isEmpty) {
-                          return null;
-                        }
-
-                        final parsed =
-                            int.tryParse(value.trim());
-
-                        if (parsed == null || parsed < 0) {
-                          return 'Ingresá un número válido';
-                        }
-
-                        return null;
-                      },
-                    ),
-                  ],
+              children: [
+                const Text(
+                  'Datos del trabajo',
+                  style: AppTextStyles.sectionTitle,
                 ),
-              ),
-              const SizedBox(height: AppSpacing.xxl),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton.icon(
-                  onPressed: _saving ? null : _save,
-                  icon: _saving
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child:
-                              CircularProgressIndicator(
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : const Icon(Icons.save_rounded),
-                  label: Text(
-                    _saving
-                        ? 'Guardando...'
-                        : 'Guardar reparación',
+                const SizedBox(height: AppSpacing.xs),
+                const Text(
+                  'El progreso se calculará automáticamente según las reparaciones de cada categoría.',
+                  style: AppTextStyles.subtitle,
+                ),
+                const SizedBox(height: AppSpacing.xxl),
+                AppCard(
+                  child: Column(
+                    children: [
+                      TextFormField(
+                        controller: _nameController,
+                        textCapitalization: TextCapitalization.sentences,
+                        decoration: _inputDecoration(
+                          label: 'Nombre del trabajo',
+                          hint: 'Ej. Amortiguadores delanteros',
+                          icon: Icons.build_outlined,
+                        ),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Ingresá un nombre';
+                          }
+
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                      DropdownButtonFormField<String>(
+                        initialValue: _category,
+                        decoration: _inputDecoration(
+                          label: 'Categoría',
+                          icon: Icons.category_outlined,
+                        ),
+                        items: _categories
+                            .map(
+                              (item) => DropdownMenuItem(
+                                value: item,
+                                child: Text(item),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() {
+                              _category = value;
+                            });
+                          }
+                        },
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                      DropdownButtonFormField<String>(
+                        initialValue: _priority,
+                        decoration: _inputDecoration(
+                          label: 'Prioridad',
+                          icon: Icons.priority_high_rounded,
+                        ),
+                        items: _priorities
+                            .map(
+                              (item) => DropdownMenuItem(
+                                value: item,
+                                child: Text(item),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() {
+                              _priority = value;
+                            });
+                          }
+                        },
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                      TextFormField(
+                        controller: _costController,
+                        keyboardType: TextInputType.number,
+                        decoration: _inputDecoration(
+                          label: 'Costo estimado',
+                          hint: '0',
+                          icon: Icons.payments_outlined,
+                        ),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return null;
+                          }
+
+                          final parsed = int.tryParse(value.trim());
+
+                          if (parsed == null || parsed < 0) {
+                            return 'Ingresá un número válido';
+                          }
+
+                          return null;
+                        },
+                      ),
+                    ],
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(height: AppSpacing.xxl),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: _saving || !_canSave ? null : _save,
+                    icon: _saving
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.save_rounded),
+                    label: Text(
+                      _saving ? 'Guardando...' : 'Guardar reparación',
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

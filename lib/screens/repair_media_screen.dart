@@ -13,15 +13,13 @@ import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_text_styles.dart';
 import '../widgets/common/app_card.dart';
+import '../widgets/common/app_dialog.dart';
 import 'photo_viewer_screen.dart';
 
 class RepairMediaScreen extends StatelessWidget {
   final Repair repair;
 
-  const RepairMediaScreen({
-    super.key,
-    required this.repair,
-  });
+  const RepairMediaScreen({super.key, required this.repair});
 
   static const _stages = <String, String>{
     'before': 'Antes',
@@ -61,26 +59,14 @@ class RepairMediaScreen extends StatelessWidget {
     await context.read<RepairMediaProvider>().add(media);
   }
 
-  Future<void> _confirmDelete(
-    BuildContext context,
-    RepairMedia media,
-  ) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Eliminar evidencia'),
-        content: const Text('Esta acción no se puede deshacer.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancelar'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Eliminar'),
-          ),
-        ],
-      ),
+  Future<void> _confirmDelete(BuildContext context, RepairMedia media) async {
+    final confirmed = await AppDialog.confirm(
+      context,
+      title: 'Eliminar evidencia',
+      message: 'Esta acción no se puede deshacer.',
+      confirmLabel: 'Eliminar',
+      icon: Icons.delete_outline_rounded,
+      destructive: true,
     );
 
     if (confirmed == true && context.mounted) {
@@ -180,9 +166,8 @@ class _StageSection extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => PhotoViewerScreen(
-                          imagePath: media.path,
-                        ),
+                        builder: (_) =>
+                            PhotoViewerScreen(imagePath: media.path),
                       ),
                     );
                   },
@@ -248,7 +233,10 @@ class _EmptyEvidence extends StatelessWidget {
               color: AppColors.secondaryText,
             ),
             const SizedBox(height: AppSpacing.lg),
-            const Text('Todavía no hay evidencias', style: AppTextStyles.sectionTitle),
+            const Text(
+              'Todavía no hay evidencias',
+              style: AppTextStyles.sectionTitle,
+            ),
             const SizedBox(height: AppSpacing.sm),
             const Text(
               'Agregá fotos del antes, durante, después o comprobantes del trabajo.',
@@ -300,11 +288,7 @@ class _AddMediaSheetState extends State<_AddMediaSheet> {
   void _finish(ImageSource source) {
     Navigator.pop(
       context,
-      _MediaDraft(
-        stage: _stage,
-        note: _noteController.text,
-        source: source,
-      ),
+      _MediaDraft(stage: _stage, note: _noteController.text, source: source),
     );
   }
 
@@ -325,7 +309,7 @@ class _AddMediaSheetState extends State<_AddMediaSheet> {
             const Text('Nueva evidencia', style: AppTextStyles.sectionTitle),
             const SizedBox(height: AppSpacing.lg),
             DropdownButtonFormField<String>(
-              value: _stage,
+              initialValue: _stage,
               decoration: const InputDecoration(labelText: 'Tipo'),
               items: const [
                 DropdownMenuItem(value: 'before', child: Text('Antes')),

@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../models/vehicle.dart';
@@ -16,12 +17,10 @@ class EditVehicleScreen extends StatefulWidget {
   const EditVehicleScreen({super.key});
 
   @override
-  State<EditVehicleScreen> createState() =>
-      _EditVehicleScreenState();
+  State<EditVehicleScreen> createState() => _EditVehicleScreenState();
 }
 
-class _EditVehicleScreenState
-    extends State<EditVehicleScreen> {
+class _EditVehicleScreenState extends State<EditVehicleScreen> {
   final _formKey = GlobalKey<FormState>();
 
   late final TextEditingController _brandController;
@@ -46,32 +45,20 @@ class _EditVehicleScreenState
 
     final vehicle = context.read<VehicleProvider>().vehicle;
 
-    _brandController =
-        TextEditingController(text: vehicle.brand);
-    _modelController =
-        TextEditingController(text: vehicle.model);
-    _versionController =
-        TextEditingController(text: vehicle.version);
-    _yearController = TextEditingController(
-      text: vehicle.year.toString(),
-    );
-    _engineController =
-        TextEditingController(text: vehicle.engine);
-    _colorController =
-        TextEditingController(text: vehicle.color);
+    _brandController = TextEditingController(text: vehicle.brand);
+    _modelController = TextEditingController(text: vehicle.model);
+    _versionController = TextEditingController(text: vehicle.version);
+    _yearController = TextEditingController(text: vehicle.year.toString());
+    _engineController = TextEditingController(text: vehicle.engine);
+    _colorController = TextEditingController(text: vehicle.color);
     _kilometersController = TextEditingController(
       text: vehicle.kilometers.toString(),
     );
-    _licensePlateController =
-        TextEditingController(text: vehicle.licensePlate);
-    _vinController =
-        TextEditingController(text: vehicle.vin);
-    _transmissionController =
-        TextEditingController(text: vehicle.transmission);
-    _fuelTypeController =
-        TextEditingController(text: vehicle.fuelType);
-    _driveTypeController =
-        TextEditingController(text: vehicle.driveType);
+    _licensePlateController = TextEditingController(text: vehicle.licensePlate);
+    _vinController = TextEditingController(text: vehicle.vin);
+    _transmissionController = TextEditingController(text: vehicle.transmission);
+    _fuelTypeController = TextEditingController(text: vehicle.fuelType);
+    _driveTypeController = TextEditingController(text: vehicle.driveType);
     _imagePath = vehicle.imagePath;
   }
 
@@ -93,9 +80,7 @@ class _EditVehicleScreenState
   }
 
   Future<void> _pickImage() async {
-    final file = await ImageService.pickAndCropImage(
-      context: context,
-    );
+    final file = await ImageService.pickAndCropImage(context: context);
 
     if (file == null || !mounted) {
       return;
@@ -107,6 +92,7 @@ class _EditVehicleScreenState
   }
 
   Future<void> _save() async {
+    FocusManager.instance.primaryFocus?.unfocus();
     if (_saving || !_formKey.currentState!.validate()) {
       return;
     }
@@ -114,6 +100,7 @@ class _EditVehicleScreenState
     setState(() {
       _saving = true;
     });
+    HapticFeedback.lightImpact();
 
     final vehicle = Vehicle(
       brand: _brandController.text.trim(),
@@ -122,20 +109,16 @@ class _EditVehicleScreenState
       year: int.parse(_yearController.text.trim()),
       engine: _engineController.text.trim(),
       color: _colorController.text.trim(),
-      kilometers:
-          int.parse(_kilometersController.text.trim()),
+      kilometers: int.parse(_kilometersController.text.trim()),
       imagePath: _imagePath,
-      licensePlate:
-          _licensePlateController.text.trim().toUpperCase(),
+      licensePlate: _licensePlateController.text.trim().toUpperCase(),
       vin: _vinController.text.trim().toUpperCase(),
       transmission: _transmissionController.text.trim(),
       fuelType: _fuelTypeController.text.trim(),
       driveType: _driveTypeController.text.trim(),
     );
 
-    await context
-        .read<VehicleProvider>()
-        .updateVehicle(vehicle);
+    await context.read<VehicleProvider>().updateVehicle(vehicle);
 
     if (!mounted) {
       return;
@@ -144,10 +127,7 @@ class _EditVehicleScreenState
     Navigator.pop(context);
   }
 
-  String? _requiredText(
-    String? value,
-    String field,
-  ) {
+  String? _requiredText(String? value, String field) {
     if (value == null || value.trim().isEmpty) {
       return 'Completá $field';
     }
@@ -155,12 +135,7 @@ class _EditVehicleScreenState
     return null;
   }
 
-  String? _positiveNumber(
-    String? value,
-    String field, {
-    int? min,
-    int? max,
-  }) {
+  String? _positiveNumber(String? value, String field, {int? min, int? max}) {
     if (value == null || value.trim().isEmpty) {
       return 'Completá $field';
     }
@@ -194,34 +169,24 @@ class _EditVehicleScreenState
       filled: true,
       fillColor: AppColors.surfaceLight,
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(
-          AppRadius.medium,
-        ),
+        borderRadius: BorderRadius.circular(AppRadius.medium),
         borderSide: BorderSide.none,
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(
-          AppRadius.medium,
-        ),
-        borderSide: BorderSide(
-          color: Colors.white.withValues(alpha: 0.06),
-        ),
+        borderRadius: BorderRadius.circular(AppRadius.medium),
+        borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(
-          AppRadius.medium,
-        ),
-        borderSide: const BorderSide(
-          color: AppColors.primary,
-          width: 1.4,
-        ),
+        borderRadius: BorderRadius.circular(AppRadius.medium),
+        borderSide: const BorderSide(color: AppColors.primary, width: 1.4),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final hasImage = _imagePath != null &&
+    final hasImage =
+        _imagePath != null &&
         _imagePath!.trim().isNotEmpty &&
         File(_imagePath!).existsSync();
 
@@ -234,6 +199,7 @@ class _EditVehicleScreenState
       body: SafeArea(
         child: Form(
           key: _formKey,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
           child: ListView(
             padding: const EdgeInsets.fromLTRB(
               AppSpacing.xl,
@@ -246,21 +212,15 @@ class _EditVehicleScreenState
                 color: Colors.transparent,
                 child: InkWell(
                   onTap: _pickImage,
-                  borderRadius: BorderRadius.circular(
-                    AppRadius.large,
-                  ),
+                  borderRadius: BorderRadius.circular(AppRadius.large),
                   child: Ink(
                     height: 220,
                     decoration: BoxDecoration(
                       color: AppColors.surfaceLight,
-                      borderRadius: BorderRadius.circular(
-                        AppRadius.large,
-                      ),
+                      borderRadius: BorderRadius.circular(AppRadius.large),
                       image: hasImage
                           ? DecorationImage(
-                              image: FileImage(
-                                File(_imagePath!),
-                              ),
+                              image: FileImage(File(_imagePath!)),
                               fit: BoxFit.cover,
                             )
                           : null,
@@ -275,12 +235,9 @@ class _EditVehicleScreenState
                                 Icon(
                                   Icons.add_a_photo_outlined,
                                   size: 42,
-                                  color:
-                                      AppColors.secondaryText,
+                                  color: AppColors.secondaryText,
                                 ),
-                                SizedBox(
-                                  height: AppSpacing.sm,
-                                ),
+                                SizedBox(height: AppSpacing.sm),
                                 Text(
                                   'Agregar foto del vehículo',
                                   style: AppTextStyles.subtitle,
@@ -297,12 +254,8 @@ class _EditVehicleScreenState
                               vertical: AppSpacing.sm,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.black.withValues(
-                                alpha: 0.68,
-                              ),
-                              borderRadius: BorderRadius.circular(
-                                100,
-                              ),
+                              color: Colors.black.withValues(alpha: 0.68),
+                              borderRadius: BorderRadius.circular(100),
                             ),
                             child: const Row(
                               children: [
@@ -332,8 +285,7 @@ class _EditVehicleScreenState
               const SizedBox(height: AppSpacing.xxl),
               const _FormSectionHeader(
                 title: 'Identidad',
-                subtitle:
-                    'Datos principales del vehículo',
+                subtitle: 'Datos principales del vehículo',
               ),
               const SizedBox(height: AppSpacing.md),
               AppCard(
@@ -341,32 +293,27 @@ class _EditVehicleScreenState
                   children: [
                     TextFormField(
                       controller: _brandController,
-                      textCapitalization:
-                          TextCapitalization.words,
+                      textCapitalization: TextCapitalization.words,
                       decoration: _decoration(
                         label: 'Marca',
                         icon: Icons.business_outlined,
                       ),
-                      validator: (value) =>
-                          _requiredText(value, 'la marca'),
+                      validator: (value) => _requiredText(value, 'la marca'),
                     ),
                     const SizedBox(height: AppSpacing.lg),
                     TextFormField(
                       controller: _modelController,
-                      textCapitalization:
-                          TextCapitalization.words,
+                      textCapitalization: TextCapitalization.words,
                       decoration: _decoration(
                         label: 'Modelo',
                         icon: Icons.directions_car_outlined,
                       ),
-                      validator: (value) =>
-                          _requiredText(value, 'el modelo'),
+                      validator: (value) => _requiredText(value, 'el modelo'),
                     ),
                     const SizedBox(height: AppSpacing.lg),
                     TextFormField(
                       controller: _versionController,
-                      textCapitalization:
-                          TextCapitalization.words,
+                      textCapitalization: TextCapitalization.words,
                       decoration: _decoration(
                         label: 'Versión',
                         hint: 'Ej. GLXi',
@@ -391,14 +338,12 @@ class _EditVehicleScreenState
                     const SizedBox(height: AppSpacing.lg),
                     TextFormField(
                       controller: _colorController,
-                      textCapitalization:
-                          TextCapitalization.words,
+                      textCapitalization: TextCapitalization.words,
                       decoration: _decoration(
                         label: 'Color',
                         icon: Icons.palette_outlined,
                       ),
-                      validator: (value) =>
-                          _requiredText(value, 'el color'),
+                      validator: (value) => _requiredText(value, 'el color'),
                     ),
                     const SizedBox(height: AppSpacing.lg),
                     TextFormField(
@@ -408,10 +353,8 @@ class _EditVehicleScreenState
                         label: 'Kilometraje',
                         icon: Icons.speed_rounded,
                       ),
-                      validator: (value) => _positiveNumber(
-                        value,
-                        'el kilometraje',
-                      ),
+                      validator: (value) =>
+                          _positiveNumber(value, 'el kilometraje'),
                     ),
                   ],
                 ),
@@ -419,8 +362,7 @@ class _EditVehicleScreenState
               const SizedBox(height: AppSpacing.xxl),
               const _FormSectionHeader(
                 title: 'Especificaciones',
-                subtitle:
-                    'Configuración mecánica principal',
+                subtitle: 'Configuración mecánica principal',
               ),
               const SizedBox(height: AppSpacing.md),
               AppCard(
@@ -428,20 +370,17 @@ class _EditVehicleScreenState
                   children: [
                     TextFormField(
                       controller: _engineController,
-                      textCapitalization:
-                          TextCapitalization.sentences,
+                      textCapitalization: TextCapitalization.sentences,
                       decoration: _decoration(
                         label: 'Motor',
                         icon: Icons.settings_outlined,
                       ),
-                      validator: (value) =>
-                          _requiredText(value, 'el motor'),
+                      validator: (value) => _requiredText(value, 'el motor'),
                     ),
                     const SizedBox(height: AppSpacing.lg),
                     TextFormField(
                       controller: _transmissionController,
-                      textCapitalization:
-                          TextCapitalization.words,
+                      textCapitalization: TextCapitalization.words,
                       decoration: _decoration(
                         label: 'Transmisión',
                         hint: 'Ej. Manual',
@@ -451,20 +390,17 @@ class _EditVehicleScreenState
                     const SizedBox(height: AppSpacing.lg),
                     TextFormField(
                       controller: _fuelTypeController,
-                      textCapitalization:
-                          TextCapitalization.words,
+                      textCapitalization: TextCapitalization.words,
                       decoration: _decoration(
                         label: 'Combustible',
                         hint: 'Ej. Nafta',
-                        icon:
-                            Icons.local_gas_station_outlined,
+                        icon: Icons.local_gas_station_outlined,
                       ),
                     ),
                     const SizedBox(height: AppSpacing.lg),
                     TextFormField(
                       controller: _driveTypeController,
-                      textCapitalization:
-                          TextCapitalization.words,
+                      textCapitalization: TextCapitalization.words,
                       decoration: _decoration(
                         label: 'Tracción',
                         hint: 'Ej. Delantera',
@@ -477,8 +413,7 @@ class _EditVehicleScreenState
               const SizedBox(height: AppSpacing.xxl),
               const _FormSectionHeader(
                 title: 'Identificación',
-                subtitle:
-                    'Documentación básica del vehículo',
+                subtitle: 'Documentación básica del vehículo',
               ),
               const SizedBox(height: AppSpacing.md),
               AppCard(
@@ -486,19 +421,16 @@ class _EditVehicleScreenState
                   children: [
                     TextFormField(
                       controller: _licensePlateController,
-                      textCapitalization:
-                          TextCapitalization.characters,
+                      textCapitalization: TextCapitalization.characters,
                       decoration: _decoration(
                         label: 'Patente',
-                        icon:
-                            Icons.confirmation_number_outlined,
+                        icon: Icons.confirmation_number_outlined,
                       ),
                     ),
                     const SizedBox(height: AppSpacing.lg),
                     TextFormField(
                       controller: _vinController,
-                      textCapitalization:
-                          TextCapitalization.characters,
+                      textCapitalization: TextCapitalization.characters,
                       decoration: _decoration(
                         label: 'VIN / Chasis',
                         icon: Icons.fingerprint_rounded,
@@ -516,17 +448,10 @@ class _EditVehicleScreenState
                       ? const SizedBox(
                           width: 18,
                           height: 18,
-                          child:
-                              CircularProgressIndicator(
-                            strokeWidth: 2,
-                          ),
+                          child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.save_rounded),
-                  label: Text(
-                    _saving
-                        ? 'Guardando...'
-                        : 'Guardar vehículo',
-                  ),
+                  label: Text(_saving ? 'Guardando...' : 'Guardar vehículo'),
                 ),
               ),
             ],
@@ -541,25 +466,16 @@ class _FormSectionHeader extends StatelessWidget {
   final String title;
   final String subtitle;
 
-  const _FormSectionHeader({
-    required this.title,
-    required this.subtitle,
-  });
+  const _FormSectionHeader({required this.title, required this.subtitle});
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          title,
-          style: AppTextStyles.sectionTitle,
-        ),
+        Text(title, style: AppTextStyles.sectionTitle),
         const SizedBox(height: AppSpacing.xs),
-        Text(
-          subtitle,
-          style: AppTextStyles.subtitle,
-        ),
+        Text(subtitle, style: AppTextStyles.subtitle),
       ],
     );
   }

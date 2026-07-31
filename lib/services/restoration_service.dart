@@ -21,10 +21,7 @@ class RestorationService {
     for (final repair in repairs) {
       final category = _normalizedCategory(repair.category);
 
-      repairsByCategory.putIfAbsent(
-        category,
-        () => <Repair>[],
-      );
+      repairsByCategory.putIfAbsent(category, () => <Repair>[]);
 
       repairsByCategory[category]!.add(repair);
     }
@@ -36,27 +33,21 @@ class RestorationService {
     double categoriesProgress = 0;
 
     for (final categoryRepairs in repairsByCategory.values) {
-      categoriesProgress += calculateCategoryProgress(
-        categoryRepairs,
-      );
+      categoriesProgress += calculateCategoryProgress(categoryRepairs);
     }
 
-    return (categoriesProgress / repairsByCategory.length)
-        .clamp(0.0, 1.0);
+    return (categoriesProgress / repairsByCategory.length).clamp(0.0, 1.0);
   }
 
   /// Calcula el progreso promedio de una categoría.
-  static double calculateCategoryProgress(
-    List<Repair> repairs,
-  ) {
+  static double calculateCategoryProgress(List<Repair> repairs) {
     if (repairs.isEmpty) {
       return 0;
     }
 
     final total = repairs.fold<double>(
       0,
-      (sum, repair) =>
-          sum + repair.progress.clamp(0.0, 1.0),
+      (sum, repair) => sum + repair.progress.clamp(0.0, 1.0),
     );
 
     return (total / repairs.length).clamp(0.0, 1.0);

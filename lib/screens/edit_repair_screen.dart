@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../models/repair.dart';
@@ -13,14 +14,10 @@ import '../widgets/common/app_progress_bar.dart';
 class EditRepairScreen extends StatefulWidget {
   final Repair repair;
 
-  const EditRepairScreen({
-    super.key,
-    required this.repair,
-  });
+  const EditRepairScreen({super.key, required this.repair});
 
   @override
-  State<EditRepairScreen> createState() =>
-      _EditRepairScreenState();
+  State<EditRepairScreen> createState() => _EditRepairScreenState();
 }
 
 class _EditRepairScreenState extends State<EditRepairScreen> {
@@ -36,11 +33,7 @@ class _EditRepairScreenState extends State<EditRepairScreen> {
   bool _saving = false;
 
   static const _priorities = ['Alta', 'Media', 'Baja'];
-  static const _statuses = [
-    'Pendiente',
-    'En proceso',
-    'Completado',
-  ];
+  static const _statuses = ['Pendiente', 'En proceso', 'Completado'];
 
   @override
   void initState() {
@@ -70,8 +63,7 @@ class _EditRepairScreenState extends State<EditRepairScreen> {
   }
 
   double get _previewProgress {
-    final percentage =
-        double.tryParse(_progressController.text.trim()) ?? 0;
+    final percentage = double.tryParse(_progressController.text.trim()) ?? 0;
     return (percentage / 100).clamp(0.0, 1.0);
   }
 
@@ -90,21 +82,17 @@ class _EditRepairScreenState extends State<EditRepairScreen> {
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppRadius.medium),
-        borderSide: BorderSide(
-          color: Colors.white.withValues(alpha: 0.06),
-        ),
+        borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppRadius.medium),
-        borderSide: const BorderSide(
-          color: AppColors.primary,
-          width: 1.4,
-        ),
+        borderSide: const BorderSide(color: AppColors.primary, width: 1.4),
       ),
     );
   }
 
   Future<void> _save() async {
+    FocusManager.instance.primaryFocus?.unfocus();
     if (_saving || !_formKey.currentState!.validate()) {
       return;
     }
@@ -112,31 +100,26 @@ class _EditRepairScreenState extends State<EditRepairScreen> {
     setState(() {
       _saving = true;
     });
+    HapticFeedback.lightImpact();
 
-    final progressPercentage =
-        double.parse(_progressController.text.trim())
-            .clamp(0.0, 100.0);
+    final progressPercentage = double.parse(
+      _progressController.text.trim(),
+    ).clamp(0.0, 100.0);
 
-    widget.repair
-      ..priority = _selectedPriority
-      ..status = _selectedStatus
-      ..progress = progressPercentage / 100
-      ..estimatedCost =
-          int.parse(_estimatedCostController.text.trim())
-      ..actualCost =
-          int.parse(_actualCostController.text.trim())
-      ..paid = _paid;
+    final updatedRepair = Repair(
+      id: widget.repair.id,
+      name: widget.repair.name,
+      category: widget.repair.category,
+      priority: _selectedPriority,
+      progress: progressPercentage / 100,
+      estimatedCost: int.tryParse(_estimatedCostController.text.trim()) ?? 0,
+      status: _selectedStatus,
+      weight: widget.repair.weight,
+      actualCost: int.tryParse(_actualCostController.text.trim()) ?? 0,
+      paid: _paid,
+    );
 
-    if (widget.repair.progress >= 1) {
-      widget.repair.status = 'Completado';
-    } else if (widget.repair.progress > 0 &&
-        widget.repair.status == 'Pendiente') {
-      widget.repair.status = 'En proceso';
-    }
-
-    await context
-        .read<RepairProvider>()
-        .updateRepair(widget.repair);
+    await context.read<RepairProvider>().updateRepair(updatedRepair);
 
     if (!mounted) {
       return;
@@ -145,11 +128,7 @@ class _EditRepairScreenState extends State<EditRepairScreen> {
     Navigator.pop(context);
   }
 
-  String? _validateNumber(
-    String? value, {
-    required String field,
-    double? max,
-  }) {
+  String? _validateNumber(String? value, {required String field, double? max}) {
     if (value == null || value.trim().isEmpty) {
       return 'Completá $field';
     }
@@ -180,6 +159,7 @@ class _EditRepairScreenState extends State<EditRepairScreen> {
       body: SafeArea(
         child: Form(
           key: _formKey,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
           child: ListView(
             padding: const EdgeInsets.fromLTRB(
               AppSpacing.xl,
@@ -188,15 +168,9 @@ class _EditRepairScreenState extends State<EditRepairScreen> {
               AppSpacing.xxxl,
             ),
             children: [
-              Text(
-                widget.repair.name,
-                style: AppTextStyles.screenTitle,
-              ),
+              Text(widget.repair.name, style: AppTextStyles.screenTitle),
               const SizedBox(height: AppSpacing.xs),
-              Text(
-                widget.repair.category,
-                style: AppTextStyles.subtitle,
-              ),
+              Text(widget.repair.category, style: AppTextStyles.subtitle),
               const SizedBox(height: AppSpacing.xxl),
               AppCard(
                 child: Column(
@@ -251,7 +225,7 @@ class _EditRepairScreenState extends State<EditRepairScreen> {
                 child: Column(
                   children: [
                     DropdownButtonFormField<String>(
-                      value: _selectedPriority,
+                      initialValue: _selectedPriority,
                       decoration: _inputDecoration(
                         label: 'Prioridad',
                         icon: Icons.priority_high_rounded,
@@ -274,7 +248,7 @@ class _EditRepairScreenState extends State<EditRepairScreen> {
                     ),
                     const SizedBox(height: AppSpacing.lg),
                     DropdownButtonFormField<String>(
-                      value: _selectedStatus,
+                      initialValue: _selectedStatus,
                       decoration: _inputDecoration(
                         label: 'Estado',
                         icon: Icons.flag_outlined,
@@ -309,10 +283,8 @@ class _EditRepairScreenState extends State<EditRepairScreen> {
                         label: 'Costo estimado',
                         icon: Icons.calculate_outlined,
                       ),
-                      validator: (value) => _validateNumber(
-                        value,
-                        field: 'el costo estimado',
-                      ),
+                      validator: (value) =>
+                          _validateNumber(value, field: 'el costo estimado'),
                     ),
                     const SizedBox(height: AppSpacing.lg),
                     TextFormField(
@@ -322,10 +294,8 @@ class _EditRepairScreenState extends State<EditRepairScreen> {
                         label: 'Costo real',
                         icon: Icons.payments_outlined,
                       ),
-                      validator: (value) => _validateNumber(
-                        value,
-                        field: 'el costo real',
-                      ),
+                      validator: (value) =>
+                          _validateNumber(value, field: 'el costo real'),
                     ),
                     const SizedBox(height: AppSpacing.md),
                     SwitchListTile.adaptive(
@@ -335,7 +305,7 @@ class _EditRepairScreenState extends State<EditRepairScreen> {
                         'Marcá esta opción cuando el gasto esté cubierto.',
                       ),
                       value: _paid,
-                      activeColor: AppColors.primary,
+                      activeThumbColor: AppColors.primary,
                       onChanged: (value) {
                         setState(() {
                           _paid = value;
@@ -354,14 +324,10 @@ class _EditRepairScreenState extends State<EditRepairScreen> {
                       ? const SizedBox(
                           width: 18,
                           height: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                          ),
+                          child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.save_rounded),
-                  label: Text(
-                    _saving ? 'Guardando...' : 'Guardar cambios',
-                  ),
+                  label: Text(_saving ? 'Guardando...' : 'Guardar cambios'),
                 ),
               ),
             ],

@@ -5,10 +5,7 @@ import '../../theme/app_colors.dart';
 class PriorityChip extends StatelessWidget {
   final String priority;
 
-  const PriorityChip({
-    super.key,
-    required this.priority,
-  });
+  const PriorityChip({super.key, required this.priority});
 
   @override
   Widget build(BuildContext context) {
@@ -37,10 +34,7 @@ class PriorityChip extends StatelessWidget {
     final label = priority.trim().isEmpty ? 'Sin datos' : priority.trim();
 
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 10,
-        vertical: 6,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(100),

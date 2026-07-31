@@ -5,10 +5,7 @@ import 'package:flutter/material.dart';
 class PhotoViewerScreen extends StatelessWidget {
   final String imagePath;
 
-  const PhotoViewerScreen({
-    super.key,
-    required this.imagePath,
-  });
+  const PhotoViewerScreen({super.key, required this.imagePath});
 
   @override
   Widget build(BuildContext context) {
@@ -35,21 +32,20 @@ class PhotoViewerScreen extends StatelessWidget {
               child: SizedBox(
                 width: constraints.maxWidth,
                 height: constraints.maxHeight,
-                child: file.existsSync()
-                    ? Image.file(
-                        file,
-                        width: constraints.maxWidth,
-                        height: constraints.maxHeight,
-                        fit: BoxFit.contain,
-                        errorBuilder: (
-                          context,
-                          error,
-                          stackTrace,
-                        ) {
-                          return const _ImageError();
-                        },
-                      )
-                    : const _ImageError(),
+                child: Hero(
+                  tag: 'photo:$imagePath',
+                  child: file.existsSync()
+                      ? Image.file(
+                          file,
+                          width: constraints.maxWidth,
+                          height: constraints.maxHeight,
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) {
+                            return const _ImageError();
+                          },
+                        )
+                      : const _ImageError(),
+                ),
               ),
             ),
           );
@@ -68,17 +64,11 @@ class _ImageError extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.broken_image_outlined,
-            color: Colors.white,
-            size: 60,
-          ),
+          Icon(Icons.broken_image_outlined, color: Colors.white, size: 60),
           SizedBox(height: 12),
           Text(
             'No se pudo abrir la imagen',
-            style: TextStyle(
-              color: Colors.white,
-            ),
+            style: TextStyle(color: Colors.white),
           ),
         ],
       ),

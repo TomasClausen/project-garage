@@ -16,10 +16,7 @@ class GalleryPhotoAdapter extends TypeAdapter<GalleryPhoto> {
     final fields = <int, dynamic>{
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
-    return GalleryPhoto(
-      id: fields[0] as String,
-      path: fields[1] as String,
-    );
+    return GalleryPhoto(id: fields[0] as String, path: fields[1] as String);
   }
 
   @override

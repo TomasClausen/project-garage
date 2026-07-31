@@ -112,11 +112,7 @@ class VehicleStatus extends HiveObject {
   @HiveField(2)
   final DateTime? lastWorkDate;
 
-  VehicleStatus({
-    this.items = const [],
-    this.lastWork,
-    this.lastWorkDate,
-  });
+  VehicleStatus({this.items = const [], this.lastWork, this.lastWorkDate});
 
   int? get healthScore {
     final validScores = items
@@ -128,10 +124,7 @@ class VehicleStatus extends HiveObject {
       return null;
     }
 
-    final total = validScores.fold<int>(
-      0,
-      (sum, score) => sum + score,
-    );
+    final total = validScores.fold<int>(0, (sum, score) => sum + score);
 
     return (total / validScores.length).round();
   }

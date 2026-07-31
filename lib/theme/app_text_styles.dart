@@ -23,10 +23,7 @@ class AppTextStyles {
     color: AppColors.text,
   );
 
-  static const body = TextStyle(
-    fontSize: 15,
-    color: AppColors.text,
-  );
+  static const body = TextStyle(fontSize: 15, color: AppColors.text);
 
   static const subtitle = TextStyle(
     fontSize: 14,

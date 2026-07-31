@@ -3,13 +3,12 @@ import 'dart:typed_data';
 import 'package:crop_your_image/crop_your_image.dart';
 import 'package:flutter/material.dart';
 
+import '../widgets/common/app_snackbar.dart';
+
 class CropImageScreen extends StatefulWidget {
   final Uint8List imageBytes;
 
-  const CropImageScreen({
-    super.key,
-    required this.imageBytes,
-  });
+  const CropImageScreen({super.key, required this.imageBytes});
 
   @override
   State<CropImageScreen> createState() => _CropImageScreenState();
@@ -62,10 +61,7 @@ class _CropImageScreenState extends State<CropImageScreen> {
                   case CropSuccess(:final croppedImage):
                     if (!mounted) return;
 
-                    Navigator.pop(
-                      context,
-                      croppedImage,
-                    );
+                    Navigator.pop(context, croppedImage);
 
                   case CropFailure(:final cause):
                     if (!mounted) return;
@@ -74,12 +70,9 @@ class _CropImageScreenState extends State<CropImageScreen> {
                       _cropping = false;
                     });
 
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          'No se pudo recortar la imagen: $cause',
-                        ),
-                      ),
+                    AppSnackbar.error(
+                      context,
+                      'No se pudo recortar la imagen: $cause',
                     );
                 }
               },
@@ -89,9 +82,7 @@ class _CropImageScreenState extends State<CropImageScreen> {
             const Positioned.fill(
               child: ColoredBox(
                 color: Color(0x66000000),
-                child: Center(
-                  child: CircularProgressIndicator(),
-                ),
+                child: Center(child: CircularProgressIndicator()),
               ),
             ),
         ],

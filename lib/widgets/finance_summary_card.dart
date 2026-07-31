@@ -5,10 +5,7 @@ import '../models/dashboard_summary.dart';
 class FinanceSummaryCard extends StatelessWidget {
   final DashboardSummary summary;
 
-  const FinanceSummaryCard({
-    super.key,
-    required this.summary,
-  });
+  const FinanceSummaryCard({super.key, required this.summary});
 
   static const Color _cardColor = Color(0xFF18181C);
   static const Color _accentColor = Color(0xFF9F2436);
@@ -45,8 +42,7 @@ class FinanceSummaryCard extends StatelessWidget {
         ? ((actualTotal / estimatedTotal) * 100).round()
         : 0;
 
-    final isOverBudget =
-        estimatedTotal > 0 && actualTotal > estimatedTotal;
+    final isOverBudget = estimatedTotal > 0 && actualTotal > estimatedTotal;
 
     return Container(
       width: double.infinity,
@@ -54,9 +50,7 @@ class FinanceSummaryCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: _cardColor,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.05),
-        ),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -86,7 +80,7 @@ class FinanceSummaryCard extends StatelessWidget {
           Text(
             'Inversión registrada',
             style: TextStyle(
-              color: Colors.white.withOpacity(0.48),
+              color: Colors.white.withValues(alpha: 0.48),
               fontSize: 12,
               fontWeight: FontWeight.w600,
             ),
@@ -118,7 +112,7 @@ class FinanceSummaryCard extends StatelessWidget {
             style: TextStyle(
               color: isOverBudget
                   ? Colors.redAccent
-                  : Colors.white.withOpacity(0.5),
+                  : Colors.white.withValues(alpha: 0.5),
               fontSize: 12,
               fontWeight: FontWeight.w500,
             ),
@@ -131,12 +125,9 @@ class FinanceSummaryCard extends StatelessWidget {
             child: LinearProgressIndicator(
               value: budgetProgress,
               minHeight: 10,
-              backgroundColor:
-                  Colors.white.withOpacity(0.07),
+              backgroundColor: Colors.white.withValues(alpha: 0.07),
               valueColor: AlwaysStoppedAnimation<Color>(
-                isOverBudget
-                    ? Colors.redAccent
-                    : _accentColor,
+                isOverBudget ? Colors.redAccent : _accentColor,
               ),
             ),
           ),
@@ -148,9 +139,7 @@ class FinanceSummaryCard extends StatelessWidget {
               Expanded(
                 child: _FinanceMetric(
                   title: 'Estimado',
-                  value: _formatMoney(
-                    summary.estimatedTotal,
-                  ),
+                  value: _formatMoney(summary.estimatedTotal),
                   icon: Icons.calculate_outlined,
                   color: Colors.white70,
                 ),
@@ -161,9 +150,7 @@ class FinanceSummaryCard extends StatelessWidget {
               Expanded(
                 child: _FinanceMetric(
                   title: 'Gastado',
-                  value: _formatMoney(
-                    summary.actualTotal,
-                  ),
+                  value: _formatMoney(summary.actualTotal),
                   icon: Icons.payments_outlined,
                   color: Colors.lightBlueAccent,
                 ),
@@ -208,11 +195,9 @@ class _FinanceMetric extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.03),
+        color: Colors.white.withValues(alpha: 0.03),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.05),
-        ),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -222,14 +207,10 @@ class _FinanceMetric extends StatelessWidget {
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.12),
+              color: color.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(
-              icon,
-              color: color,
-              size: 19,
-            ),
+            child: Icon(icon, color: color, size: 19),
           ),
 
           const SizedBox(height: 12),
@@ -237,7 +218,7 @@ class _FinanceMetric extends StatelessWidget {
           Text(
             title,
             style: TextStyle(
-              color: Colors.white.withOpacity(0.45),
+              color: Colors.white.withValues(alpha: 0.45),
               fontSize: 11,
               fontWeight: FontWeight.w500,
             ),
@@ -277,22 +258,15 @@ class _RemainingBudgetPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = isOverBudget
-        ? Colors.redAccent
-        : Colors.orangeAccent;
+    final color = isOverBudget ? Colors.redAccent : Colors.orangeAccent;
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 15,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
+        color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: color.withOpacity(0.18),
-        ),
+        border: Border.all(color: color.withValues(alpha: 0.18)),
       ),
       child: Row(
         children: [
@@ -300,7 +274,7 @@ class _RemainingBudgetPanel extends StatelessWidget {
             width: 38,
             height: 38,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.14),
+              color: color.withValues(alpha: 0.14),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -316,13 +290,12 @@ class _RemainingBudgetPanel extends StatelessWidget {
 
           Expanded(
             child: Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   title,
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.5),
+                    color: Colors.white.withValues(alpha: 0.5),
                     fontSize: 11,
                     fontWeight: FontWeight.w500,
                   ),

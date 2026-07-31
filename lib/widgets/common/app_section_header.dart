@@ -32,11 +32,7 @@ class AppSectionHeader extends StatelessWidget {
               color: AppColors.primary.withValues(alpha: 0.13),
               borderRadius: BorderRadius.circular(AppRadius.small),
             ),
-            child: Icon(
-              icon,
-              size: 21,
-              color: AppColors.primary,
-            ),
+            child: Icon(icon, size: 21, color: AppColors.primary),
           ),
           const SizedBox(width: AppSpacing.md),
         ],
@@ -44,10 +40,7 @@ class AppSectionHeader extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                title,
-                style: AppTextStyles.cardTitle,
-              ),
+              Text(title, style: AppTextStyles.cardTitle),
               if (subtitle != null && subtitle!.trim().isNotEmpty) ...[
                 const SizedBox(height: AppSpacing.xs),
                 Text(

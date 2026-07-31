@@ -19,18 +19,13 @@ import 'repair_media_screen.dart';
 class RepairDetailScreen extends StatefulWidget {
   final Repair repair;
 
-  const RepairDetailScreen({
-    super.key,
-    required this.repair,
-  });
+  const RepairDetailScreen({super.key, required this.repair});
 
   @override
-  State<RepairDetailScreen> createState() =>
-      _RepairDetailScreenState();
+  State<RepairDetailScreen> createState() => _RepairDetailScreenState();
 }
 
-class _RepairDetailScreenState
-    extends State<RepairDetailScreen> {
+class _RepairDetailScreenState extends State<RepairDetailScreen> {
   StatusChipType _statusType(Repair repair) {
     final status = repair.status.trim().toLowerCase();
 
@@ -49,9 +44,7 @@ class _RepairDetailScreenState
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => EditRepairScreen(
-          repair: widget.repair,
-        ),
+        builder: (_) => EditRepairScreen(repair: widget.repair),
       ),
     );
 
@@ -94,12 +87,8 @@ class _RepairDetailScreenState
                   width: 52,
                   height: 52,
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(
-                      alpha: 0.14,
-                    ),
-                    borderRadius: BorderRadius.circular(
-                      AppRadius.medium,
-                    ),
+                    color: AppColors.primary.withValues(alpha: 0.14),
+                    borderRadius: BorderRadius.circular(AppRadius.medium),
                   ),
                   child: const Icon(
                     Icons.build_rounded,
@@ -110,20 +99,11 @@ class _RepairDetailScreenState
                 const SizedBox(width: AppSpacing.md),
                 Expanded(
                   child: Column(
-                    crossAxisAlignment:
-                        CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        repair.name,
-                        style: AppTextStyles.screenTitle,
-                      ),
-                      const SizedBox(
-                        height: AppSpacing.xs,
-                      ),
-                      Text(
-                        repair.category,
-                        style: AppTextStyles.subtitle,
-                      ),
+                      Text(repair.name, style: AppTextStyles.screenTitle),
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(repair.category, style: AppTextStyles.subtitle),
                     ],
                   ),
                 ),
@@ -134,12 +114,8 @@ class _RepairDetailScreenState
               spacing: AppSpacing.sm,
               runSpacing: AppSpacing.sm,
               children: [
-                PriorityChip(
-                  priority: repair.priority,
-                ),
-                StatusChip(
-                  status: _statusType(repair),
-                ),
+                PriorityChip(priority: repair.priority),
+                StatusChip(status: _statusType(repair)),
                 _PaidChip(paid: repair.paid),
               ],
             ),
@@ -151,10 +127,7 @@ class _RepairDetailScreenState
                   Row(
                     children: [
                       const Expanded(
-                        child: Text(
-                          'Progreso',
-                          style: AppTextStyles.cardTitle,
-                        ),
+                        child: Text('Progreso', style: AppTextStyles.cardTitle),
                       ),
                       Text(
                         ProgressFormatter.format(progress),
@@ -177,8 +150,8 @@ class _RepairDetailScreenState
                     progress >= 1
                         ? 'Trabajo completado'
                         : progress > 0
-                            ? 'La reparación está en curso'
-                            : 'La reparación todavía no comenzó',
+                        ? 'La reparación está en curso'
+                        : 'La reparación todavía no comenzó',
                     style: AppTextStyles.caption,
                   ),
                 ],
@@ -268,7 +241,10 @@ class _RepairDetailScreenState
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('Evidencias', style: AppTextStyles.cardTitle),
+                            const Text(
+                              'Evidencias',
+                              style: AppTextStyles.cardTitle,
+                            ),
                             const SizedBox(height: AppSpacing.xs),
                             Text(
                               count == 0
@@ -304,20 +280,14 @@ class _RepairDetailScreenState
 class _PaidChip extends StatelessWidget {
   final bool paid;
 
-  const _PaidChip({
-    required this.paid,
-  });
+  const _PaidChip({required this.paid});
 
   @override
   Widget build(BuildContext context) {
-    final color =
-        paid ? AppColors.success : AppColors.secondaryText;
+    final color = paid ? AppColors.success : AppColors.secondaryText;
 
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 10,
-        vertical: 6,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.14),
         borderRadius: BorderRadius.circular(100),
@@ -326,9 +296,7 @@ class _PaidChip extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            paid
-                ? Icons.check_circle_outline_rounded
-                : Icons.pending_outlined,
+            paid ? Icons.check_circle_outline_rounded : Icons.pending_outlined,
             size: 14,
             color: color,
           ),
@@ -372,21 +340,12 @@ class _CostCard extends StatelessWidget {
             height: 38,
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(
-                AppRadius.small,
-              ),
+              borderRadius: BorderRadius.circular(AppRadius.small),
             ),
-            child: Icon(
-              icon,
-              color: color,
-              size: 20,
-            ),
+            child: Icon(icon, color: color, size: 20),
           ),
           const SizedBox(height: AppSpacing.md),
-          Text(
-            title,
-            style: AppTextStyles.caption,
-          ),
+          Text(title, style: AppTextStyles.caption),
           const SizedBox(height: AppSpacing.xs),
           FittedBox(
             fit: BoxFit.scaleDown,
@@ -421,18 +380,9 @@ class _InfoRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(
-          icon,
-          size: 20,
-          color: AppColors.secondaryText,
-        ),
+        Icon(icon, size: 20, color: AppColors.secondaryText),
         const SizedBox(width: AppSpacing.md),
-        Expanded(
-          child: Text(
-            label,
-            style: AppTextStyles.subtitle,
-          ),
-        ),
+        Expanded(child: Text(label, style: AppTextStyles.subtitle)),
         const SizedBox(width: AppSpacing.md),
         Flexible(
           child: Text(

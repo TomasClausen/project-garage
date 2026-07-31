@@ -1,10 +1,7 @@
 import '../models/expense.dart';
 
-
 final List<Expense> expenses = [
-
   Expense(
-
     name: "Amortiguadores delanteros",
 
     category: "Suspensión",
@@ -12,12 +9,9 @@ final List<Expense> expenses = [
     amount: 80000,
 
     paid: false,
-
   ),
 
-
   Expense(
-
     name: "Bomba de agua",
 
     category: "Refrigeración",
@@ -25,12 +19,9 @@ final List<Expense> expenses = [
     amount: 60000,
 
     paid: true,
-
   ),
 
-
   Expense(
-
     name: "Junta tapa de válvulas",
 
     category: "Motor",
@@ -38,8 +29,5 @@ final List<Expense> expenses = [
     amount: 30000,
 
     paid: false,
-
   ),
-
-
 ];

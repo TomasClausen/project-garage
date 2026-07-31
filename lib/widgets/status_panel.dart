@@ -2,13 +2,11 @@ import 'package:flutter/material.dart';
 
 import '../models/vehicle_status.dart';
 
+@Deprecated('Use the active status sections in VehicleScreen instead.')
 class StatusPanel extends StatelessWidget {
   final VehicleStatus status;
 
-  const StatusPanel({
-    super.key,
-    required this.status,
-  });
+  const StatusPanel({super.key, required this.status});
 
   static const Color _cardColor = Color(0xFF18181C);
   static const Color _surfaceColor = Color(0xFF222228);
@@ -29,17 +27,12 @@ class StatusPanel extends StatelessWidget {
       decoration: BoxDecoration(
         color: _cardColor,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.06),
-        ),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _StatusHeader(
-            score: score,
-            label: status.healthLabel,
-          ),
+          _StatusHeader(score: score, label: status.healthLabel),
           const SizedBox(height: 22),
           LayoutBuilder(
             builder: (context, constraints) {
@@ -48,8 +41,7 @@ class StatusPanel extends StatelessWidget {
                   children: [
                     for (var index = 0; index < items.length; index++) ...[
                       _HealthItemCard(item: items[index]),
-                      if (index != items.length - 1)
-                        const SizedBox(height: 10),
+                      if (index != items.length - 1) const SizedBox(height: 10),
                     ],
                   ],
                 );
@@ -59,8 +51,7 @@ class StatusPanel extends StatelessWidget {
                 spacing: 10,
                 runSpacing: 10,
                 children: items.map((item) {
-                  final itemWidth =
-                      (constraints.maxWidth - 10) / 2;
+                  final itemWidth = (constraints.maxWidth - 10) / 2;
 
                   return SizedBox(
                     width: itemWidth,
@@ -85,10 +76,7 @@ class _StatusHeader extends StatelessWidget {
   final int? score;
   final String label;
 
-  const _StatusHeader({
-    required this.score,
-    required this.label,
-  });
+  const _StatusHeader({required this.score, required this.label});
 
   @override
   Widget build(BuildContext context) {
@@ -134,10 +122,7 @@ class _StatusHeader extends StatelessWidget {
           ),
         ),
         Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 8,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
             color: StatusPanel._surfaceColor,
             borderRadius: BorderRadius.circular(14),
@@ -182,9 +167,7 @@ class _StatusHeader extends StatelessWidget {
 class _HealthItemCard extends StatelessWidget {
   final VehicleHealthItem item;
 
-  const _HealthItemCard({
-    required this.item,
-  });
+  const _HealthItemCard({required this.item});
 
   @override
   Widget build(BuildContext context) {
@@ -192,16 +175,12 @@ class _HealthItemCard extends StatelessWidget {
     final note = item.note?.trim();
 
     return Container(
-      constraints: const BoxConstraints(
-        minHeight: 94,
-      ),
+      constraints: const BoxConstraints(minHeight: 94),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: StatusPanel._surfaceColor,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: condition.color.withValues(alpha: 0.18),
-        ),
+        border: Border.all(color: condition.color.withValues(alpha: 0.18)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -215,11 +194,7 @@ class _HealthItemCard extends StatelessWidget {
                   color: condition.color.withValues(alpha: 0.12),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(
-                  condition.icon,
-                  size: 17,
-                  color: condition.color,
-                ),
+                child: Icon(condition.icon, size: 17, color: condition.color),
               ),
               const SizedBox(width: 9),
               Expanded(
@@ -270,10 +245,7 @@ class _LastWorkCard extends StatelessWidget {
   final String? lastWork;
   final DateTime? lastWorkDate;
 
-  const _LastWorkCard({
-    required this.lastWork,
-    required this.lastWorkDate,
-  });
+  const _LastWorkCard({required this.lastWork, required this.lastWorkDate});
 
   @override
   Widget build(BuildContext context) {

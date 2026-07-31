@@ -21,3 +21,8 @@
 ### Compatibility
 - No se modifican modelos ni adapters de Hive.
 - Se conservan todos los datos existentes.
+# v0.8.5
+
+- Release de estabilización: integridad referencial, estado consistente,
+  mantenimiento sin reseed, analyzer limpio y cobertura automatizada.
+- Detalle completo en `CHANGELOG_v0.8.5.md`.

@@ -9,122 +9,51 @@ import 'providers/vehicle_provider.dart';
 import 'providers/maintenance_provider.dart';
 import 'providers/gallery_provider.dart';
 import 'providers/repair_media_provider.dart';
-
-
+import 'providers/timeline_provider.dart';
 
 void main() async {
-
   WidgetsFlutterBinding.ensureInitialized();
-
 
   await HiveService.init();
 
-
-
   runApp(
-
     MultiProvider(
-
       providers: [
+        ChangeNotifierProvider(create: (_) => RepairProvider()),
 
+        ChangeNotifierProvider(create: (_) => VehicleProvider()),
 
-        ChangeNotifierProvider(
+        ChangeNotifierProvider(create: (_) => MaintenanceProvider()),
 
-          create: (_) => RepairProvider(),
+        ChangeNotifierProvider(create: (_) => GalleryProvider()),
 
-        ),
+        ChangeNotifierProvider(create: (_) => RepairMediaProvider()),
 
-
-
-        ChangeNotifierProvider(
-
-          create: (_) => VehicleProvider(),
-
-        ),
-
-
-
-        ChangeNotifierProvider(
-
-          create: (_) => MaintenanceProvider(),
-
-        ),
-
-
-
-        ChangeNotifierProvider(
-
-          create: (_) => GalleryProvider(),
-
-        ),
-
-        ChangeNotifierProvider(
-
-          create: (_) => RepairMediaProvider(),
-
-        ),
-
-
+        ChangeNotifierProvider(create: (_) => TimelineProvider()),
       ],
 
-
       child: const LancerApp(),
-
-
     ),
-
-
   );
-
 }
 
-
-
-
-
-
 class LancerApp extends StatelessWidget {
-
-
   const LancerApp({super.key});
 
-
-
   @override
-  Widget build(BuildContext context){
-
-
+  Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
 
+      title: "Project Garage",
 
-      debugShowCheckedModeBanner:false,
+      theme: ThemeData(
+        brightness: Brightness.dark,
 
-
-      title:"Project Garage",
-
-
-
-      theme:ThemeData(
-
-
-        brightness:Brightness.dark,
-
-
-        scaffoldBackgroundColor:
-            const Color(0xFF121212),
-
-
+        scaffoldBackgroundColor: const Color(0xFF121212),
       ),
 
-
-
       home: const MainNavigation(),
-
-
     );
-
-
   }
-
-
 }

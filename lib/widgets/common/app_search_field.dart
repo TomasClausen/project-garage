@@ -32,10 +32,7 @@ class AppSearchField extends StatelessWidget {
           focusNode: focusNode,
           onChanged: onChanged,
           textInputAction: TextInputAction.search,
-          style: const TextStyle(
-            color: AppColors.text,
-            fontSize: 14,
-          ),
+          style: const TextStyle(color: AppColors.text, fontSize: 14),
           decoration: InputDecoration(
             hintText: hintText,
             hintStyle: const TextStyle(

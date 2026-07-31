@@ -5,16 +5,14 @@ import '../models/dashboard_summary.dart';
 class RepairSummaryCard extends StatelessWidget {
   final DashboardSummary summary;
 
-  const RepairSummaryCard({
-    super.key,
-    required this.summary,
-  });
+  const RepairSummaryCard({super.key, required this.summary});
 
   static const Color _cardColor = Color(0xFF18181C);
 
   @override
   Widget build(BuildContext context) {
-    final totalRepairs = summary.pendingRepairs +
+    final totalRepairs =
+        summary.pendingRepairs +
         summary.inProgressRepairs +
         summary.completedRepairs;
 
@@ -24,9 +22,7 @@ class RepairSummaryCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: _cardColor,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.05),
-        ),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -34,11 +30,7 @@ class RepairSummaryCard extends StatelessWidget {
         children: [
           const Row(
             children: [
-              Icon(
-                Icons.build_rounded,
-                color: Color(0xFF9F2436),
-                size: 24,
-              ),
+              Icon(Icons.build_rounded, color: Color(0xFF9F2436), size: 24),
               SizedBox(width: 10),
               Text(
                 'Reparaciones',
@@ -70,7 +62,7 @@ class RepairSummaryCard extends StatelessWidget {
                 Text(
                   'Reparaciones registradas',
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.48),
+                    color: Colors.white.withValues(alpha: 0.48),
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
                   ),
@@ -145,7 +137,7 @@ class _RepairDistributionBar extends StatelessWidget {
         width: double.infinity,
         height: 10,
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.06),
+          color: Colors.white.withValues(alpha: 0.06),
           borderRadius: BorderRadius.circular(20),
         ),
       );
@@ -161,23 +153,17 @@ class _RepairDistributionBar extends StatelessWidget {
             if (completed > 0)
               Expanded(
                 flex: completed,
-                child: Container(
-                  color: Colors.green,
-                ),
+                child: Container(color: Colors.green),
               ),
             if (inProgress > 0)
               Expanded(
                 flex: inProgress,
-                child: Container(
-                  color: Colors.amber,
-                ),
+                child: Container(color: Colors.amber),
               ),
             if (pending > 0)
               Expanded(
                 flex: pending,
-                child: Container(
-                  color: Colors.redAccent,
-                ),
+                child: Container(color: Colors.redAccent),
               ),
           ],
         ),
@@ -202,16 +188,11 @@ class _RepairStatusItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 6,
-        vertical: 14,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 14),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.03),
+        color: Colors.white.withValues(alpha: 0.03),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.05),
-        ),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -220,14 +201,10 @@ class _RepairStatusItem extends StatelessWidget {
             width: 38,
             height: 38,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.14),
+              color: color.withValues(alpha: 0.14),
               shape: BoxShape.circle,
             ),
-            child: Icon(
-              icon,
-              color: color,
-              size: 19,
-            ),
+            child: Icon(icon, color: color, size: 19),
           ),
 
           const SizedBox(height: 10),
@@ -253,7 +230,7 @@ class _RepairStatusItem extends StatelessWidget {
                 textAlign: TextAlign.center,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  color: Colors.white.withOpacity(0.62),
+                  color: Colors.white.withValues(alpha: 0.62),
                   fontSize: 10.5,
                   fontWeight: FontWeight.w600,
                   height: 1.15,

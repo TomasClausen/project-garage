@@ -13,6 +13,7 @@ import '../providers/gallery_provider.dart';
 import '../providers/maintenance_provider.dart';
 import '../providers/repair_media_provider.dart';
 import '../providers/repair_provider.dart';
+import '../providers/timeline_provider.dart';
 import '../providers/vehicle_provider.dart';
 import '../services/dashboard_service.dart';
 import '../services/priority_service.dart';
@@ -23,6 +24,7 @@ import '../theme/app_spacing.dart';
 import '../theme/app_text_styles.dart';
 import '../widgets/common/app_card.dart';
 import '../widgets/common/app_progress_bar.dart';
+import '../widgets/common/app_skeleton.dart';
 import '../widgets/next_goal_card.dart';
 import 'maintenance_screen.dart';
 import 'repair_detail_screen.dart';
@@ -32,53 +34,69 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final vehicle = context.watch<VehicleProvider>().vehicle;
-    final repairs = context.watch<RepairProvider>().repairs;
-    final maintenances =
-        context.watch<MaintenanceProvider>().maintenances;
-    final repairMedia =
-        context.watch<RepairMediaProvider>().items;
-    final galleryPhotos = context.watch<GalleryProvider>().photos;
+    final vehicleProvider = context.watch<VehicleProvider>();
+    final repairProvider = context.watch<RepairProvider>();
+    final maintenanceProvider = context.watch<MaintenanceProvider>();
+    final repairMediaProvider = context.watch<RepairMediaProvider>();
+    final galleryProvider = context.watch<GalleryProvider>();
+    final timelineProvider = context.watch<TimelineProvider>();
+    final vehicle = vehicleProvider.vehicle;
+    final repairs = repairProvider.repairs;
+    final maintenances = maintenanceProvider.maintenances;
+    final repairMedia = repairMediaProvider.items;
+    final galleryPhotos = galleryProvider.photos;
 
-    final progress =
-        RestorationService.calculateProgress(repairs);
-    final nextRepair =
-        PriorityService.getNextRepair(repairs);
+    final progress = RestorationService.calculateProgress(repairs);
+    final nextRepair = PriorityService.getNextRepair(repairs);
     final dashboard = DashboardService.generate(repairs);
-    final maintenanceAlert = _nextMaintenance(
-      maintenances,
-      vehicle.kilometers,
-    );
+    final maintenanceAlert = _nextMaintenance(maintenances, vehicle.kilometers);
 
-    final latestImage = _latestImage(
-      repairMedia,
-      galleryPhotos,
-    );
+    final featuredImage = timelineProvider.featuredImage;
+
+    final latestImage = featuredImage == null
+        ? _latestImage(repairMedia, galleryPhotos)
+        : _LatestImage(
+            path: featuredImage.imagePath,
+            label: 'Foto destacada',
+            note: featuredImage.description,
+          );
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: CustomScrollView(
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.xl,
-                AppSpacing.lg,
-                AppSpacing.xl,
-                110,
-              ),
-              sliver: SliverList(
-                delegate: SliverChildListDelegate(
-                  [
-                    _Header(
-                      vehicleName:
-                          '${vehicle.brand} ${vehicle.model}',
-                    ),
+      body: AppLoadingGate(
+        future: Future.wait([
+          vehicleProvider.ready,
+          repairProvider.ready,
+          maintenanceProvider.ready,
+          repairMediaProvider.ready,
+          galleryProvider.ready,
+          timelineProvider.ready,
+        ]),
+        onRefresh: () => Future.wait([
+          vehicleProvider.refresh(),
+          repairProvider.refresh(),
+          maintenanceProvider.refresh(),
+          repairMediaProvider.refresh(),
+          galleryProvider.refresh(),
+          timelineProvider.refresh(),
+        ]),
+        child: SafeArea(
+          child: CustomScrollView(
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.xl,
+                  AppSpacing.lg,
+                  AppSpacing.xl,
+                  110,
+                ),
+                sliver: SliverList(
+                  delegate: SliverChildListDelegate([
+                    _Header(vehicleName: '${vehicle.brand} ${vehicle.model}'),
                     const SizedBox(height: AppSpacing.xxl),
                     _ProjectHero(
-                      vehicleName:
-                          '${vehicle.brand} ${vehicle.model}',
+                      vehicleName: '${vehicle.brand} ${vehicle.model}',
                       year: vehicle.year,
                       kilometers: vehicle.kilometers,
                       progress: progress,
@@ -87,18 +105,14 @@ class HomeScreen extends StatelessWidget {
                     const SizedBox(height: AppSpacing.xxl),
                     const _SectionHeader(
                       title: 'Resumen general',
-                      subtitle:
-                          'Información clave del proyecto',
+                      subtitle: 'Información clave del proyecto',
                     ),
                     const SizedBox(height: AppSpacing.md),
                     _OverviewGrid(
                       repairs: repairs.length,
-                      completedRepairs:
-                          dashboard.completedRepairs,
-                      maintenanceCount:
-                          maintenances.length,
-                      evidenceCount: repairMedia.length +
-                          galleryPhotos.length,
+                      completedRepairs: dashboard.completedRepairs,
+                      maintenanceCount: maintenances.length,
+                      evidenceCount: repairMedia.length + galleryPhotos.length,
                       totalSpent: dashboard.actualTotal,
                     ),
                     const SizedBox(height: AppSpacing.xxl),
@@ -111,9 +125,7 @@ class HomeScreen extends StatelessWidget {
                                 context,
                                 MaterialPageRoute(
                                   builder: (_) =>
-                                      RepairDetailScreen(
-                                    repair: nextRepair,
-                                  ),
+                                      RepairDetailScreen(repair: nextRepair),
                                 ),
                               );
                             },
@@ -121,8 +133,7 @@ class HomeScreen extends StatelessWidget {
                     const SizedBox(height: AppSpacing.xxl),
                     const _SectionHeader(
                       title: 'Mantenimiento',
-                      subtitle:
-                          'Próximo servicio recomendado',
+                      subtitle: 'Próximo servicio recomendado',
                     ),
                     const SizedBox(height: AppSpacing.md),
                     _MaintenanceCard(
@@ -131,8 +142,7 @@ class HomeScreen extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) =>
-                                const MaintenanceScreen(),
+                            builder: (_) => const MaintenanceScreen(),
                           ),
                         );
                       },
@@ -140,21 +150,18 @@ class HomeScreen extends StatelessWidget {
                     const SizedBox(height: AppSpacing.xxl),
                     const _SectionHeader(
                       title: 'Finanzas',
-                      subtitle:
-                          'Estado económico de la restauración',
+                      subtitle: 'Estado económico de la restauración',
                     ),
                     const SizedBox(height: AppSpacing.md),
                     _FinanceCard(
                       estimated: dashboard.estimatedTotal,
                       spent: dashboard.actualTotal,
-                      remaining:
-                          dashboard.remainingEstimated,
+                      remaining: dashboard.remainingEstimated,
                     ),
                     const SizedBox(height: AppSpacing.xxl),
                     const _SectionHeader(
                       title: 'Última evidencia',
-                      subtitle:
-                          'Registro visual más reciente',
+                      subtitle: 'Registro visual más reciente',
                     ),
                     const SizedBox(height: AppSpacing.md),
                     _LatestImageCard(
@@ -168,11 +175,11 @@ class HomeScreen extends StatelessWidget {
                       maintenances: maintenances,
                       currentKm: vehicle.kilometers,
                     ),
-                  ],
+                  ]),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -185,13 +192,11 @@ class HomeScreen extends StatelessWidget {
     final candidates = <_MaintenanceAlert>[];
 
     for (final maintenance in maintenances) {
-      if (maintenance.lastKm <= 0 ||
-          maintenance.intervalKm <= 0) {
+      if (maintenance.lastKm <= 0 || maintenance.intervalKm <= 0) {
         continue;
       }
 
-      final nextKm =
-          maintenance.lastKm + maintenance.intervalKm;
+      final nextKm = maintenance.lastKm + maintenance.intervalKm;
       final remaining = nextKm - currentKm;
 
       candidates.add(
@@ -207,9 +212,7 @@ class HomeScreen extends StatelessWidget {
       return null;
     }
 
-    candidates.sort(
-      (a, b) => a.remainingKm.compareTo(b.remainingKm),
-    );
+    candidates.sort((a, b) => a.remainingKm.compareTo(b.remainingKm));
 
     return candidates.first;
   }
@@ -221,21 +224,13 @@ class HomeScreen extends StatelessWidget {
     if (repairMedia.isNotEmpty) {
       final item = repairMedia.first;
 
-      return _LatestImage(
-        path: item.path,
-        label: item.stage,
-        note: item.note,
-      );
+      return _LatestImage(path: item.path, label: item.stage, note: item.note);
     }
 
     if (galleryPhotos.isNotEmpty) {
       final item = galleryPhotos.last;
 
-      return _LatestImage(
-        path: item.path,
-        label: 'Galería',
-        note: '',
-      );
+      return _LatestImage(path: item.path, label: 'Galería', note: '');
     }
 
     return null;
@@ -245,9 +240,7 @@ class HomeScreen extends StatelessWidget {
 class _Header extends StatelessWidget {
   final String vehicleName;
 
-  const _Header({
-    required this.vehicleName,
-  });
+  const _Header({required this.vehicleName});
 
   @override
   Widget build(BuildContext context) {
@@ -258,9 +251,7 @@ class _Header extends StatelessWidget {
           height: 48,
           decoration: BoxDecoration(
             color: AppColors.primary.withValues(alpha: 0.14),
-            borderRadius: BorderRadius.circular(
-              AppRadius.medium,
-            ),
+            borderRadius: BorderRadius.circular(AppRadius.medium),
           ),
           child: const Icon(
             Icons.garage_rounded,
@@ -273,10 +264,7 @@ class _Header extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Project Garage',
-                style: AppTextStyles.screenTitle,
-              ),
+              const Text('Project Garage', style: AppTextStyles.screenTitle),
               const SizedBox(height: AppSpacing.xs),
               Text(
                 vehicleName,
@@ -295,17 +283,11 @@ class _Header extends StatelessWidget {
           decoration: BoxDecoration(
             color: AppColors.surfaceLight,
             borderRadius: BorderRadius.circular(100),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.05),
-            ),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
           ),
           child: const Row(
             children: [
-              Icon(
-                Icons.circle,
-                color: AppColors.success,
-                size: 9,
-              ),
+              Icon(Icons.circle, color: AppColors.success, size: 9),
               SizedBox(width: 7),
               Text(
                 'Proyecto activo',
@@ -340,16 +322,15 @@ class _ProjectHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasImage = imagePath != null &&
+    final hasImage =
+        imagePath != null &&
         imagePath!.trim().isNotEmpty &&
         File(imagePath!).existsSync();
 
     final percentage = (progress * 100).round();
 
     return ClipRRect(
-      borderRadius: BorderRadius.circular(
-        AppRadius.large,
-      ),
+      borderRadius: BorderRadius.circular(AppRadius.large),
       child: SizedBox(
         height: 300,
         child: Stack(
@@ -359,8 +340,7 @@ class _ProjectHero extends StatelessWidget {
               Image.file(
                 File(imagePath!),
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) =>
-                    const _HeroPlaceholder(),
+                errorBuilder: (_, _, _) => const _HeroPlaceholder(),
               )
             else
               const _HeroPlaceholder(),
@@ -471,18 +451,12 @@ class _HeroTag extends StatelessWidget {
   final IconData icon;
   final String text;
 
-  const _HeroTag({
-    required this.icon,
-    required this.text,
-  });
+  const _HeroTag({required this.icon, required this.text});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 10,
-        vertical: 7,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
         color: Colors.black.withValues(alpha: 0.42),
         borderRadius: BorderRadius.circular(100),
@@ -490,11 +464,7 @@ class _HeroTag extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            icon,
-            size: 14,
-            color: Colors.white70,
-          ),
+          Icon(icon, size: 14, color: Colors.white70),
           const SizedBox(width: 6),
           Text(
             text,
@@ -514,25 +484,16 @@ class _SectionHeader extends StatelessWidget {
   final String title;
   final String subtitle;
 
-  const _SectionHeader({
-    required this.title,
-    required this.subtitle,
-  });
+  const _SectionHeader({required this.title, required this.subtitle});
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          title,
-          style: AppTextStyles.sectionTitle,
-        ),
+        Text(title, style: AppTextStyles.sectionTitle),
         const SizedBox(height: AppSpacing.xs),
-        Text(
-          subtitle,
-          style: AppTextStyles.subtitle,
-        ),
+        Text(subtitle, style: AppTextStyles.subtitle),
       ],
     );
   }
@@ -557,8 +518,7 @@ class _OverviewGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final width =
-            (constraints.maxWidth - AppSpacing.md) / 2;
+        final width = (constraints.maxWidth - AppSpacing.md) / 2;
 
         return Wrap(
           spacing: AppSpacing.md,
@@ -638,15 +598,9 @@ class _MetricCard extends StatelessWidget {
             height: 40,
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(
-                AppRadius.small,
-              ),
+              borderRadius: BorderRadius.circular(AppRadius.small),
             ),
-            child: Icon(
-              icon,
-              color: color,
-              size: 20,
-            ),
+            child: Icon(icon, color: color, size: 20),
           ),
           const SizedBox(height: AppSpacing.md),
           FittedBox(
@@ -699,10 +653,7 @@ class _MaintenanceCard extends StatelessWidget {
   final _MaintenanceAlert? alert;
   final VoidCallback onTap;
 
-  const _MaintenanceCard({
-    required this.alert,
-    required this.onTap,
-  });
+  const _MaintenanceCard({required this.alert, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -713,9 +664,7 @@ class _MaintenanceCard extends StatelessWidget {
         onTap: onTap,
         child: const Row(
           children: [
-            _MaintenanceIcon(
-              color: AppColors.secondaryText,
-            ),
+            _MaintenanceIcon(color: AppColors.secondaryText),
             SizedBox(width: AppSpacing.md),
             Expanded(
               child: Column(
@@ -744,8 +693,7 @@ class _MaintenanceCard extends StatelessWidget {
     }
 
     final overdue = current.remainingKm <= 0;
-    final color =
-        overdue ? AppColors.danger : AppColors.warning;
+    final color = overdue ? AppColors.danger : AppColors.warning;
 
     return AppCard(
       onTap: onTap,
@@ -796,9 +744,7 @@ class _MaintenanceCard extends StatelessWidget {
 class _MaintenanceIcon extends StatelessWidget {
   final Color color;
 
-  const _MaintenanceIcon({
-    required this.color,
-  });
+  const _MaintenanceIcon({required this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -807,14 +753,9 @@ class _MaintenanceIcon extends StatelessWidget {
       height: 46,
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(
-          AppRadius.medium,
-        ),
+        borderRadius: BorderRadius.circular(AppRadius.medium),
       ),
-      child: Icon(
-        Icons.fact_check_outlined,
-        color: color,
-      ),
+      child: Icon(Icons.fact_check_outlined, color: color),
     );
   }
 }
@@ -832,9 +773,7 @@ class _FinanceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final progress = estimated <= 0
-        ? 0.0
-        : (spent / estimated).clamp(0.0, 1.0);
+    final progress = estimated <= 0 ? 0.0 : (spent / estimated).clamp(0.0, 1.0);
 
     return AppCard(
       child: Column(
@@ -868,17 +807,11 @@ class _FinanceCard extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: _FinanceMetric(
-                  label: 'Estimado',
-                  value: estimated,
-                ),
+                child: _FinanceMetric(label: 'Estimado', value: estimated),
               ),
               const SizedBox(width: AppSpacing.md),
               Expanded(
-                child: _FinanceMetric(
-                  label: 'Pendiente',
-                  value: remaining,
-                ),
+                child: _FinanceMetric(label: 'Pendiente', value: remaining),
               ),
             ],
           ),
@@ -892,10 +825,7 @@ class _FinanceMetric extends StatelessWidget {
   final String label;
   final int value;
 
-  const _FinanceMetric({
-    required this.label,
-    required this.value,
-  });
+  const _FinanceMetric({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
@@ -903,17 +833,12 @@ class _FinanceMetric extends StatelessWidget {
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         color: AppColors.surfaceLight,
-        borderRadius: BorderRadius.circular(
-          AppRadius.small,
-        ),
+        borderRadius: BorderRadius.circular(AppRadius.small),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: AppTextStyles.caption,
-          ),
+          Text(label, style: AppTextStyles.caption),
           const SizedBox(height: AppSpacing.xs),
           FittedBox(
             fit: BoxFit.scaleDown,
@@ -958,14 +883,13 @@ class _LatestImageCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasImage = imagePath != null &&
+    final hasImage =
+        imagePath != null &&
         imagePath!.trim().isNotEmpty &&
         File(imagePath!).existsSync();
 
     return ClipRRect(
-      borderRadius: BorderRadius.circular(
-        AppRadius.large,
-      ),
+      borderRadius: BorderRadius.circular(AppRadius.large),
       child: SizedBox(
         height: 220,
         child: Stack(
@@ -975,8 +899,7 @@ class _LatestImageCard extends StatelessWidget {
               Image.file(
                 File(imagePath!),
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) =>
-                    const _ImagePlaceholder(),
+                errorBuilder: (_, _, _) => const _ImagePlaceholder(),
               )
             else
               const _ImagePlaceholder(),
@@ -986,10 +909,7 @@ class _LatestImageCard extends StatelessWidget {
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.transparent,
-                      Color(0xD9000000),
-                    ],
+                    colors: [Colors.transparent, Color(0xD9000000)],
                   ),
                 ),
               ),
@@ -1003,8 +923,8 @@ class _LatestImageCard extends StatelessWidget {
                   Text(
                     hasImage
                         ? (label?.trim().isNotEmpty == true
-                            ? label!
-                            : 'Evidencia')
+                              ? label!
+                              : 'Evidencia')
                         : 'Sin evidencias',
                     style: const TextStyle(
                       color: Colors.white,
@@ -1012,8 +932,7 @@ class _LatestImageCard extends StatelessWidget {
                       fontWeight: FontWeight.w800,
                     ),
                   ),
-                  if (hasImage &&
-                      note?.trim().isNotEmpty == true) ...[
+                  if (hasImage && note?.trim().isNotEmpty == true) ...[
                     const SizedBox(height: AppSpacing.xs),
                     Text(
                       note!,
@@ -1074,27 +993,21 @@ class _ProjectHealthCard extends StatelessWidget {
         )
         .length;
 
-    final overdueMaintenances = maintenances.where(
-      (maintenance) {
-        if (maintenance.lastKm <= 0 ||
-            maintenance.intervalKm <= 0) {
-          return false;
-        }
+    final overdueMaintenances = maintenances.where((maintenance) {
+      if (maintenance.lastKm <= 0 || maintenance.intervalKm <= 0) {
+        return false;
+      }
 
-        return currentKm >=
-            maintenance.lastKm +
-                maintenance.intervalKm;
-      },
-    ).length;
+      return currentKm >= maintenance.lastKm + maintenance.intervalKm;
+    }).length;
 
-    final totalAlerts =
-        criticalRepairs + overdueMaintenances;
+    final totalAlerts = criticalRepairs + overdueMaintenances;
 
     final color = totalAlerts == 0
         ? AppColors.success
         : totalAlerts <= 2
-            ? AppColors.warning
-            : AppColors.danger;
+        ? AppColors.warning
+        : AppColors.danger;
 
     return AppCard(
       child: Row(
@@ -1104,9 +1017,7 @@ class _ProjectHealthCard extends StatelessWidget {
             height: 48,
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(
-                AppRadius.medium,
-              ),
+              borderRadius: BorderRadius.circular(AppRadius.medium),
             ),
             child: Icon(
               totalAlerts == 0

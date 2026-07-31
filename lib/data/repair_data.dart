@@ -1,13 +1,7 @@
 import '../models/repair.dart';
 
-
-
 final List<Repair> repairs = [
-
-
-
   Repair(
-
     id: "tren_delantero",
 
     name: "Tren delantero",
@@ -27,15 +21,9 @@ final List<Repair> repairs = [
     actualCost: 0,
 
     paid: false,
-
   ),
 
-
-
-
-
   Repair(
-
     id: "amortiguadores_delanteros",
 
     name: "Amortiguadores delanteros",
@@ -55,15 +43,9 @@ final List<Repair> repairs = [
     actualCost: 0,
 
     paid: false,
-
   ),
 
-
-
-
-
   Repair(
-
     id: "aire_acondicionado",
 
     name: "Aire acondicionado",
@@ -83,15 +65,9 @@ final List<Repair> repairs = [
     actualCost: 0,
 
     paid: false,
-
   ),
 
-
-
-
-
   Repair(
-
     id: "junta_tapa_valvulas",
 
     name: "Junta tapa de válvulas",
@@ -111,15 +87,9 @@ final List<Repair> repairs = [
     actualCost: 0,
 
     paid: false,
-
   ),
 
-
-
-
-
   Repair(
-
     id: "pintura_exterior",
 
     name: "Pintura exterior",
@@ -139,9 +109,5 @@ final List<Repair> repairs = [
     actualCost: 0,
 
     paid: false,
-
   ),
-
-
-
 ];

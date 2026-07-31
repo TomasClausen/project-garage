@@ -2,20 +2,12 @@ import 'package:flutter/material.dart';
 
 import '../../theme/app_colors.dart';
 
-enum StatusChipType {
-  completed,
-  inProgress,
-  pending,
-  noData,
-}
+enum StatusChipType { completed, inProgress, pending, noData }
 
 class StatusChip extends StatelessWidget {
   final StatusChipType status;
 
-  const StatusChip({
-    super.key,
-    required this.status,
-  });
+  const StatusChip({super.key, required this.status});
 
   @override
   Widget build(BuildContext context) {
@@ -50,10 +42,7 @@ class StatusChip extends StatelessWidget {
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 10,
-        vertical: 6,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(100),
@@ -61,11 +50,7 @@ class StatusChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            icon,
-            size: 14,
-            color: color,
-          ),
+          Icon(icon, size: 14, color: color),
           const SizedBox(width: 6),
           Text(
             text,

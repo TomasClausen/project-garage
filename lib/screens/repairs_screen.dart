@@ -12,15 +12,11 @@ import '../widgets/common/app_card.dart';
 import '../widgets/common/app_progress_bar.dart';
 import '../widgets/common/app_search_field.dart';
 import '../widgets/common/empty_state.dart';
+import '../widgets/common/app_skeleton.dart';
 import '../widgets/repair_card.dart';
 import 'add_repair_screen.dart';
 
-enum RepairListFilter {
-  all,
-  pending,
-  inProgress,
-  completed,
-}
+enum RepairListFilter { all, pending, inProgress, completed }
 
 class RepairsScreen extends StatefulWidget {
   const RepairsScreen({super.key});
@@ -30,8 +26,7 @@ class RepairsScreen extends StatefulWidget {
 }
 
 class _RepairsScreenState extends State<RepairsScreen> {
-  final TextEditingController _searchController =
-      TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
 
   RepairListFilter _selectedFilter = RepairListFilter.all;
   final Set<String> _collapsedCategories = <String>{};
@@ -45,9 +40,7 @@ class _RepairsScreenState extends State<RepairsScreen> {
   Future<void> _openAddRepair() async {
     await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => const AddRepairScreen(),
-      ),
+      MaterialPageRoute(builder: (_) => const AddRepairScreen()),
     );
   }
 
@@ -55,7 +48,8 @@ class _RepairsScreenState extends State<RepairsScreen> {
     final query = _searchController.text.trim().toLowerCase();
 
     final filtered = repairs.where((repair) {
-      final matchesSearch = query.isEmpty ||
+      final matchesSearch =
+          query.isEmpty ||
           repair.name.toLowerCase().contains(query) ||
           repair.category.toLowerCase().contains(query) ||
           repair.priority.toLowerCase().contains(query) ||
@@ -71,11 +65,9 @@ class _RepairsScreenState extends State<RepairsScreen> {
         case RepairListFilter.pending:
           return _repairState(repair) == RepairListFilter.pending;
         case RepairListFilter.inProgress:
-          return _repairState(repair) ==
-              RepairListFilter.inProgress;
+          return _repairState(repair) == RepairListFilter.inProgress;
         case RepairListFilter.completed:
-          return _repairState(repair) ==
-              RepairListFilter.completed;
+          return _repairState(repair) == RepairListFilter.completed;
       }
     }).toList();
 
@@ -111,30 +103,24 @@ class _RepairsScreenState extends State<RepairsScreen> {
   }
 
   int _compareRepairs(Repair a, Repair b) {
-    final priorityCompare =
-        _priorityValue(a.priority).compareTo(
-      _priorityValue(b.priority),
-    );
+    final priorityCompare = _priorityValue(
+      a.priority,
+    ).compareTo(_priorityValue(b.priority));
 
     if (priorityCompare != 0) {
       return priorityCompare;
     }
 
-    final progressCompare =
-        a.progress.compareTo(b.progress);
+    final progressCompare = a.progress.compareTo(b.progress);
 
     if (progressCompare != 0) {
       return progressCompare;
     }
 
-    return a.name.toLowerCase().compareTo(
-          b.name.toLowerCase(),
-        );
+    return a.name.toLowerCase().compareTo(b.name.toLowerCase());
   }
 
-  Map<String, List<Repair>> _groupByCategory(
-    List<Repair> repairs,
-  ) {
+  Map<String, List<Repair>> _groupByCategory(List<Repair> repairs) {
     final groups = <String, List<Repair>>{};
 
     for (final repair in repairs) {
@@ -147,11 +133,7 @@ class _RepairsScreenState extends State<RepairsScreen> {
     }
 
     final entries = groups.entries.toList()
-      ..sort(
-        (a, b) => a.key.toLowerCase().compareTo(
-              b.key.toLowerCase(),
-            ),
-      );
+      ..sort((a, b) => a.key.toLowerCase().compareTo(b.key.toLowerCase()));
 
     return Map<String, List<Repair>>.fromEntries(entries);
   }
@@ -163,20 +145,14 @@ class _RepairsScreenState extends State<RepairsScreen> {
 
     final total = repairs.fold<double>(
       0,
-      (sum, repair) =>
-          sum + repair.progress.clamp(0.0, 1.0),
+      (sum, repair) => sum + repair.progress.clamp(0.0, 1.0),
     );
 
     return (total / repairs.length).clamp(0.0, 1.0);
   }
 
-  int _countByState(
-    List<Repair> repairs,
-    RepairListFilter state,
-  ) {
-    return repairs.where(
-      (repair) => _repairState(repair) == state,
-    ).length;
+  int _countByState(List<Repair> repairs, RepairListFilter state) {
+    return repairs.where((repair) => _repairState(repair) == state).length;
   }
 
   String _filterLabel(RepairListFilter filter) {
@@ -224,8 +200,7 @@ class _RepairsScreenState extends State<RepairsScreen> {
     final allRepairs = provider.repairs;
     final visibleRepairs = _filteredRepairs(allRepairs);
     final groupedRepairs = _groupByCategory(visibleRepairs);
-    final generalProgress =
-        RestorationService.calculateProgress(allRepairs);
+    final generalProgress = RestorationService.calculateProgress(allRepairs);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -236,25 +211,25 @@ class _RepairsScreenState extends State<RepairsScreen> {
         icon: const Icon(Icons.add_rounded),
         label: const Text(
           'Nueva reparación',
-          style: TextStyle(
-            fontWeight: FontWeight.w700,
-          ),
+          style: TextStyle(fontWeight: FontWeight.w700),
         ),
       ),
-      body: SafeArea(
-        child: CustomScrollView(
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.xl,
-                AppSpacing.lg,
-                AppSpacing.xl,
-                110,
-              ),
-              sliver: SliverList(
-                delegate: SliverChildListDelegate(
-                  [
+      body: AppLoadingGate(
+        future: provider.ready,
+        onRefresh: provider.refresh,
+        child: SafeArea(
+          child: CustomScrollView(
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.xl,
+                  AppSpacing.lg,
+                  AppSpacing.xl,
+                  110,
+                ),
+                sliver: SliverList(
+                  delegate: SliverChildListDelegate([
                     _ScreenHeader(
                       repairCount: allRepairs.length,
                       onAddPressed: _openAddRepair,
@@ -319,8 +294,7 @@ class _RepairsScreenState extends State<RepairsScreen> {
                         onAction: () {
                           _searchController.clear();
                           setState(() {
-                            _selectedFilter =
-                                RepairListFilter.all;
+                            _selectedFilter = RepairListFilter.all;
                           });
                         },
                       )
@@ -329,30 +303,24 @@ class _RepairsScreenState extends State<RepairsScreen> {
                         (entry) => _CategorySection(
                           category: entry.key,
                           repairs: entry.value,
-                          isCollapsed: _collapsedCategories
-                              .contains(entry.key),
+                          isCollapsed: _collapsedCategories.contains(entry.key),
                           onToggle: () {
                             setState(() {
-                              if (_collapsedCategories
-                                  .contains(entry.key)) {
-                                _collapsedCategories
-                                    .remove(entry.key);
+                              if (_collapsedCategories.contains(entry.key)) {
+                                _collapsedCategories.remove(entry.key);
                               } else {
-                                _collapsedCategories
-                                    .add(entry.key);
+                                _collapsedCategories.add(entry.key);
                               }
                             });
                           },
-                          progress: _averageProgress(
-                            entry.value,
-                          ),
+                          progress: _averageProgress(entry.value),
                         ),
                       ),
-                  ],
+                  ]),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -363,10 +331,7 @@ class _ScreenHeader extends StatelessWidget {
   final int repairCount;
   final VoidCallback onAddPressed;
 
-  const _ScreenHeader({
-    required this.repairCount,
-    required this.onAddPressed,
-  });
+  const _ScreenHeader({required this.repairCount, required this.onAddPressed});
 
   @override
   Widget build(BuildContext context) {
@@ -376,12 +341,8 @@ class _ScreenHeader extends StatelessWidget {
           width: 50,
           height: 50,
           decoration: BoxDecoration(
-            color: AppColors.primary.withValues(
-              alpha: 0.14,
-            ),
-            borderRadius: BorderRadius.circular(
-              AppRadius.medium,
-            ),
+            color: AppColors.primary.withValues(alpha: 0.14),
+            borderRadius: BorderRadius.circular(AppRadius.medium),
           ),
           child: const Icon(
             Icons.build_rounded,
@@ -394,10 +355,7 @@ class _ScreenHeader extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Taller',
-                style: AppTextStyles.screenTitle,
-              ),
+              const Text('Taller', style: AppTextStyles.screenTitle),
               const SizedBox(height: AppSpacing.xs),
               Text(
                 repairCount == 1
@@ -468,11 +426,7 @@ class _ProjectSummary extends StatelessWidget {
             style: AppTextStyles.caption,
           ),
           const SizedBox(height: AppSpacing.lg),
-          AppProgressBar(
-            value: progress,
-            color: AppColors.primary,
-            height: 10,
-          ),
+          AppProgressBar(value: progress, color: AppColors.primary, height: 10),
           const SizedBox(height: AppSpacing.xl),
           Row(
             children: [
@@ -532,20 +486,12 @@ class _SummaryMetric extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(
-          AppRadius.small,
-        ),
-        border: Border.all(
-          color: color.withValues(alpha: 0.16),
-        ),
+        borderRadius: BorderRadius.circular(AppRadius.small),
+        border: Border.all(color: color.withValues(alpha: 0.16)),
       ),
       child: Column(
         children: [
-          Icon(
-            icon,
-            size: 18,
-            color: color,
-          ),
+          Icon(icon, size: 18, color: color),
           const SizedBox(height: AppSpacing.xs),
           Text(
             '$value',
@@ -594,9 +540,7 @@ class _FilterBar extends StatelessWidget {
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: RepairListFilter.values.length,
-        separatorBuilder: (_, __) => const SizedBox(
-          width: AppSpacing.sm,
-        ),
+        separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.sm),
         itemBuilder: (context, index) {
           final filter = RepairListFilter.values[index];
           final selected = filter == selectedFilter;
@@ -608,24 +552,18 @@ class _FilterBar extends StatelessWidget {
             avatar: Icon(
               iconFor(filter),
               size: 16,
-              color: selected
-                  ? Colors.white
-                  : color,
+              color: selected ? Colors.white : color,
             ),
             label: Text(labelFor(filter)),
             labelStyle: TextStyle(
-              color: selected
-                  ? Colors.white
-                  : AppColors.secondaryText,
+              color: selected ? Colors.white : AppColors.secondaryText,
               fontSize: 12,
               fontWeight: FontWeight.w700,
             ),
             selectedColor: color,
             backgroundColor: AppColors.surfaceLight,
             side: BorderSide(
-              color: selected
-                  ? color
-                  : Colors.white.withValues(alpha: 0.05),
+              color: selected ? color : Colors.white.withValues(alpha: 0.05),
             ),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(100),
@@ -658,30 +596,21 @@ class _CategorySection extends StatelessWidget {
     final percentage = (progress * 100).round();
 
     return Padding(
-      padding: const EdgeInsets.only(
-        bottom: AppSpacing.xxl,
-      ),
+      padding: const EdgeInsets.only(bottom: AppSpacing.xxl),
       child: Column(
         children: [
           Material(
             color: Colors.transparent,
             child: InkWell(
               onTap: onToggle,
-              borderRadius: BorderRadius.circular(
-                AppRadius.medium,
-              ),
+              borderRadius: BorderRadius.circular(AppRadius.medium),
               child: Ink(
-                padding: const EdgeInsets.all(
-                  AppSpacing.lg,
-                ),
+                padding: const EdgeInsets.all(AppSpacing.lg),
                 decoration: BoxDecoration(
                   color: AppColors.surfaceLight,
-                  borderRadius: BorderRadius.circular(
-                    AppRadius.medium,
-                  ),
+                  borderRadius: BorderRadius.circular(AppRadius.medium),
                   border: Border.all(
-                    color:
-                        Colors.white.withValues(alpha: 0.05),
+                    color: Colors.white.withValues(alpha: 0.05),
                   ),
                 ),
                 child: Row(
@@ -690,13 +619,8 @@ class _CategorySection extends StatelessWidget {
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color:
-                            AppColors.primary.withValues(
-                          alpha: 0.12,
-                        ),
-                        borderRadius: BorderRadius.circular(
-                          AppRadius.small,
-                        ),
+                        color: AppColors.primary.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(AppRadius.small),
                       ),
                       child: const Icon(
                         Icons.folder_outlined,
@@ -707,28 +631,22 @@ class _CategorySection extends StatelessWidget {
                     const SizedBox(width: AppSpacing.md),
                     Expanded(
                       child: Column(
-                        crossAxisAlignment:
-                            CrossAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             category,
                             maxLines: 1,
-                            overflow:
-                                TextOverflow.ellipsis,
+                            overflow: TextOverflow.ellipsis,
                             style: AppTextStyles.cardTitle,
                           ),
-                          const SizedBox(
-                            height: AppSpacing.xs,
-                          ),
+                          const SizedBox(height: AppSpacing.xs),
                           Text(
                             repairs.length == 1
                                 ? '1 reparación'
                                 : '${repairs.length} reparaciones',
                             style: AppTextStyles.caption,
                           ),
-                          const SizedBox(
-                            height: AppSpacing.sm,
-                          ),
+                          const SizedBox(height: AppSpacing.sm),
                           AppProgressBar(
                             value: progress,
                             color: AppColors.primary,
@@ -748,14 +666,10 @@ class _CategorySection extends StatelessWidget {
                             fontWeight: FontWeight.w800,
                           ),
                         ),
-                        const SizedBox(
-                          height: AppSpacing.xs,
-                        ),
+                        const SizedBox(height: AppSpacing.xs),
                         AnimatedRotation(
                           turns: isCollapsed ? -0.25 : 0,
-                          duration: const Duration(
-                            milliseconds: 180,
-                          ),
+                          duration: const Duration(milliseconds: 180),
                           child: const Icon(
                             Icons.keyboard_arrow_down_rounded,
                             color: AppColors.secondaryText,
@@ -775,16 +689,10 @@ class _CategorySection extends StatelessWidget {
                 : CrossFadeState.showSecond,
             firstChild: const SizedBox.shrink(),
             secondChild: Padding(
-              padding: const EdgeInsets.only(
-                top: AppSpacing.lg,
-              ),
+              padding: const EdgeInsets.only(top: AppSpacing.lg),
               child: Column(
                 children: repairs
-                    .map(
-                      (repair) => RepairCard(
-                        repair: repair,
-                      ),
-                    )
+                    .map((repair) => RepairCard(repair: repair))
                     .toList(),
               ),
             ),

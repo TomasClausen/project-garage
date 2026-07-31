@@ -16,6 +16,8 @@ import '../theme/app_spacing.dart';
 import '../theme/app_text_styles.dart';
 import '../widgets/common/app_card.dart';
 import '../widgets/common/app_progress_bar.dart';
+import '../widgets/common/app_skeleton.dart';
+import '../widgets/vehicle_maintenance_shortcut.dart';
 import 'edit_vehicle_screen.dart';
 import 'maintenance_screen.dart';
 
@@ -25,21 +27,20 @@ class VehicleScreen extends StatelessWidget {
   Future<void> _openEditor(BuildContext context) async {
     await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => const EditVehicleScreen(),
-      ),
+      MaterialPageRoute(builder: (_) => const EditVehicleScreen()),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final vehicle = context.watch<VehicleProvider>().vehicle;
-    final repairs = context.watch<RepairProvider>().repairs;
-    final maintenances =
-        context.watch<MaintenanceProvider>().maintenances;
+    final vehicleProvider = context.watch<VehicleProvider>();
+    final repairProvider = context.watch<RepairProvider>();
+    final maintenanceProvider = context.watch<MaintenanceProvider>();
+    final vehicle = vehicleProvider.vehicle;
+    final repairs = repairProvider.repairs;
+    final maintenances = maintenanceProvider.maintenances;
 
-    final restorationProgress =
-        RestorationService.calculateProgress(repairs);
+    final restorationProgress = RestorationService.calculateProgress(repairs);
 
     final completedRepairs = repairs
         .where((repair) => repair.progress >= 1)
@@ -51,23 +52,31 @@ class VehicleScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: CustomScrollView(
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.xl,
-                AppSpacing.lg,
-                AppSpacing.xl,
-                110,
-              ),
-              sliver: SliverList(
-                delegate: SliverChildListDelegate(
-                  [
-                    _ScreenHeader(
-                      onEdit: () => _openEditor(context),
-                    ),
+      body: AppLoadingGate(
+        future: Future.wait([
+          vehicleProvider.ready,
+          repairProvider.ready,
+          maintenanceProvider.ready,
+        ]),
+        onRefresh: () => Future.wait([
+          vehicleProvider.refresh(),
+          repairProvider.refresh(),
+          maintenanceProvider.refresh(),
+        ]),
+        child: SafeArea(
+          child: CustomScrollView(
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.xl,
+                  AppSpacing.lg,
+                  AppSpacing.xl,
+                  110,
+                ),
+                sliver: SliverList(
+                  delegate: SliverChildListDelegate([
+                    _ScreenHeader(onEdit: () => _openEditor(context)),
                     const SizedBox(height: AppSpacing.xxl),
                     _VehicleHero(
                       vehicle: vehicle,
@@ -77,22 +86,19 @@ class VehicleScreen extends StatelessWidget {
                     const SizedBox(height: AppSpacing.xxl),
                     const _SectionTitle(
                       title: 'Resumen del vehículo',
-                      subtitle:
-                          'Información principal del proyecto',
+                      subtitle: 'Información principal del proyecto',
                     ),
                     const SizedBox(height: AppSpacing.md),
                     _QuickMetrics(
                       repairs: repairs.length,
                       completedRepairs: completedRepairs,
-                      registeredMaintenances:
-                          registeredMaintenances,
+                      registeredMaintenances: registeredMaintenances,
                       kilometers: vehicle.kilometers,
                     ),
                     const SizedBox(height: AppSpacing.xxl),
                     const _SectionTitle(
                       title: 'Ficha técnica',
-                      subtitle:
-                          'Datos de identificación y configuración',
+                      subtitle: 'Datos de identificación y configuración',
                     ),
                     const SizedBox(height: AppSpacing.md),
                     _TechnicalDataCard(vehicle: vehicle),
@@ -105,16 +111,14 @@ class VehicleScreen extends StatelessWidget {
                     const SizedBox(height: AppSpacing.md),
                     _CategoryStatusGrid(repairs: repairs),
                     const SizedBox(height: AppSpacing.xxl),
-                    _MaintenanceShortcut(
+                    VehicleMaintenanceShortcut(
                       maintenanceCount: maintenances.length,
-                      registeredCount:
-                          registeredMaintenances,
+                      registeredCount: registeredMaintenances,
                       onTap: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) =>
-                                const MaintenanceScreen(),
+                            builder: (_) => const MaintenanceScreen(),
                           ),
                         );
                       },
@@ -125,16 +129,14 @@ class VehicleScreen extends StatelessWidget {
                       child: FilledButton.icon(
                         onPressed: () => _openEditor(context),
                         icon: const Icon(Icons.edit_rounded),
-                        label: const Text(
-                          'Editar información del vehículo',
-                        ),
+                        label: const Text('Editar información del vehículo'),
                       ),
                     ),
-                  ],
+                  ]),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -144,9 +146,7 @@ class VehicleScreen extends StatelessWidget {
 class _ScreenHeader extends StatelessWidget {
   final VoidCallback onEdit;
 
-  const _ScreenHeader({
-    required this.onEdit,
-  });
+  const _ScreenHeader({required this.onEdit});
 
   @override
   Widget build(BuildContext context) {
@@ -157,9 +157,7 @@ class _ScreenHeader extends StatelessWidget {
           height: 48,
           decoration: BoxDecoration(
             color: AppColors.primary.withValues(alpha: 0.14),
-            borderRadius: BorderRadius.circular(
-              AppRadius.medium,
-            ),
+            borderRadius: BorderRadius.circular(AppRadius.medium),
           ),
           child: const Icon(
             Icons.directions_car_filled_rounded,
@@ -171,10 +169,7 @@ class _ScreenHeader extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Vehículo',
-                style: AppTextStyles.screenTitle,
-              ),
+              Text('Vehículo', style: AppTextStyles.screenTitle),
               SizedBox(height: AppSpacing.xs),
               Text(
                 'Identidad y estado del proyecto',
@@ -207,15 +202,14 @@ class _VehicleHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final imagePath = vehicle.imagePath;
-    final hasImage = imagePath != null &&
+    final hasImage =
+        imagePath != null &&
         imagePath.trim().isNotEmpty &&
         File(imagePath).existsSync();
     final percentage = (progress * 100).round();
 
     return ClipRRect(
-      borderRadius: BorderRadius.circular(
-        AppRadius.large,
-      ),
+      borderRadius: BorderRadius.circular(AppRadius.large),
       child: SizedBox(
         height: 330,
         child: Stack(
@@ -225,8 +219,7 @@ class _VehicleHero extends StatelessWidget {
               Image.file(
                 File(imagePath),
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) =>
-                    const _VehiclePlaceholder(),
+                errorBuilder: (_, _, _) => const _VehiclePlaceholder(),
               )
             else
               const _VehiclePlaceholder(),
@@ -251,12 +244,9 @@ class _VehicleHero extends StatelessWidget {
                 tooltip: 'Cambiar foto',
                 onPressed: onEdit,
                 style: IconButton.styleFrom(
-                  backgroundColor:
-                      Colors.black.withValues(alpha: 0.48),
+                  backgroundColor: Colors.black.withValues(alpha: 0.48),
                 ),
-                icon: const Icon(
-                  Icons.photo_camera_outlined,
-                ),
+                icon: const Icon(Icons.photo_camera_outlined),
               ),
             ),
             Positioned(
@@ -269,8 +259,7 @@ class _VehicleHero extends StatelessWidget {
                   Text(
                     vehicle.brand,
                     style: TextStyle(
-                      color:
-                          Colors.white.withValues(alpha: 0.68),
+                      color: Colors.white.withValues(alpha: 0.68),
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 1.2,
@@ -299,9 +288,7 @@ class _VehicleHero extends StatelessWidget {
                       ),
                       _HeroChip(
                         icon: Icons.speed_rounded,
-                        label: KmFormatter.format(
-                          vehicle.kilometers,
-                        ),
+                        label: KmFormatter.format(vehicle.kilometers),
                       ),
                       if (vehicle.version.trim().isNotEmpty)
                         _HeroChip(
@@ -370,33 +357,21 @@ class _HeroChip extends StatelessWidget {
   final IconData icon;
   final String label;
 
-  const _HeroChip({
-    required this.icon,
-    required this.label,
-  });
+  const _HeroChip({required this.icon, required this.label});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 10,
-        vertical: 7,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
         color: Colors.black.withValues(alpha: 0.42),
         borderRadius: BorderRadius.circular(100),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.08),
-        ),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            icon,
-            size: 14,
-            color: Colors.white70,
-          ),
+          Icon(icon, size: 14, color: Colors.white70),
           const SizedBox(width: 6),
           Text(
             label,
@@ -416,25 +391,16 @@ class _SectionTitle extends StatelessWidget {
   final String title;
   final String subtitle;
 
-  const _SectionTitle({
-    required this.title,
-    required this.subtitle,
-  });
+  const _SectionTitle({required this.title, required this.subtitle});
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          title,
-          style: AppTextStyles.sectionTitle,
-        ),
+        Text(title, style: AppTextStyles.sectionTitle),
         const SizedBox(height: AppSpacing.xs),
-        Text(
-          subtitle,
-          style: AppTextStyles.subtitle,
-        ),
+        Text(subtitle, style: AppTextStyles.subtitle),
       ],
     );
   }
@@ -457,8 +423,7 @@ class _QuickMetrics extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final width =
-            (constraints.maxWidth - AppSpacing.md) / 2;
+        final width = (constraints.maxWidth - AppSpacing.md) / 2;
 
         return Wrap(
           spacing: AppSpacing.md,
@@ -539,11 +504,7 @@ class _MetricCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            icon,
-            color: AppColors.primary,
-            size: 22,
-          ),
+          Icon(icon, color: AppColors.primary, size: 22),
           const SizedBox(height: AppSpacing.md),
           Text(
             value,
@@ -580,9 +541,7 @@ class _MetricCard extends StatelessWidget {
 class _TechnicalDataCard extends StatelessWidget {
   final Vehicle vehicle;
 
-  const _TechnicalDataCard({
-    required this.vehicle,
-  });
+  const _TechnicalDataCard({required this.vehicle});
 
   @override
   Widget build(BuildContext context) {
@@ -658,25 +617,16 @@ class _TechnicalRow extends StatelessWidget {
           height: 38,
           decoration: BoxDecoration(
             color: AppColors.primary.withValues(alpha: 0.10),
-            borderRadius: BorderRadius.circular(
-              AppRadius.small,
-            ),
+            borderRadius: BorderRadius.circular(AppRadius.small),
           ),
-          child: Icon(
-            icon,
-            size: 19,
-            color: AppColors.primary,
-          ),
+          child: Icon(icon, size: 19, color: AppColors.primary),
         ),
         const SizedBox(width: AppSpacing.md),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                label,
-                style: AppTextStyles.caption,
-              ),
+              Text(label, style: AppTextStyles.caption),
               const SizedBox(height: AppSpacing.xs),
               Text(
                 cleanValue.isEmpty ? 'Sin datos' : cleanValue,
@@ -700,23 +650,12 @@ class _TechnicalRow extends StatelessWidget {
 class _CategoryStatusGrid extends StatelessWidget {
   final List<Repair> repairs;
 
-  const _CategoryStatusGrid({
-    required this.repairs,
-  });
+  const _CategoryStatusGrid({required this.repairs});
 
   static const _categories = [
-    _CategoryDefinition(
-      name: 'Motor',
-      icon: Icons.settings_rounded,
-    ),
-    _CategoryDefinition(
-      name: 'Suspensión',
-      icon: Icons.car_repair_rounded,
-    ),
-    _CategoryDefinition(
-      name: 'Exterior',
-      icon: Icons.auto_awesome_rounded,
-    ),
+    _CategoryDefinition(name: 'Motor', icon: Icons.settings_rounded),
+    _CategoryDefinition(name: 'Suspensión', icon: Icons.car_repair_rounded),
+    _CategoryDefinition(name: 'Exterior', icon: Icons.auto_awesome_rounded),
     _CategoryDefinition(
       name: 'Interior',
       icon: Icons.airline_seat_recline_normal_rounded,
@@ -727,8 +666,7 @@ class _CategoryStatusGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final width =
-            (constraints.maxWidth - AppSpacing.md) / 2;
+        final width = (constraints.maxWidth - AppSpacing.md) / 2;
 
         return Wrap(
           spacing: AppSpacing.md,
@@ -741,9 +679,7 @@ class _CategoryStatusGrid extends StatelessWidget {
 
             final hasData = categoryRepairs.isNotEmpty;
             final progress = hasData
-                ? RestorationService.calculateCategoryProgress(
-                    categoryRepairs,
-                  )
+                ? RestorationService.calculateCategoryProgress(categoryRepairs)
                 : 0.0;
 
             return SizedBox(
@@ -766,10 +702,7 @@ class _CategoryDefinition {
   final String name;
   final IconData icon;
 
-  const _CategoryDefinition({
-    required this.name,
-    required this.icon,
-  });
+  const _CategoryDefinition({required this.name, required this.icon});
 }
 
 class _CategoryCard extends StatelessWidget {
@@ -788,19 +721,14 @@ class _CategoryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final percentage = (progress * 100).round();
-    final color = hasData
-        ? _progressColor(progress)
-        : AppColors.secondaryText;
+    final color = hasData ? _progressColor(progress) : AppColors.secondaryText;
 
     return AppCard(
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            definition.icon,
-            color: color,
-          ),
+          Icon(definition.icon, color: color),
           const SizedBox(height: AppSpacing.md),
           Text(
             definition.name,
@@ -813,17 +741,11 @@ class _CategoryCard extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
-            hasData
-                ? '$repairCount trabajos'
-                : 'Sin datos',
+            hasData ? '$repairCount trabajos' : 'Sin datos',
             style: AppTextStyles.caption,
           ),
           const SizedBox(height: AppSpacing.md),
-          AppProgressBar(
-            value: progress,
-            color: color,
-            height: 7,
-          ),
+          AppProgressBar(value: progress, color: color, height: 7),
           const SizedBox(height: AppSpacing.sm),
           Text(
             hasData ? '$percentage%' : '—',
@@ -848,64 +770,5 @@ class _CategoryCard extends StatelessWidget {
     }
 
     return AppColors.danger;
-  }
-}
-
-class _MaintenanceShortcut extends StatelessWidget {
-  final int maintenanceCount;
-  final int registeredCount;
-  final VoidCallback onTap;
-
-  const _MaintenanceShortcut({
-    required this.maintenanceCount,
-    required this.registeredCount,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return AppCard(
-      onTap: onTap,
-      child: Row(
-        children: [
-          Container(
-            width: 46,
-            height: 46,
-            decoration: BoxDecoration(
-              color: AppColors.warning.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(
-                AppRadius.medium,
-              ),
-            ),
-            child: const Icon(
-              Icons.fact_check_outlined,
-              color: AppColors.warning,
-            ),
-          ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Mantenimientos',
-                  style: AppTextStyles.cardTitle,
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  '$registeredCount de $maintenanceCount con registro',
-                  style: AppTextStyles.caption,
-                ),
-              ],
-            ),
-          ),
-          const Icon(
-            Icons.arrow_forward_ios_rounded,
-            size: 17,
-            color: AppColors.secondaryText,
-          ),
-        ],
-      ),
-    );
   }
 }

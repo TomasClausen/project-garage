@@ -7,14 +7,13 @@ import '../models/gallery_photo.dart';
 import '../providers/gallery_provider.dart';
 import '../screens/photo_viewer_screen.dart';
 import '../services/image_service.dart';
+import '../widgets/common/app_dialog.dart';
 
 class GalleryScreen extends StatelessWidget {
   const GalleryScreen({super.key});
 
   Future<void> addPhoto(BuildContext context) async {
-    final file = await ImageService.pickAndCropImage(
-      context: context,
-    );
+    final file = await ImageService.pickAndCropImage(context: context);
 
     if (file == null) {
       return;
@@ -37,30 +36,13 @@ class GalleryScreen extends StatelessWidget {
     GalleryProvider provider,
     GalleryPhoto photo,
   ) async {
-    final shouldDelete = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Eliminar foto'),
-          content: const Text(
-            '¿Seguro que querés eliminar esta foto?',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(dialogContext, false);
-              },
-              child: const Text('Cancelar'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(dialogContext, true);
-              },
-              child: const Text('Eliminar'),
-            ),
-          ],
-        );
-      },
+    final shouldDelete = await AppDialog.confirm(
+      context,
+      title: 'Eliminar foto',
+      message: '¿Seguro que querés eliminar esta foto?',
+      confirmLabel: 'Eliminar',
+      icon: Icons.delete_outline_rounded,
+      destructive: true,
     );
 
     if (shouldDelete != true) {
@@ -70,16 +52,11 @@ class GalleryScreen extends StatelessWidget {
     await provider.deletePhoto(photo.id);
   }
 
-  void openPhoto(
-    BuildContext context,
-    GalleryPhoto photo,
-  ) {
+  void openPhoto(BuildContext context, GalleryPhoto photo) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => PhotoViewerScreen(
-          imagePath: photo.path,
-        ),
+        builder: (_) => PhotoViewerScreen(imagePath: photo.path),
       ),
     );
   }
@@ -90,9 +67,7 @@ class GalleryScreen extends StatelessWidget {
     final photos = provider.photos;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Galería'),
-      ),
+      appBar: AppBar(title: const Text('Galería')),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
           await addPhoto(context);
@@ -103,16 +78,12 @@ class GalleryScreen extends StatelessWidget {
           ? const Center(
               child: Text(
                 'No hay fotos todavía',
-                style: TextStyle(
-                  fontSize: 18,
-                  color: Colors.grey,
-                ),
+                style: TextStyle(fontSize: 18, color: Colors.grey),
               ),
             )
           : GridView.builder(
               padding: const EdgeInsets.all(15),
-              gridDelegate:
-                  const SliverGridDelegateWithFixedCrossAxisCount(
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 3,
                 crossAxisSpacing: 10,
                 mainAxisSpacing: 10,
@@ -124,17 +95,10 @@ class GalleryScreen extends StatelessWidget {
 
                 return GestureDetector(
                   onTap: () {
-                    openPhoto(
-                      context,
-                      photo,
-                    );
+                    openPhoto(context, photo);
                   },
                   onLongPress: () async {
-                    await confirmDelete(
-                      context,
-                      provider,
-                      photo,
-                    );
+                    await confirmDelete(context, provider, photo);
                   },
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(12),
@@ -142,17 +106,11 @@ class GalleryScreen extends StatelessWidget {
                         ? Image.file(
                             file,
                             fit: BoxFit.cover,
-                            errorBuilder: (
-                              context,
-                              error,
-                              stackTrace,
-                            ) {
+                            errorBuilder: (context, error, stackTrace) {
                               return const ColoredBox(
                                 color: Colors.black12,
                                 child: Center(
-                                  child: Icon(
-                                    Icons.broken_image_outlined,
-                                  ),
+                                  child: Icon(Icons.broken_image_outlined),
                                 ),
                               );
                             },
@@ -160,9 +118,7 @@ class GalleryScreen extends StatelessWidget {
                         : const ColoredBox(
                             color: Colors.black12,
                             child: Center(
-                              child: Icon(
-                                Icons.broken_image_outlined,
-                              ),
+                              child: Icon(Icons.broken_image_outlined),
                             ),
                           ),
                   ),

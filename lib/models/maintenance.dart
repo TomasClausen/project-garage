@@ -2,42 +2,30 @@ import 'package:hive_ce/hive_ce.dart';
 
 part 'maintenance.g.dart';
 
-
 @HiveType(typeId: 2)
 class Maintenance {
-
-
   @HiveField(0)
   final String id;
-
 
   @HiveField(1)
   String name;
 
-
   @HiveField(2)
   String category;
-
 
   @HiveField(3)
   int lastKm;
 
-
   @HiveField(4)
   int intervalKm;
-
 
   @HiveField(5)
   String lastDate;
 
-
   @HiveField(6)
   String notes;
 
-
-
   Maintenance({
-
     required this.id,
 
     required this.name,
@@ -51,8 +39,5 @@ class Maintenance {
     required this.lastDate,
 
     required this.notes,
-
   });
-
-
 }

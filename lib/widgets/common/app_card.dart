@@ -7,6 +7,7 @@ class AppCard extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry padding;
   final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
   final Color? color;
   final Border? border;
   final List<BoxShadow>? shadows;
@@ -16,6 +17,7 @@ class AppCard extends StatelessWidget {
     required this.child,
     this.padding = const EdgeInsets.all(20),
     this.onTap,
+    this.onLongPress,
     this.color,
     this.border,
     this.shadows,
@@ -26,11 +28,9 @@ class AppCard extends StatelessWidget {
     final decoration = BoxDecoration(
       color: color ?? AppColors.surface,
       borderRadius: BorderRadius.circular(AppRadius.large),
-      border: border ??
-          Border.all(
-            color: Colors.white.withValues(alpha: 0.05),
-          ),
-      boxShadow: shadows ??
+      border: border ?? Border.all(color: Colors.white.withValues(alpha: 0.05)),
+      boxShadow:
+          shadows ??
           [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.18),
@@ -40,8 +40,10 @@ class AppCard extends StatelessWidget {
           ],
     );
 
-    if (onTap == null) {
-      return Container(
+    if (onTap == null && onLongPress == null) {
+      return AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOut,
         padding: padding,
         decoration: decoration,
         child: child,
@@ -55,10 +57,8 @@ class AppCard extends StatelessWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(AppRadius.large),
           onTap: onTap,
-          child: Padding(
-            padding: padding,
-            child: child,
-          ),
+          onLongPress: onLongPress,
+          child: Padding(padding: padding, child: child),
         ),
       ),
     );

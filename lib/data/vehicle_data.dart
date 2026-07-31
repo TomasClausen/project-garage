@@ -1,8 +1,6 @@
 import '../models/vehicle.dart';
 
-
 final Vehicle lancer = Vehicle(
-
   brand: "Mitsubishi",
 
   model: "Lancer GLXi",
@@ -14,5 +12,4 @@ final Vehicle lancer = Vehicle(
   color: "Bordo P78",
 
   kilometers: 245000,
-
 );

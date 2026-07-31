@@ -5,21 +5,31 @@ import 'package:hive_ce/hive_ce.dart';
 
 import '../models/repair_media.dart';
 import '../services/hive_service.dart';
+import '../services/timeline_service.dart';
 
 class RepairMediaProvider extends ChangeNotifier {
   late Box<RepairMedia> _box;
+  late final Future<void> ready;
   List<RepairMedia> _items = [];
 
   RepairMediaProvider() {
-    _load();
+    ready = _load();
   }
 
   List<RepairMedia> get items => List.unmodifiable(_items);
 
   Future<void> _load() async {
     _box = Hive.box<RepairMedia>(HiveService.repairMediaBox);
+
+    _reload();
+  }
+
+  Future<void> refresh() => _load();
+
+  void _reload() {
     _items = _box.values.toList()
       ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
     notifyListeners();
   }
 
@@ -27,23 +37,66 @@ class RepairMediaProvider extends ChangeNotifier {
     return _items.where((item) => item.repairId == repairId).toList();
   }
 
+  RepairMedia? byId(String id) {
+    for (final item in _items) {
+      if (item.id == id) {
+        return item;
+      }
+    }
+
+    return null;
+  }
+
   int countForRepair(String repairId) => forRepair(repairId).length;
 
-  Future<void> add(RepairMedia media) async {
+  Future<void> add(
+    RepairMedia media, {
+    List<String> tags = const [],
+    bool isFeatured = false,
+  }) async {
     await _box.put(media.id, media);
-    _items = _box.values.toList()
-      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
-    notifyListeners();
+
+    await TimelineService.record(
+      type: media.stage == 'invoice' ? 'invoice' : 'photo',
+      title: media.stage == 'invoice'
+          ? 'Comprobante agregado'
+          : 'Evidencia agregada',
+      description: media.note,
+      relatedId: media.id,
+      imagePath: media.path,
+      category: media.stage,
+      tags: tags,
+      isFeatured: isFeatured,
+      repairId: media.repairId,
+    );
+
+    _reload();
+  }
+
+  Future<void> addMany(
+    List<RepairMedia> mediaItems, {
+    List<String> tags = const [],
+    bool isFeatured = false,
+  }) async {
+    for (int i = 0; i < mediaItems.length; i++) {
+      await add(mediaItems[i], tags: tags, isFeatured: isFeatured && i == 0);
+    }
   }
 
   Future<void> delete(RepairMedia media) async {
+    await TimelineService.deleteRelated(relatedId: media.id);
     await _box.delete(media.id);
-    final file = File(media.path);
-    if (await file.exists()) {
-      await file.delete();
+
+    try {
+      final file = File(media.path);
+      if (await file.exists()) {
+        await file.delete();
+      }
+    } on FileSystemException {
+      // Hive is the source of truth; inaccessible files must not leave
+      // orphaned records in the application.
     }
-    _items = _box.values.toList()
-      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
-    notifyListeners();
+
+    _reload();
   }
 }

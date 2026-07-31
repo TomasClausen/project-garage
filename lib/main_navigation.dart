@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'screens/finance_screen.dart';
-import 'screens/gallery_screen.dart';
+import 'screens/bitacora_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/repairs_screen.dart';
 import 'screens/vehicle_screen.dart';
@@ -11,8 +12,7 @@ class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
 
   @override
-  State<MainNavigation> createState() =>
-      _MainNavigationState();
+  State<MainNavigation> createState() => _MainNavigationState();
 }
 
 class _MainNavigationState extends State<MainNavigation> {
@@ -23,22 +23,30 @@ class _MainNavigationState extends State<MainNavigation> {
     VehicleScreen(),
     RepairsScreen(),
     FinanceScreen(),
-    GalleryScreen(),
+    BitacoraScreen(),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: currentIndex,
-        children: screens,
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 240),
+        switchInCurve: Curves.easeOut,
+        switchOutCurve: Curves.easeIn,
+        transitionBuilder: (child, animation) =>
+            FadeTransition(opacity: animation, child: child),
+        child: KeyedSubtree(
+          key: ValueKey(currentIndex),
+          child: screens[currentIndex],
+        ),
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: currentIndex,
         backgroundColor: AppColors.surface,
-        indicatorColor:
-            AppColors.primary.withValues(alpha: 0.18),
+        indicatorColor: AppColors.primary.withValues(alpha: 0.18),
         onDestinationSelected: (index) {
+          if (index == currentIndex) return;
+          HapticFeedback.selectionClick();
           setState(() {
             currentIndex = index;
           });
@@ -51,8 +59,7 @@ class _MainNavigationState extends State<MainNavigation> {
           ),
           NavigationDestination(
             icon: Icon(Icons.directions_car_outlined),
-            selectedIcon:
-                Icon(Icons.directions_car_filled_rounded),
+            selectedIcon: Icon(Icons.directions_car_filled_rounded),
             label: 'Vehículo',
           ),
           NavigationDestination(
@@ -62,15 +69,13 @@ class _MainNavigationState extends State<MainNavigation> {
           ),
           NavigationDestination(
             icon: Icon(Icons.account_balance_wallet_outlined),
-            selectedIcon:
-                Icon(Icons.account_balance_wallet_rounded),
+            selectedIcon: Icon(Icons.account_balance_wallet_rounded),
             label: 'Finanzas',
           ),
           NavigationDestination(
-            icon: Icon(Icons.photo_library_outlined),
-            selectedIcon:
-                Icon(Icons.photo_library_rounded),
-            label: 'Fotos',
+            icon: Icon(Icons.auto_stories_outlined),
+            selectedIcon: Icon(Icons.auto_stories_rounded),
+            label: 'Bitácora',
           ),
         ],
       ),

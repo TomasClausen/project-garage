@@ -2,9 +2,7 @@ import '../models/dashboard_summary.dart';
 import '../models/repair.dart';
 
 class DashboardService {
-  static DashboardSummary generate(
-    List<Repair> repairs,
-  ) {
+  static DashboardSummary generate(List<Repair> repairs) {
     int pendingRepairs = 0;
     int inProgressRepairs = 0;
     int completedRepairs = 0;
@@ -25,10 +23,9 @@ class DashboardService {
       }
     }
 
-    final remainingEstimated =
-        estimatedTotal > actualTotal
-            ? estimatedTotal - actualTotal
-            : 0;
+    final remainingEstimated = estimatedTotal > actualTotal
+        ? estimatedTotal - actualTotal
+        : 0;
 
     return DashboardSummary(
       pendingRepairs: pendingRepairs,
