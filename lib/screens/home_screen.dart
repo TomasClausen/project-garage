@@ -3,151 +3,171 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../core/formatters/km_formatter.dart';
+import '../core/formatters/money_formatter.dart';
+import '../models/gallery_photo.dart';
+import '../models/maintenance.dart';
+import '../models/repair.dart';
+import '../models/repair_media.dart';
+import '../providers/gallery_provider.dart';
 import '../providers/maintenance_provider.dart';
+import '../providers/repair_media_provider.dart';
 import '../providers/repair_provider.dart';
 import '../providers/vehicle_provider.dart';
-
 import '../services/dashboard_service.dart';
 import '../services/priority_service.dart';
 import '../services/restoration_service.dart';
-import '../services/vehicle_status_panel_service.dart';
-
-import '../widgets/finance_summary_card.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_radius.dart';
+import '../theme/app_spacing.dart';
+import '../theme/app_text_styles.dart';
+import '../widgets/common/app_card.dart';
+import '../widgets/common/app_progress_bar.dart';
 import '../widgets/next_goal_card.dart';
-import '../widgets/repair_summary_card.dart';
-import '../widgets/status_panel.dart';
+import 'maintenance_screen.dart';
+import 'repair_detail_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
-  static const Color _accentColor = Color(0xFF9F2436);
-  static const Color _backgroundColor = Color(0xFF0D0D0F);
-  static const Color _cardColor = Color(0xFF18181C);
-
   @override
   Widget build(BuildContext context) {
-    final repairProvider = context.watch<RepairProvider>();
-    final maintenanceProvider =
-        context.watch<MaintenanceProvider>();
-    final vehicleProvider = context.watch<VehicleProvider>();
+    final vehicle = context.watch<VehicleProvider>().vehicle;
+    final repairs = context.watch<RepairProvider>().repairs;
+    final maintenances =
+        context.watch<MaintenanceProvider>().maintenances;
+    final repairMedia =
+        context.watch<RepairMediaProvider>().items;
+    final galleryPhotos = context.watch<GalleryProvider>().photos;
 
-    final repairs = repairProvider.repairs;
-    final maintenances = maintenanceProvider.maintenances;
-    final vehicle = vehicleProvider.vehicle;
-
-    final progress = RestorationService.calculateProgress(
-      repairs,
-    ).clamp(0.0, 1.0);
-
-    final nextRepair = PriorityService.getNextRepair(
-      repairs,
-    );
-
-    final vehicleStatus = VehicleStatusPanelService.generate(
-      repairs,
+    final progress =
+        RestorationService.calculateProgress(repairs);
+    final nextRepair =
+        PriorityService.getNextRepair(repairs);
+    final dashboard = DashboardService.generate(repairs);
+    final maintenanceAlert = _nextMaintenance(
       maintenances,
       vehicle.kilometers,
     );
 
-    final dashboardSummary = DashboardService.generate(
-      repairs,
+    final latestImage = _latestImage(
+      repairMedia,
+      galleryPhotos,
     );
 
     return Scaffold(
-      backgroundColor: _backgroundColor,
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: CustomScrollView(
           physics: const BouncingScrollPhysics(),
           slivers: [
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(
-                20,
-                18,
-                20,
-                32,
+                AppSpacing.xl,
+                AppSpacing.lg,
+                AppSpacing.xl,
+                110,
               ),
               sliver: SliverList(
                 delegate: SliverChildListDelegate(
                   [
-                    _DashboardHeader(
+                    _Header(
                       vehicleName:
                           '${vehicle.brand} ${vehicle.model}',
                     ),
-
-                    const SizedBox(height: 22),
-
-                    _VehicleHeroCard(
+                    const SizedBox(height: AppSpacing.xxl),
+                    _ProjectHero(
                       vehicleName:
                           '${vehicle.brand} ${vehicle.model}',
                       year: vehicle.year,
-                      engine: vehicle.engine,
                       kilometers: vehicle.kilometers,
                       progress: progress,
                       imagePath: vehicle.imagePath,
                     ),
-
-                    const SizedBox(height: 30),
-
+                    const SizedBox(height: AppSpacing.xxl),
                     const _SectionHeader(
-                      title: 'Resumen del proyecto',
+                      title: 'Resumen general',
                       subtitle:
-                          'Estado general de la restauración',
-                      icon: Icons.dashboard_rounded,
+                          'Información clave del proyecto',
                     ),
-
-                    const SizedBox(height: 14),
-
-                    RepairSummaryCard(
-                      summary: dashboardSummary,
+                    const SizedBox(height: AppSpacing.md),
+                    _OverviewGrid(
+                      repairs: repairs.length,
+                      completedRepairs:
+                          dashboard.completedRepairs,
+                      maintenanceCount:
+                          maintenances.length,
+                      evidenceCount: repairMedia.length +
+                          galleryPhotos.length,
+                      totalSpent: dashboard.actualTotal,
                     ),
-
-                    const SizedBox(height: 26),
-
-                    const _SectionHeader(
-                      title: 'Inversión',
-                      subtitle:
-                          'Estimación y gastos registrados',
-                      icon:
-                          Icons.account_balance_wallet_rounded,
-                    ),
-
-                    const SizedBox(height: 14),
-
-                    FinanceSummaryCard(
-                      summary: dashboardSummary,
-                    ),
-
-                    const SizedBox(height: 26),
-
-                    const _SectionHeader(
-                      title: 'Estado del vehículo',
-                      subtitle:
-                          'Diagnóstico según reparaciones y mantenimiento',
-                      icon: Icons.monitor_heart_rounded,
-                    ),
-
-                    const SizedBox(height: 14),
-
-                    StatusPanel(
-                      status: vehicleStatus,
-                    ),
-
-                    const SizedBox(height: 26),
-
-                    const _SectionHeader(
-                      title: 'Próximo objetivo',
-                      subtitle:
-                          'La reparación que conviene priorizar',
-                      icon: Icons.flag_rounded,
-                    ),
-
-                    const SizedBox(height: 14),
-
+                    const SizedBox(height: AppSpacing.xxl),
                     NextGoalCard(
                       repair: nextRepair,
+                      onTap: nextRepair == null
+                          ? null
+                          : () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      RepairDetailScreen(
+                                    repair: nextRepair,
+                                  ),
+                                ),
+                              );
+                            },
                     ),
-
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppSpacing.xxl),
+                    const _SectionHeader(
+                      title: 'Mantenimiento',
+                      subtitle:
+                          'Próximo servicio recomendado',
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    _MaintenanceCard(
+                      alert: maintenanceAlert,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                const MaintenanceScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: AppSpacing.xxl),
+                    const _SectionHeader(
+                      title: 'Finanzas',
+                      subtitle:
+                          'Estado económico de la restauración',
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    _FinanceCard(
+                      estimated: dashboard.estimatedTotal,
+                      spent: dashboard.actualTotal,
+                      remaining:
+                          dashboard.remainingEstimated,
+                    ),
+                    const SizedBox(height: AppSpacing.xxl),
+                    const _SectionHeader(
+                      title: 'Última evidencia',
+                      subtitle:
+                          'Registro visual más reciente',
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    _LatestImageCard(
+                      imagePath: latestImage?.path,
+                      label: latestImage?.label,
+                      note: latestImage?.note,
+                    ),
+                    const SizedBox(height: AppSpacing.xxl),
+                    _ProjectHealthCard(
+                      repairs: repairs,
+                      maintenances: maintenances,
+                      currentKm: vehicle.kilometers,
+                    ),
                   ],
                 ),
               ),
@@ -157,12 +177,75 @@ class HomeScreen extends StatelessWidget {
       ),
     );
   }
+
+  static _MaintenanceAlert? _nextMaintenance(
+    List<Maintenance> maintenances,
+    int currentKm,
+  ) {
+    final candidates = <_MaintenanceAlert>[];
+
+    for (final maintenance in maintenances) {
+      if (maintenance.lastKm <= 0 ||
+          maintenance.intervalKm <= 0) {
+        continue;
+      }
+
+      final nextKm =
+          maintenance.lastKm + maintenance.intervalKm;
+      final remaining = nextKm - currentKm;
+
+      candidates.add(
+        _MaintenanceAlert(
+          name: maintenance.name,
+          remainingKm: remaining,
+          nextKm: nextKm,
+        ),
+      );
+    }
+
+    if (candidates.isEmpty) {
+      return null;
+    }
+
+    candidates.sort(
+      (a, b) => a.remainingKm.compareTo(b.remainingKm),
+    );
+
+    return candidates.first;
+  }
+
+  static _LatestImage? _latestImage(
+    List<RepairMedia> repairMedia,
+    List<GalleryPhoto> galleryPhotos,
+  ) {
+    if (repairMedia.isNotEmpty) {
+      final item = repairMedia.first;
+
+      return _LatestImage(
+        path: item.path,
+        label: item.stage,
+        note: item.note,
+      );
+    }
+
+    if (galleryPhotos.isNotEmpty) {
+      final item = galleryPhotos.last;
+
+      return _LatestImage(
+        path: item.path,
+        label: 'Galería',
+        note: '',
+      );
+    }
+
+    return null;
+  }
 }
 
-class _DashboardHeader extends StatelessWidget {
+class _Header extends StatelessWidget {
   final String vehicleName;
 
-  const _DashboardHeader({
+  const _Header({
     required this.vehicleName,
   });
 
@@ -174,76 +257,65 @@ class _DashboardHeader extends StatelessWidget {
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            color: HomeScreen._cardColor,
-            borderRadius: BorderRadius.circular(15),
-            border: Border.all(
-              color: Colors.white.withValues(
-                alpha: 0.06,
-              ),
+            color: AppColors.primary.withValues(alpha: 0.14),
+            borderRadius: BorderRadius.circular(
+              AppRadius.medium,
             ),
           ),
           child: const Icon(
-            Icons.directions_car_filled_rounded,
-            color: HomeScreen._accentColor,
-            size: 26,
+            Icons.garage_rounded,
+            color: AppColors.primary,
+            size: 25,
           ),
         ),
-
-        const SizedBox(width: 14),
-
+        const SizedBox(width: AppSpacing.md),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'PROJECT GARAGE',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context)
-                    .textTheme
-                    .titleLarge
-                    ?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0.5,
-                    ),
+              const Text(
+                'Project Garage',
+                style: AppTextStyles.screenTitle,
               ),
-
-              const SizedBox(height: 3),
-
+              const SizedBox(height: AppSpacing.xs),
               Text(
                 vehicleName,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: Colors.white.withValues(
-                    alpha: 0.55,
-                  ),
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                ),
+                style: AppTextStyles.subtitle,
               ),
             ],
           ),
         ),
-
         Container(
-          width: 42,
-          height: 42,
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.sm,
+          ),
           decoration: BoxDecoration(
-            color: HomeScreen._cardColor,
-            borderRadius: BorderRadius.circular(14),
+            color: AppColors.surfaceLight,
+            borderRadius: BorderRadius.circular(100),
             border: Border.all(
-              color: Colors.white.withValues(
-                alpha: 0.05,
-              ),
+              color: Colors.white.withValues(alpha: 0.05),
             ),
           ),
-          child: Icon(
-            Icons.more_horiz_rounded,
-            color: Colors.white.withValues(
-              alpha: 0.75,
-            ),
+          child: const Row(
+            children: [
+              Icon(
+                Icons.circle,
+                color: AppColors.success,
+                size: 9,
+              ),
+              SizedBox(width: 7),
+              Text(
+                'Proyecto activo',
+                style: TextStyle(
+                  color: AppColors.text,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
           ),
         ),
       ],
@@ -251,18 +323,16 @@ class _DashboardHeader extends StatelessWidget {
   }
 }
 
-class _VehicleHeroCard extends StatelessWidget {
+class _ProjectHero extends StatelessWidget {
   final String vehicleName;
   final int year;
-  final String engine;
   final int kilometers;
   final double progress;
   final String? imagePath;
 
-  const _VehicleHeroCard({
+  const _ProjectHero({
     required this.vehicleName,
     required this.year,
-    required this.engine,
     required this.kilometers,
     required this.progress,
     required this.imagePath,
@@ -270,118 +340,50 @@ class _VehicleHeroCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final progressPercentage = (progress * 100).round();
-
     final hasImage = imagePath != null &&
         imagePath!.trim().isNotEmpty &&
         File(imagePath!).existsSync();
 
+    final percentage = (progress * 100).round();
+
     return ClipRRect(
-      borderRadius: BorderRadius.circular(28),
-      child: Container(
-        width: double.infinity,
-        height: 420,
-        decoration: BoxDecoration(
-          color: const Color(0xFF18181C),
-          borderRadius: BorderRadius.circular(28),
-          border: Border.all(
-            color: Colors.white.withValues(
-              alpha: 0.07,
-            ),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(
-                alpha: 0.35,
-              ),
-              blurRadius: 26,
-              offset: const Offset(0, 14),
-            ),
-          ],
-        ),
+      borderRadius: BorderRadius.circular(
+        AppRadius.large,
+      ),
+      child: SizedBox(
+        height: 300,
         child: Stack(
           fit: StackFit.expand,
           children: [
-            _HeroBackground(
-              imagePath: imagePath,
-              hasImage: hasImage,
-            ),
-
-            const _HeroGradientOverlay(),
-
-            Positioned(
-              top: 20,
-              left: 20,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 11,
-                  vertical: 7,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(
-                    alpha: 0.45,
-                  ),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: Colors.white.withValues(
-                      alpha: 0.10,
-                    ),
-                  ),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _ActiveProjectIndicator(),
-                    SizedBox(width: 7),
-                    Text(
-                      'PROYECTO ACTIVO',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 1,
-                      ),
-                    ),
+            if (hasImage)
+              Image.file(
+                File(imagePath!),
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) =>
+                    const _HeroPlaceholder(),
+              )
+            else
+              const _HeroPlaceholder(),
+            const DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.transparent,
+                    Color(0x22000000),
+                    Color(0xEF08090C),
                   ],
+                  stops: [0.2, 0.5, 1],
                 ),
               ),
             ),
-
             Positioned(
-              top: 18,
-              right: 18,
-              child: Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(
-                    alpha: 0.42,
-                  ),
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: Colors.white.withValues(
-                      alpha: 0.10,
-                    ),
-                  ),
-                ),
-                child: Icon(
-                  hasImage
-                      ? Icons.photo_camera_outlined
-                      : Icons.add_a_photo_outlined,
-                  color: Colors.white,
-                  size: 20,
-                ),
-              ),
-            ),
-
-            Positioned(
-              left: 22,
-              right: 22,
-              bottom: 22,
+              left: AppSpacing.xl,
+              right: AppSpacing.xl,
+              bottom: AppSpacing.xl,
               child: Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     vehicleName,
@@ -390,90 +392,52 @@ class _VehicleHeroCard extends StatelessWidget {
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 27,
+                      height: 1.08,
                       fontWeight: FontWeight.w900,
-                      height: 1.05,
                     ),
                   ),
-
-                  const SizedBox(height: 8),
-
-                  Text(
-                    '$year  •  $engine',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: Colors.white.withValues(
-                        alpha: 0.70,
-                      ),
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-
-                  const SizedBox(height: 18),
-
-                  Row(
+                  const SizedBox(height: AppSpacing.sm),
+                  Wrap(
+                    spacing: AppSpacing.sm,
+                    runSpacing: AppSpacing.sm,
                     children: [
-                      Expanded(
-                        child: _HeroMetric(
-                          icon: Icons.speed_rounded,
-                          label: 'Kilometraje',
-                          value:
-                              '${_formatNumber(kilometers)} km',
-                        ),
+                      _HeroTag(
+                        icon: Icons.calendar_today_outlined,
+                        text: '$year',
                       ),
-
-                      const SizedBox(width: 12),
-
-                      Expanded(
-                        child: _RestorationProgressMetric(
-                          progress: progress,
-                        ),
+                      _HeroTag(
+                        icon: Icons.speed_rounded,
+                        text: KmFormatter.format(kilometers),
                       ),
                     ],
                   ),
-
-                  const SizedBox(height: 20),
-
+                  const SizedBox(height: AppSpacing.lg),
                   Row(
                     children: [
-                      const Expanded(
-                        child: Text(
-                          'Progreso general',
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          ),
+                      const Text(
+                        'Restauración general',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
+                      const Spacer(),
                       Text(
-                        '$progressPercentage%',
+                        '$percentage%',
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w800,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w900,
                         ),
                       ),
                     ],
                   ),
-
-                  const SizedBox(height: 9),
-
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(20),
-                    child: LinearProgressIndicator(
-                      value: progress,
-                      minHeight: 9,
-                      backgroundColor:
-                          Colors.white.withValues(
-                        alpha: 0.14,
-                      ),
-                      valueColor:
-                          const AlwaysStoppedAnimation<Color>(
-                        HomeScreen._accentColor,
-                      ),
-                    ),
+                  const SizedBox(height: AppSpacing.sm),
+                  AppProgressBar(
+                    value: progress,
+                    color: AppColors.primary,
+                    height: 9,
                   ),
                 ],
               ),
@@ -482,43 +446,6 @@ class _VehicleHeroCard extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  static String _formatNumber(int number) {
-    return number.toString().replaceAllMapped(
-      RegExp(r'\B(?=(\d{3})+(?!\d))'),
-      (match) => '.',
-    );
-  }
-}
-
-class _HeroBackground extends StatelessWidget {
-  final String? imagePath;
-  final bool hasImage;
-
-  const _HeroBackground({
-    required this.imagePath,
-    required this.hasImage,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    if (hasImage) {
-      return Image.file(
-        File(imagePath!),
-        fit: BoxFit.cover,
-        alignment: Alignment.center,
-        errorBuilder: (
-          context,
-          error,
-          stackTrace,
-        ) {
-          return const _HeroPlaceholder();
-        },
-      );
-    }
-
-    return const _HeroPlaceholder();
   }
 }
 
@@ -528,352 +455,54 @@ class _HeroPlaceholder extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF29252A),
-            Color(0xFF18171A),
-            Color(0xFF101012),
-          ],
-        ),
-      ),
-      child: Stack(
-        children: [
-          Positioned(
-            top: 52,
-            right: -35,
-            child: Icon(
-              Icons.directions_car_filled_rounded,
-              size: 210,
-              color: Colors.white.withValues(
-                alpha: 0.035,
-              ),
-            ),
-          ),
-
-          Center(
-            child: Transform.translate(
-              offset: const Offset(0, -35),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 74,
-                    height: 74,
-                    decoration: BoxDecoration(
-                      color:
-                          HomeScreen._accentColor.withValues(
-                        alpha: 0.13,
-                      ),
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color:
-                            HomeScreen._accentColor.withValues(
-                          alpha: 0.25,
-                        ),
-                      ),
-                    ),
-                    child: const Icon(
-                      Icons.directions_car_filled_rounded,
-                      color: HomeScreen._accentColor,
-                      size: 37,
-                    ),
-                  ),
-
-                  const SizedBox(height: 13),
-
-                  const Text(
-                    'Agregá una foto de portada',
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-
-                  const SizedBox(height: 4),
-
-                  Text(
-                    'Personalizá la presentación de tu proyecto',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.white.withValues(
-                        alpha: 0.36,
-                      ),
-                      fontSize: 11,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _HeroGradientOverlay extends StatelessWidget {
-  const _HeroGradientOverlay();
-
-  @override
-  Widget build(BuildContext context) {
-    return const DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          stops: [
-            0,
-            0.38,
-            0.68,
-            1,
-          ],
-          colors: [
-            Color(0x22000000),
-            Color(0x19000000),
-            Color(0xB8000000),
-            Color(0xF0000000),
-          ],
+      color: AppColors.surfaceLight,
+      child: const Center(
+        child: Icon(
+          Icons.directions_car_filled_rounded,
+          size: 76,
+          color: AppColors.secondaryText,
         ),
       ),
     );
   }
 }
 
-class _HeroMetric extends StatelessWidget {
+class _HeroTag extends StatelessWidget {
   final IconData icon;
-  final String label;
-  final String value;
+  final String text;
 
-  const _HeroMetric({
+  const _HeroTag({
     required this.icon,
-    required this.label,
-    required this.value,
+    required this.text,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(
-        horizontal: 12,
-        vertical: 11,
+        horizontal: 10,
+        vertical: 7,
       ),
       decoration: BoxDecoration(
-        color: Colors.black.withValues(
-          alpha: 0.28,
-        ),
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(
-          color: Colors.white.withValues(
-            alpha: 0.08,
-          ),
-        ),
+        color: Colors.black.withValues(alpha: 0.42),
+        borderRadius: BorderRadius.circular(100),
       ),
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
             icon,
+            size: 14,
             color: Colors.white70,
-            size: 19,
           ),
-
-          const SizedBox(width: 9),
-
-          Expanded(
-            child: Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: Colors.white.withValues(
-                      alpha: 0.44,
-                    ),
-                    fontSize: 10,
-                  ),
-                ),
-
-                const SizedBox(height: 2),
-
-                Text(
-                  value,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
+          const SizedBox(width: 6),
+          Text(
+            text,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
             ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-
-class _RestorationProgressMetric extends StatelessWidget {
-  final double progress;
-
-  const _RestorationProgressMetric({
-    required this.progress,
-  });
-
-  Color _progressColor(double value) {
-    if (value < 0.30) {
-      return const Color(0xFFE1525C);
-    }
-
-    if (value < 0.70) {
-      return const Color(0xFFF2994A);
-    }
-
-    if (value < 0.90) {
-      return const Color(0xFFF2C94C);
-    }
-
-    return const Color(0xFF4CD964);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final safeProgress = progress.clamp(0.0, 1.0);
-    final progressColor = _progressColor(safeProgress);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 12,
-        vertical: 9,
-      ),
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(
-          alpha: 0.28,
-        ),
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(
-          color: Colors.white.withValues(
-            alpha: 0.08,
-          ),
-        ),
-      ),
-      child: TweenAnimationBuilder<double>(
-        tween: Tween<double>(
-          begin: 0,
-          end: safeProgress,
-        ),
-        duration: const Duration(
-          milliseconds: 900,
-        ),
-        curve: Curves.easeOutCubic,
-        builder: (
-          context,
-          animatedProgress,
-          child,
-        ) {
-          final percentage =
-              (animatedProgress * 100).round();
-
-          return Row(
-            children: [
-              SizedBox(
-                width: 42,
-                height: 42,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    CircularProgressIndicator(
-                      value: animatedProgress,
-                      strokeWidth: 4,
-                      strokeCap: StrokeCap.round,
-                      backgroundColor:
-                          Colors.white.withValues(
-                        alpha: 0.10,
-                      ),
-                      valueColor:
-                          AlwaysStoppedAnimation<Color>(
-                        progressColor,
-                      ),
-                    ),
-                    Text(
-                      '$percentage',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(width: 10),
-
-              Expanded(
-                child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Restauración',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: Colors.white.withValues(
-                          alpha: 0.44,
-                        ),
-                        fontSize: 10,
-                      ),
-                    ),
-
-                    const SizedBox(height: 3),
-
-                    Text(
-                      '$percentage%',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: progressColor,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _ActiveProjectIndicator extends StatelessWidget {
-  const _ActiveProjectIndicator();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 7,
-      height: 7,
-      decoration: const BoxDecoration(
-        color: Color(0xFF4CD964),
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: Color(0x804CD964),
-            blurRadius: 6,
           ),
         ],
       ),
@@ -884,67 +513,631 @@ class _ActiveProjectIndicator extends StatelessWidget {
 class _SectionHeader extends StatelessWidget {
   final String title;
   final String subtitle;
-  final IconData icon;
 
   const _SectionHeader({
     required this.title,
     required this.subtitle,
-    required this.icon,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          width: 38,
-          height: 38,
-          decoration: BoxDecoration(
-            color: HomeScreen._accentColor.withValues(
-              alpha: 0.13,
-            ),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(
-            icon,
-            color: HomeScreen._accentColor,
-            size: 20,
-          ),
+        Text(
+          title,
+          style: AppTextStyles.sectionTitle,
         ),
+        const SizedBox(height: AppSpacing.xs),
+        Text(
+          subtitle,
+          style: AppTextStyles.subtitle,
+        ),
+      ],
+    );
+  }
+}
 
-        const SizedBox(width: 12),
+class _OverviewGrid extends StatelessWidget {
+  final int repairs;
+  final int completedRepairs;
+  final int maintenanceCount;
+  final int evidenceCount;
+  final int totalSpent;
 
-        Expanded(
-          child: Column(
-            crossAxisAlignment:
-                CrossAxisAlignment.start,
+  const _OverviewGrid({
+    required this.repairs,
+    required this.completedRepairs,
+    required this.maintenanceCount,
+    required this.evidenceCount,
+    required this.totalSpent,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width =
+            (constraints.maxWidth - AppSpacing.md) / 2;
+
+        return Wrap(
+          spacing: AppSpacing.md,
+          runSpacing: AppSpacing.md,
+          children: [
+            SizedBox(
+              width: width,
+              child: _MetricCard(
+                icon: Icons.build_outlined,
+                label: 'Taller',
+                value: '$repairs',
+                helper: '$completedRepairs completadas',
+                color: AppColors.primary,
+              ),
+            ),
+            SizedBox(
+              width: width,
+              child: _MetricCard(
+                icon: Icons.fact_check_outlined,
+                label: 'Mantenimientos',
+                value: '$maintenanceCount',
+                helper: 'servicios cargados',
+                color: AppColors.warning,
+              ),
+            ),
+            SizedBox(
+              width: width,
+              child: _MetricCard(
+                icon: Icons.photo_library_outlined,
+                label: 'Evidencias',
+                value: '$evidenceCount',
+                helper: 'fotos registradas',
+                color: AppColors.success,
+              ),
+            ),
+            SizedBox(
+              width: width,
+              child: _MetricCard(
+                icon: Icons.payments_outlined,
+                label: 'Invertido',
+                value: MoneyFormatter.format(totalSpent),
+                helper: 'costo real',
+                color: Colors.lightBlueAccent,
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _MetricCard extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final String helper;
+  final Color color;
+
+  const _MetricCard({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.helper,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(
+                AppRadius.small,
+              ),
+            ),
+            child: Icon(
+              icon,
+              color: color,
+              size: 20,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value,
+              style: const TextStyle(
+                color: AppColors.text,
+                fontSize: 22,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            label,
+            style: const TextStyle(
+              color: AppColors.text,
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            helper,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTextStyles.caption,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MaintenanceAlert {
+  final String name;
+  final int remainingKm;
+  final int nextKm;
+
+  const _MaintenanceAlert({
+    required this.name,
+    required this.remainingKm,
+    required this.nextKm,
+  });
+}
+
+class _MaintenanceCard extends StatelessWidget {
+  final _MaintenanceAlert? alert;
+  final VoidCallback onTap;
+
+  const _MaintenanceCard({
+    required this.alert,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final current = alert;
+
+    if (current == null) {
+      return AppCard(
+        onTap: onTap,
+        child: const Row(
+          children: [
+            _MaintenanceIcon(
+              color: AppColors.secondaryText,
+            ),
+            SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Sin mantenimiento próximo',
+                    style: AppTextStyles.cardTitle,
+                  ),
+                  SizedBox(height: AppSpacing.xs),
+                  Text(
+                    'Todavía no hay registros suficientes para calcular un vencimiento.',
+                    style: AppTextStyles.caption,
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.arrow_forward_ios_rounded,
+              size: 17,
+              color: AppColors.secondaryText,
+            ),
+          ],
+        ),
+      );
+    }
+
+    final overdue = current.remainingKm <= 0;
+    final color =
+        overdue ? AppColors.danger : AppColors.warning;
+
+    return AppCard(
+      onTap: onTap,
+      child: Row(
+        children: [
+          _MaintenanceIcon(color: color),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  current.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.cardTitle,
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  overdue
+                      ? 'Vencido por ${current.remainingKm.abs()} km'
+                      : 'Faltan ${current.remainingKm} km',
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Próximo registro: ${KmFormatter.format(current.nextKm)}',
+                  style: AppTextStyles.caption,
+                ),
+              ],
+            ),
+          ),
+          const Icon(
+            Icons.arrow_forward_ios_rounded,
+            size: 17,
+            color: AppColors.secondaryText,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MaintenanceIcon extends StatelessWidget {
+  final Color color;
+
+  const _MaintenanceIcon({
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 46,
+      height: 46,
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(
+          AppRadius.medium,
+        ),
+      ),
+      child: Icon(
+        Icons.fact_check_outlined,
+        color: color,
+      ),
+    );
+  }
+}
+
+class _FinanceCard extends StatelessWidget {
+  final int estimated;
+  final int spent;
+  final int remaining;
+
+  const _FinanceCard({
+    required this.estimated,
+    required this.spent,
+    required this.remaining,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final progress = estimated <= 0
+        ? 0.0
+        : (spent / estimated).clamp(0.0, 1.0);
+
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 17,
-                  fontWeight: FontWeight.w800,
+              const Expanded(
+                child: Text(
+                  'Inversión del proyecto',
+                  style: AppTextStyles.cardTitle,
                 ),
               ),
-
-              const SizedBox(height: 3),
-
               Text(
-                subtitle,
-                style: TextStyle(
-                  color: Colors.white.withValues(
-                    alpha: 0.42,
-                  ),
-                  fontSize: 12,
-                  height: 1.3,
+                MoneyFormatter.format(spent),
+                style: const TextStyle(
+                  color: Colors.lightBlueAccent,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w900,
                 ),
               ),
             ],
           ),
+          const SizedBox(height: AppSpacing.md),
+          AppProgressBar(
+            value: progress,
+            color: Colors.lightBlueAccent,
+            height: 9,
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          Row(
+            children: [
+              Expanded(
+                child: _FinanceMetric(
+                  label: 'Estimado',
+                  value: estimated,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: _FinanceMetric(
+                  label: 'Pendiente',
+                  value: remaining,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FinanceMetric extends StatelessWidget {
+  final String label;
+  final int value;
+
+  const _FinanceMetric({
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceLight,
+        borderRadius: BorderRadius.circular(
+          AppRadius.small,
         ),
-      ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: AppTextStyles.caption,
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              MoneyFormatter.format(value),
+              style: const TextStyle(
+                color: AppColors.text,
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LatestImage {
+  final String path;
+  final String label;
+  final String note;
+
+  const _LatestImage({
+    required this.path,
+    required this.label,
+    required this.note,
+  });
+}
+
+class _LatestImageCard extends StatelessWidget {
+  final String? imagePath;
+  final String? label;
+  final String? note;
+
+  const _LatestImageCard({
+    required this.imagePath,
+    required this.label,
+    required this.note,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final hasImage = imagePath != null &&
+        imagePath!.trim().isNotEmpty &&
+        File(imagePath!).existsSync();
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(
+        AppRadius.large,
+      ),
+      child: SizedBox(
+        height: 220,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (hasImage)
+              Image.file(
+                File(imagePath!),
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) =>
+                    const _ImagePlaceholder(),
+              )
+            else
+              const _ImagePlaceholder(),
+            if (hasImage)
+              const DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.transparent,
+                      Color(0xD9000000),
+                    ],
+                  ),
+                ),
+              ),
+            Positioned(
+              left: AppSpacing.lg,
+              right: AppSpacing.lg,
+              bottom: AppSpacing.lg,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    hasImage
+                        ? (label?.trim().isNotEmpty == true
+                            ? label!
+                            : 'Evidencia')
+                        : 'Sin evidencias',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 17,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  if (hasImage &&
+                      note?.trim().isNotEmpty == true) ...[
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      note!,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ImagePlaceholder extends StatelessWidget {
+  const _ImagePlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: AppColors.surfaceLight,
+      child: const Center(
+        child: Icon(
+          Icons.photo_library_outlined,
+          size: 48,
+          color: AppColors.secondaryText,
+        ),
+      ),
+    );
+  }
+}
+
+class _ProjectHealthCard extends StatelessWidget {
+  final List<Repair> repairs;
+  final List<Maintenance> maintenances;
+  final int currentKm;
+
+  const _ProjectHealthCard({
+    required this.repairs,
+    required this.maintenances,
+    required this.currentKm,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final criticalRepairs = repairs
+        .where(
+          (repair) =>
+              repair.priority.trim().toLowerCase() == 'alta' &&
+              repair.progress < 1,
+        )
+        .length;
+
+    final overdueMaintenances = maintenances.where(
+      (maintenance) {
+        if (maintenance.lastKm <= 0 ||
+            maintenance.intervalKm <= 0) {
+          return false;
+        }
+
+        return currentKm >=
+            maintenance.lastKm +
+                maintenance.intervalKm;
+      },
+    ).length;
+
+    final totalAlerts =
+        criticalRepairs + overdueMaintenances;
+
+    final color = totalAlerts == 0
+        ? AppColors.success
+        : totalAlerts <= 2
+            ? AppColors.warning
+            : AppColors.danger;
+
+    return AppCard(
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(
+                AppRadius.medium,
+              ),
+            ),
+            child: Icon(
+              totalAlerts == 0
+                  ? Icons.verified_outlined
+                  : Icons.warning_amber_rounded,
+              color: color,
+            ),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  totalAlerts == 0
+                      ? 'Proyecto sin alertas críticas'
+                      : '$totalAlerts alertas activas',
+                  style: AppTextStyles.cardTitle,
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  totalAlerts == 0
+                      ? 'No hay reparaciones prioritarias ni mantenimientos vencidos.'
+                      : '$criticalRepairs reparaciones prioritarias · $overdueMaintenances mantenimientos vencidos',
+                  style: AppTextStyles.caption,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
