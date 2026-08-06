@@ -15,6 +15,7 @@ import '../providers/repair_media_provider.dart';
 import '../providers/repair_provider.dart';
 import '../providers/timeline_provider.dart';
 import '../providers/vehicle_provider.dart';
+import '../providers/finance_provider.dart';
 import '../services/dashboard_service.dart';
 import '../services/priority_service.dart';
 import '../services/restoration_service.dart';
@@ -40,6 +41,7 @@ class HomeScreen extends StatelessWidget {
     final repairMediaProvider = context.watch<RepairMediaProvider>();
     final galleryProvider = context.watch<GalleryProvider>();
     final timelineProvider = context.watch<TimelineProvider>();
+    final financeProvider = context.watch<FinanceProvider>();
     final vehicle = vehicleProvider.vehicle;
     final repairs = repairProvider.repairs;
     final maintenances = maintenanceProvider.maintenances;
@@ -154,9 +156,15 @@ class HomeScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: AppSpacing.md),
                     _FinanceCard(
-                      estimated: dashboard.estimatedTotal,
-                      spent: dashboard.actualTotal,
-                      remaining: dashboard.remainingEstimated,
+                      estimated: financeProvider.transactions.isEmpty
+                          ? dashboard.estimatedTotal
+                          : financeProvider.budget.expandedBudget,
+                      spent: financeProvider.transactions.isEmpty
+                          ? dashboard.actualTotal
+                          : financeProvider.netInvestment,
+                      remaining: financeProvider.transactions.isEmpty
+                          ? dashboard.remainingEstimated
+                          : financeProvider.remainingBudget.clamp(0, 1 << 62),
                     ),
                     const SizedBox(height: AppSpacing.xxl),
                     const _SectionHeader(

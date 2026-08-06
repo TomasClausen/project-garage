@@ -10,6 +10,7 @@ import 'providers/maintenance_provider.dart';
 import 'providers/gallery_provider.dart';
 import 'providers/repair_media_provider.dart';
 import 'providers/timeline_provider.dart';
+import 'providers/finance_provider.dart';
 import 'theme/app_theme.dart';
 
 void main() async {
@@ -31,6 +32,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => RepairMediaProvider()),
 
         ChangeNotifierProvider(create: (_) => TimelineProvider()),
+        ChangeNotifierProvider(create: (_) => FinanceProvider()),
       ],
 
       child: const LancerApp(),

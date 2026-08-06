@@ -97,3 +97,10 @@ progreso; no se animan grupos completos sin propósito.
 - Botones de menos de 48 px o acciones de icono sin tooltip.
 - Animaciones largas, elásticas, rotaciones o efectos simultáneos masivos.
 
+## Patrones financieros
+
+Los importes principales usan `metricValue`; las transacciones muestran icono de
+categoría, estado textual y signo. Verde identifica ingresos o pagos completos,
+ámbar pagos parciales/cercanía al límite y rojo deuda o sobrecosto. El progreso
+de presupuesto se limita visualmente a 100 %; el exceso se expresa aparte como
+“Excedido por” y nunca como una cifra disponible negativa.

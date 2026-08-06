@@ -5,6 +5,7 @@ import '../core/formatters/money_formatter.dart';
 import '../core/formatters/progress_formatter.dart';
 import '../models/repair.dart';
 import '../providers/repair_media_provider.dart';
+import '../providers/finance_provider.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
@@ -13,6 +14,7 @@ import '../widgets/common/app_card.dart';
 import '../widgets/common/app_progress_bar.dart';
 import '../widgets/common/priority_chip.dart';
 import '../widgets/common/status_chip.dart';
+import '../widgets/linked_finance_section.dart';
 import 'edit_repair_screen.dart';
 import 'repair_media_screen.dart';
 
@@ -57,6 +59,12 @@ class _RepairDetailScreenState extends State<RepairDetailScreen> {
   Widget build(BuildContext context) {
     final repair = widget.repair;
     final progress = repair.progress.clamp(0.0, 1.0);
+    final finance = context.watch<FinanceProvider>();
+    final hasFinanceTransactions = finance.byRepair(repair.id).isNotEmpty;
+    final effectiveCost = finance.effectiveRepairTotal(
+      repair.id,
+      repair.actualCost,
+    );
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -120,6 +128,11 @@ class _RepairDetailScreenState extends State<RepairDetailScreen> {
               ],
             ),
             const SizedBox(height: AppSpacing.xxl),
+            LinkedFinanceSection(
+              repairId: repair.id,
+              legacyCost: repair.actualCost,
+            ),
+            const SizedBox(height: AppSpacing.xxl),
             AppCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -171,8 +184,10 @@ class _RepairDetailScreenState extends State<RepairDetailScreen> {
                 const SizedBox(width: AppSpacing.md),
                 Expanded(
                   child: _CostCard(
-                    title: 'Costo real',
-                    value: repair.actualCost,
+                    title: hasFinanceTransactions
+                        ? 'Costo real'
+                        : 'Costo legacy',
+                    value: effectiveCost,
                     icon: Icons.payments_outlined,
                     color: AppColors.success,
                   ),
