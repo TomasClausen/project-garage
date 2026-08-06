@@ -3,23 +3,31 @@ import 'package:flutter/material.dart';
 class AppColors {
   AppColors._();
 
-  static const background = Color(0xFF0F1115);
+  static const background = Color(0xFF0D0F12);
 
-  static const surface = Color(0xFF18181C);
+  static const surface = Color(0xFF171A1F);
 
-  static const surfaceLight = Color(0xFF222228);
+  static const surfaceLight = Color(0xFF20242B);
+
+  static const surfaceElevated = surfaceLight;
 
   static const primary = Color(0xFF9F2436);
 
-  static const success = Color(0xFF45C979);
+  static const success = Color(0xFF58B77A);
 
-  static const warning = Color(0xFFFFB547);
+  static const warning = Color(0xFFDDA447);
 
-  static const danger = Color(0xFFFF5C5C);
+  static const danger = Color(0xFFE15B64);
 
-  static const text = Colors.white;
+  static const info = Color(0xFF65A7D8);
 
-  static const secondaryText = Color(0xFF9A9AA2);
+  static const text = Color(0xFFF5F7FA);
 
-  static const divider = Color(0xFF2A2A31);
+  static const secondaryText = Color(0xFF9BA3AE);
+
+  static const disabledText = Color(0xFF66707D);
+
+  static const divider = Color(0x1AFFFFFF);
+
+  static const border = Color(0x14FFFFFF);
 }

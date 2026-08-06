@@ -10,6 +10,7 @@ import 'providers/maintenance_provider.dart';
 import 'providers/gallery_provider.dart';
 import 'providers/repair_media_provider.dart';
 import 'providers/timeline_provider.dart';
+import 'theme/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -47,11 +48,7 @@ class LancerApp extends StatelessWidget {
 
       title: "Project Garage",
 
-      theme: ThemeData(
-        brightness: Brightness.dark,
-
-        scaffoldBackgroundColor: const Color(0xFF121212),
-      ),
+      theme: AppTheme.dark,
 
       home: const MainNavigation(),
     );

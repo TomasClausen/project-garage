@@ -9,6 +9,7 @@ import '../screens/repair_detail_screen.dart';
 import '../screens/edit_repair_screen.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
+import '../theme/app_icons.dart';
 import 'common/app_card.dart';
 import 'common/app_animated_entry.dart';
 import 'common/app_dialog.dart';
@@ -146,8 +147,8 @@ class RepairCard extends StatelessWidget {
                         color: AppColors.primary.withValues(alpha: 0.14),
                         borderRadius: BorderRadius.circular(14),
                       ),
-                      child: const Icon(
-                        Icons.build_rounded,
+                      child: Icon(
+                        RepairCategoryIconMapper.from(repair.category),
                         color: AppColors.primary,
                         size: 22,
                       ),

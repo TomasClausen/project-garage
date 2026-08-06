@@ -7,6 +7,8 @@ import 'screens/home_screen.dart';
 import 'screens/repairs_screen.dart';
 import 'screens/vehicle_screen.dart';
 import 'theme/app_colors.dart';
+import 'theme/app_icons.dart';
+import 'theme/app_motion.dart';
 
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
@@ -30,9 +32,9 @@ class _MainNavigationState extends State<MainNavigation> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 240),
-        switchInCurve: Curves.easeOut,
-        switchOutCurve: Curves.easeIn,
+        duration: AppDurations.normal,
+        switchInCurve: AppCurves.entrance,
+        switchOutCurve: AppCurves.stateChange,
         transitionBuilder: (child, animation) =>
             FadeTransition(opacity: animation, child: child),
         child: KeyedSubtree(
@@ -53,28 +55,28 @@ class _MainNavigationState extends State<MainNavigation> {
         },
         destinations: const [
           NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home_rounded),
+            icon: Icon(Icons.space_dashboard_outlined),
+            selectedIcon: Icon(AppIcons.home),
             label: 'Inicio',
           ),
           NavigationDestination(
             icon: Icon(Icons.directions_car_outlined),
-            selectedIcon: Icon(Icons.directions_car_filled_rounded),
+            selectedIcon: Icon(AppIcons.vehicle),
             label: 'Vehículo',
           ),
           NavigationDestination(
-            icon: Icon(Icons.build_outlined),
-            selectedIcon: Icon(Icons.build_rounded),
+            icon: Icon(Icons.handyman_outlined),
+            selectedIcon: Icon(AppIcons.workshop),
             label: 'Taller',
           ),
           NavigationDestination(
-            icon: Icon(Icons.account_balance_wallet_outlined),
-            selectedIcon: Icon(Icons.account_balance_wallet_rounded),
+            icon: Icon(Icons.receipt_long_outlined),
+            selectedIcon: Icon(AppIcons.finance),
             label: 'Finanzas',
           ),
           NavigationDestination(
             icon: Icon(Icons.auto_stories_outlined),
-            selectedIcon: Icon(Icons.auto_stories_rounded),
+            selectedIcon: Icon(AppIcons.logbook),
             label: 'Bitácora',
           ),
         ],

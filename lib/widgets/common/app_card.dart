@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../theme/app_colors.dart';
 import '../../theme/app_radius.dart';
+import '../../theme/app_shadows.dart';
+import '../../theme/app_spacing.dart';
+
+enum AppCardVariant { standard, highlight, warning, danger }
 
 class AppCard extends StatelessWidget {
   final Widget child;
@@ -11,33 +15,44 @@ class AppCard extends StatelessWidget {
   final Color? color;
   final Border? border;
   final List<BoxShadow>? shadows;
+  final AppCardVariant variant;
 
   const AppCard({
     super.key,
     required this.child,
-    this.padding = const EdgeInsets.all(20),
+    this.padding = const EdgeInsets.all(AppSpacing.xl),
     this.onTap,
     this.onLongPress,
     this.color,
     this.border,
     this.shadows,
+    this.variant = AppCardVariant.standard,
   });
 
   @override
   Widget build(BuildContext context) {
+    final variantColor = switch (variant) {
+      AppCardVariant.standard => AppColors.surface,
+      AppCardVariant.highlight => AppColors.primary,
+      AppCardVariant.warning => AppColors.warning,
+      AppCardVariant.danger => AppColors.danger,
+    };
+    final isStandard = variant == AppCardVariant.standard;
     final decoration = BoxDecoration(
-      color: color ?? AppColors.surface,
+      color:
+          color ??
+          (isStandard
+              ? AppColors.surface
+              : variantColor.withValues(alpha: 0.10)),
       borderRadius: BorderRadius.circular(AppRadius.large),
-      border: border ?? Border.all(color: Colors.white.withValues(alpha: 0.05)),
-      boxShadow:
-          shadows ??
-          [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.18),
-              blurRadius: 20,
-              offset: const Offset(0, 8),
-            ),
-          ],
+      border:
+          border ??
+          Border.all(
+            color: isStandard
+                ? AppColors.border
+                : variantColor.withValues(alpha: 0.28),
+          ),
+      boxShadow: shadows ?? AppShadows.elevated,
     );
 
     if (onTap == null && onLongPress == null) {
