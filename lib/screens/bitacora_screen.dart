@@ -21,6 +21,7 @@ import '../theme/app_text_styles.dart';
 import '../widgets/common/app_card.dart';
 import '../widgets/common/app_animated_entry.dart';
 import '../widgets/common/app_dialog.dart';
+import '../widgets/common/app_image.dart';
 import '../widgets/common/app_skeleton.dart';
 import '../widgets/common/app_swipe_actions.dart';
 import 'before_after_screen.dart';
@@ -824,8 +825,7 @@ class _EventCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasImage =
-        event.imagePath.isNotEmpty && File(event.imagePath).existsSync();
+    final hasImage = event.imagePath.isNotEmpty;
 
     return AppSwipeActions(
       actions: [
@@ -873,11 +873,9 @@ class _EventCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(AppRadius.small),
                   child: Hero(
                     tag: 'photo:${event.imagePath}',
-                    child: Image.file(
-                      File(event.imagePath),
-                      width: 82,
-                      height: 82,
-                      fit: BoxFit.cover,
+                    child: SizedBox.square(
+                      dimension: 82,
+                      child: AppThumbnail(path: event.imagePath, size: 82),
                     ),
                   ),
                 )

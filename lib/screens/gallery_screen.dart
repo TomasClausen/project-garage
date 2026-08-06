@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -8,6 +6,7 @@ import '../providers/gallery_provider.dart';
 import '../screens/photo_viewer_screen.dart';
 import '../services/image_service.dart';
 import '../widgets/common/app_dialog.dart';
+import '../widgets/common/app_image.dart';
 
 class GalleryScreen extends StatelessWidget {
   const GalleryScreen({super.key});
@@ -91,8 +90,6 @@ class GalleryScreen extends StatelessWidget {
               itemCount: photos.length,
               itemBuilder: (context, index) {
                 final photo = photos[index];
-                final file = File(photo.path);
-
                 return GestureDetector(
                   onTap: () {
                     openPhoto(context, photo);
@@ -102,25 +99,7 @@ class GalleryScreen extends StatelessWidget {
                   },
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(12),
-                    child: file.existsSync()
-                        ? Image.file(
-                            file,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return const ColoredBox(
-                                color: Colors.black12,
-                                child: Center(
-                                  child: Icon(Icons.broken_image_outlined),
-                                ),
-                              );
-                            },
-                          )
-                        : const ColoredBox(
-                            color: Colors.black12,
-                            child: Center(
-                              child: Icon(Icons.broken_image_outlined),
-                            ),
-                          ),
+                    child: AppThumbnail(path: photo.path, size: 180),
                   ),
                 );
               },

@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/formatters/money_formatter.dart';
@@ -8,6 +7,7 @@ import '../theme/app_spacing.dart';
 import '../theme/finance_mappers.dart';
 import '../widgets/common/app_card.dart';
 import '../widgets/common/app_dialog.dart';
+import '../widgets/common/app_image.dart';
 import 'edit_finance_transaction_screen.dart';
 
 class FinanceTransactionDetailScreen extends StatelessWidget {
@@ -120,13 +120,10 @@ class FinanceTransactionDetailScreen extends StatelessWidget {
                 const SizedBox(height: 12),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(12),
-                  child: Image.file(
-                    File(transaction.receiptImagePath),
+                  child: AppImage(
+                    path: transaction.receiptImagePath,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, _, _) => const SizedBox(
-                      height: 100,
-                      child: Center(child: Text('Archivo no disponible')),
-                    ),
+                    cacheWidth: 1200,
                   ),
                 ),
               ],

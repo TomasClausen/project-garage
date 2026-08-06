@@ -19,7 +19,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 0.9.0+15
+version: 0.9.1+16
 
 environment:
   sdk: ^3.12.2
@@ -41,6 +41,20 @@ dependencies:
   provider: ^6.1.2
 
   path_provider: ^2.1.5
+
+  archive: ^4.0.9
+
+  crypto: ^3.0.6
+
+  # 11.x requires AGP 9 built-in Kotlin, while current Flutter plugins still
+  # include KGP-based modules. Keep the compatible pre-breaking API line.
+  file_picker: 10.3.10
+
+  pdf: ^3.13.0
+
+  image: ^4.8.0
+
+  share_plus: ^12.0.1
   
   hive_ce: ^2.11.0
 
@@ -74,6 +88,10 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  assets:
+    - assets/fonts/Roboto-Regular.ttf
+    - assets/fonts/LICENSE-Roboto.txt
 
   # To add assets to your application, add an assets section, like this:
   # assets:

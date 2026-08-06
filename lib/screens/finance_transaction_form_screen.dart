@@ -1,11 +1,10 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../models/finance_transaction.dart';
+import '../core/errors/app_error.dart';
 import '../providers/finance_provider.dart';
 import '../providers/maintenance_provider.dart';
 import '../providers/repair_provider.dart';
@@ -13,6 +12,7 @@ import '../services/image_service.dart';
 import '../theme/app_spacing.dart';
 import '../theme/finance_mappers.dart';
 import '../widgets/common/app_button.dart';
+import '../widgets/common/app_image.dart';
 import '../widgets/common/app_snackbar.dart';
 import '../widgets/common/app_unsaved_changes_guard.dart';
 
@@ -164,7 +164,10 @@ class _FinanceTransactionFormScreenState
     } catch (error) {
       if (mounted) {
         setState(() => _saving = false);
-        AppSnackbar.error(context, 'No se pudo guardar: $error');
+        final message = error is AppError
+            ? AppFailure.fromError(error).userMessage
+            : 'No se pudo guardar el movimiento.';
+        AppSnackbar.error(context, message);
       }
     }
   }
@@ -329,13 +332,12 @@ class _FinanceTransactionFormScreenState
               if (_receipt.isNotEmpty) ...[
                 ClipRRect(
                   borderRadius: BorderRadius.circular(16),
-                  child: Image.file(
-                    File(_receipt),
+                  child: SizedBox(
                     height: 180,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, _, _) => const SizedBox(
-                      height: 80,
-                      child: Center(child: Text('Comprobante no disponible')),
+                    child: AppImage(
+                      path: _receipt,
+                      fit: BoxFit.cover,
+                      cacheWidth: 1200,
                     ),
                   ),
                 ),

@@ -11,6 +11,8 @@ import 'providers/gallery_provider.dart';
 import 'providers/repair_media_provider.dart';
 import 'providers/timeline_provider.dart';
 import 'providers/finance_provider.dart';
+import 'providers/app_preferences_provider.dart';
+import 'providers/backup_provider.dart';
 import 'theme/app_theme.dart';
 
 void main() async {
@@ -33,6 +35,8 @@ void main() async {
 
         ChangeNotifierProvider(create: (_) => TimelineProvider()),
         ChangeNotifierProvider(create: (_) => FinanceProvider()),
+        ChangeNotifierProvider(create: (_) => AppPreferencesProvider()),
+        ChangeNotifierProvider(create: (_) => BackupProvider()),
       ],
 
       child: const LancerApp(),

@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
@@ -14,6 +12,7 @@ import '../theme/app_spacing.dart';
 import '../theme/app_text_styles.dart';
 import '../widgets/common/app_card.dart';
 import '../widgets/common/app_dialog.dart';
+import '../widgets/common/app_image.dart';
 import 'photo_viewer_screen.dart';
 
 class RepairMediaScreen extends StatelessWidget {
@@ -158,7 +157,6 @@ class _StageSection extends StatelessWidget {
             ),
             itemBuilder: (context, index) {
               final media = items[index];
-              final file = File(media.path);
               return AppCard(
                 padding: EdgeInsets.zero,
                 child: InkWell(
@@ -182,14 +180,7 @@ class _StageSection extends StatelessWidget {
                             top: Radius.circular(AppRadius.large),
                           ),
                           child: SizedBox.expand(
-                            child: file.existsSync()
-                                ? Image.file(file, fit: BoxFit.cover)
-                                : const ColoredBox(
-                                    color: AppColors.surfaceLight,
-                                    child: Center(
-                                      child: Icon(Icons.broken_image_outlined),
-                                    ),
-                                  ),
+                            child: AppThumbnail(path: media.path, size: 320),
                           ),
                         ),
                       ),

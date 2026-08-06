@@ -4,7 +4,8 @@
 
 `FinanceTransaction` es la fuente de verdad gradual de los movimientos. Un
 gasto se crea una vez y se consulta desde Finanzas, Home, Bitácora, reparación y
-mantenimiento. Los importes usan enteros.
+mantenimiento. Los importes usan enteros. Moneda y separador son configurables
+sólo en presentación; nunca se convierten importes persistidos.
 
 ## Modelos persistidos
 
@@ -53,4 +54,3 @@ Las reparaciones y mantenimientos asociados no se modifican.
 Los eventos emitidos son `finance_transaction_created`,
 `finance_transaction_updated`, `finance_transaction_deleted`, `budget_updated`
 y `payment_completed`.
-

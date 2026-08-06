@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -24,11 +22,13 @@ import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_text_styles.dart';
 import '../widgets/common/app_card.dart';
+import '../widgets/common/app_image.dart';
 import '../widgets/common/app_progress_bar.dart';
 import '../widgets/common/app_skeleton.dart';
 import '../widgets/next_goal_card.dart';
 import 'maintenance_screen.dart';
 import 'repair_detail_screen.dart';
+import 'settings_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -283,6 +283,14 @@ class _Header extends StatelessWidget {
             ],
           ),
         ),
+        IconButton(
+          tooltip: 'Configuración',
+          onPressed: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const SettingsScreen()),
+          ),
+          icon: const Icon(Icons.settings_outlined),
+        ),
         Container(
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.md,
@@ -330,10 +338,7 @@ class _ProjectHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasImage =
-        imagePath != null &&
-        imagePath!.trim().isNotEmpty &&
-        File(imagePath!).existsSync();
+    final hasImage = imagePath != null && imagePath!.trim().isNotEmpty;
 
     final percentage = (progress * 100).round();
 
@@ -345,11 +350,7 @@ class _ProjectHero extends StatelessWidget {
           fit: StackFit.expand,
           children: [
             if (hasImage)
-              Image.file(
-                File(imagePath!),
-                fit: BoxFit.cover,
-                errorBuilder: (_, _, _) => const _HeroPlaceholder(),
-              )
+              AppImage(path: imagePath, fit: BoxFit.cover, cacheWidth: 1400)
             else
               const _HeroPlaceholder(),
             const DecoratedBox(
@@ -891,10 +892,7 @@ class _LatestImageCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasImage =
-        imagePath != null &&
-        imagePath!.trim().isNotEmpty &&
-        File(imagePath!).existsSync();
+    final hasImage = imagePath != null && imagePath!.trim().isNotEmpty;
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(AppRadius.large),
@@ -904,11 +902,7 @@ class _LatestImageCard extends StatelessWidget {
           fit: StackFit.expand,
           children: [
             if (hasImage)
-              Image.file(
-                File(imagePath!),
-                fit: BoxFit.cover,
-                errorBuilder: (_, _, _) => const _ImagePlaceholder(),
-              )
+              AppImage(path: imagePath, fit: BoxFit.cover, cacheWidth: 1000)
             else
               const _ImagePlaceholder(),
             if (hasImage)

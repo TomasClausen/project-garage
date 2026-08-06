@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -15,6 +13,7 @@ import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_text_styles.dart';
 import '../widgets/common/app_card.dart';
+import '../widgets/common/app_image.dart';
 import '../widgets/common/app_progress_bar.dart';
 import '../widgets/common/app_skeleton.dart';
 import '../widgets/vehicle_maintenance_shortcut.dart';
@@ -202,10 +201,7 @@ class _VehicleHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final imagePath = vehicle.imagePath;
-    final hasImage =
-        imagePath != null &&
-        imagePath.trim().isNotEmpty &&
-        File(imagePath).existsSync();
+    final hasImage = imagePath != null && imagePath.trim().isNotEmpty;
     final percentage = (progress * 100).round();
 
     return ClipRRect(
@@ -216,11 +212,7 @@ class _VehicleHero extends StatelessWidget {
           fit: StackFit.expand,
           children: [
             if (hasImage)
-              Image.file(
-                File(imagePath),
-                fit: BoxFit.cover,
-                errorBuilder: (_, _, _) => const _VehiclePlaceholder(),
-              )
+              AppImage(path: imagePath, fit: BoxFit.cover, cacheWidth: 1400)
             else
               const _VehiclePlaceholder(),
             const DecoratedBox(
