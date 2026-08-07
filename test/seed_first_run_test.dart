@@ -17,30 +17,38 @@ import 'package:lancer_restoration/screens/onboarding_screen.dart';
 import 'package:lancer_restoration/services/first_run_coordinator.dart';
 import 'package:lancer_restoration/services/hive_service.dart';
 
+Finder _fieldWithLabel(String label) => find.byWidgetPredicate(
+  (widget) => widget is TextField && widget.decoration?.labelText == label,
+);
+
+Future<void> _next(WidgetTester tester) async {
+  await tester.tap(find.widgetWithText(FilledButton, 'Continuar'));
+  await tester.pumpAndSettle();
+}
+
 Future<void> _completeOnboarding(
   WidgetTester tester, {
   bool withVehicle = false,
 }) async {
-  await tester.tap(find.widgetWithText(FilledButton, 'Continuar'));
-  await tester.pumpAndSettle();
+  await _next(tester);
   await tester.enterText(
-    find.widgetWithText(TextField, 'Nombre del proyecto *'),
+    _fieldWithLabel('Nombre del proyecto *'),
     'Proyecto limpio',
   );
   tester.testTextInput.hide();
   await tester.pumpAndSettle();
-  await tester.tap(find.widgetWithText(FilledButton, 'Continuar'));
-  await tester.pumpAndSettle();
+  await _next(tester);
+  expect(_fieldWithLabel('Marca'), findsOneWidget);
   if (withVehicle) {
-    await tester.enterText(find.widgetWithText(TextField, 'Marca'), 'Toyota');
-    await tester.enterText(find.widgetWithText(TextField, 'Modelo'), 'Corolla');
+    await tester.enterText(_fieldWithLabel('Marca'), 'Toyota');
+    await tester.enterText(_fieldWithLabel('Modelo'), 'Corolla');
     tester.testTextInput.hide();
     await tester.pumpAndSettle();
   }
   for (var step = 0; step < 3; step++) {
-    await tester.tap(find.widgetWithText(FilledButton, 'Continuar'));
-    await tester.pumpAndSettle();
+    await _next(tester);
   }
+  expect(find.widgetWithText(FilledButton, 'Empezar'), findsOneWidget);
   await tester.tap(find.widgetWithText(FilledButton, 'Empezar'));
   await tester.pumpAndSettle();
 }
@@ -49,19 +57,21 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   late Directory root;
 
-  setUpAll(() async {
+  setUp(() async {
     root = await Directory.systemTemp.createTemp('seed_first_run_');
     Hive.init(root.path);
-    Hive.registerAdapter(RepairAdapter());
-    Hive.registerAdapter(VehicleAdapter());
-    Hive.registerAdapter(MaintenanceAdapter());
-    Hive.registerAdapter(GalleryPhotoAdapter());
-    Hive.registerAdapter(RepairMediaAdapter());
-    Hive.registerAdapter(TimelineEventAdapter());
-    Hive.registerAdapter(FinanceTransactionAdapter());
-    Hive.registerAdapter(ProjectBudgetAdapter());
-    Hive.registerAdapter(AppPreferencesAdapter());
-    Hive.registerAdapter(ProjectProfileAdapter());
+    if (!Hive.isAdapterRegistered(RepairAdapter().typeId)) {
+      Hive.registerAdapter(RepairAdapter());
+      Hive.registerAdapter(VehicleAdapter());
+      Hive.registerAdapter(MaintenanceAdapter());
+      Hive.registerAdapter(GalleryPhotoAdapter());
+      Hive.registerAdapter(RepairMediaAdapter());
+      Hive.registerAdapter(TimelineEventAdapter());
+      Hive.registerAdapter(FinanceTransactionAdapter());
+      Hive.registerAdapter(ProjectBudgetAdapter());
+      Hive.registerAdapter(AppPreferencesAdapter());
+      Hive.registerAdapter(ProjectProfileAdapter());
+    }
     await Hive.openBox<Repair>(HiveService.repairBox);
     await Hive.openBox<Vehicle>(HiveService.vehicleBox);
     await Hive.openBox<Maintenance>(HiveService.maintenanceBox);
@@ -75,25 +85,11 @@ void main() {
     await Hive.openBox<dynamic>(HiveService.settingsBox);
   });
 
-  setUp(() async {
-    await Future.wait([
-      Hive.box<Repair>(HiveService.repairBox).clear(),
-      Hive.box<Vehicle>(HiveService.vehicleBox).clear(),
-      Hive.box<Maintenance>(HiveService.maintenanceBox).clear(),
-      Hive.box<GalleryPhoto>(HiveService.galleryBox).clear(),
-      Hive.box<RepairMedia>(HiveService.repairMediaBox).clear(),
-      Hive.box<TimelineEvent>(HiveService.timelineBox).clear(),
-      Hive.box<FinanceTransaction>(HiveService.financeTransactionBox).clear(),
-      Hive.box<ProjectBudget>(HiveService.projectBudgetBox).clear(),
-      Hive.box<AppPreferences>(HiveService.preferencesBox).clear(),
-      Hive.box<ProjectProfile>(HiveService.projectProfileBox).clear(),
-      Hive.box<dynamic>(HiveService.settingsBox).clear(),
-    ]);
-  });
-
-  tearDownAll(() async {
+  tearDown(() async {
     await Hive.close();
-    await root.delete(recursive: true);
+    if (await root.exists()) {
+      await root.delete(recursive: true);
+    }
   });
 
   test('clean installation has no business records', () async {
@@ -123,6 +119,8 @@ void main() {
     await _completeOnboarding(tester);
 
     expect(Hive.box<Vehicle>(HiveService.vehicleBox), isEmpty);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
   });
 
   testWidgets('onboarding creates only the vehicle entered by the user', (
@@ -138,6 +136,8 @@ void main() {
     expect(vehicles, hasLength(1));
     expect(vehicles.single.brand, 'Toyota');
     expect(vehicles.single.model, 'Corolla');
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
   });
 
   test('upgrade preserves existing business data', () async {
