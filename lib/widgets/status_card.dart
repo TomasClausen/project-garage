@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_spacing.dart';
+import '../theme/app_text_styles.dart';
+import 'common/app_card.dart';
+import 'common/app_progress_bar.dart';
 
 class StatusCard extends StatelessWidget {
   final String title;
@@ -17,38 +22,18 @@ class StatusCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 15),
-
-      padding: const EdgeInsets.all(18),
-
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E),
-
-        borderRadius: BorderRadius.circular(16),
-      ),
-
+    return AppCard(
+      margin: const EdgeInsets.only(bottom: AppSpacing.lg),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
 
         children: [
-          Text(
-            title,
-
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
+          Text(title, style: AppTextStyles.cardTitle),
 
           const SizedBox(height: 12),
 
-          LinearProgressIndicator(
-            value: progress,
-
-            minHeight: 10,
-
-            color: const Color(0xFF8B1E2D),
-
-            backgroundColor: Colors.grey.shade800,
-          ),
+          AppProgressBar(value: progress, height: 10, color: AppColors.primary),
 
           const SizedBox(height: 10),
 
@@ -59,10 +44,10 @@ class StatusCard extends StatelessWidget {
               Text(
                 "${(progress * 100).toInt()}%",
 
-                style: const TextStyle(color: Colors.white70),
+                style: AppTextStyles.label.copyWith(color: AppColors.text),
               ),
 
-              Text(status, style: const TextStyle(color: Colors.grey)),
+              Flexible(child: Text(status, style: AppTextStyles.caption)),
             ],
           ),
         ],

@@ -11,7 +11,11 @@ class AppColors {
 
   static const surfaceElevated = surfaceLight;
 
+  static const surfaceHighlight = Color(0xFF262B33);
+
   static const primary = Color(0xFF9F2436);
+
+  static const primaryBright = Color(0xFFB9364A);
 
   static const success = Color(0xFF58B77A);
 
@@ -30,4 +34,8 @@ class AppColors {
   static const divider = Color(0x1AFFFFFF);
 
   static const border = Color(0x14FFFFFF);
+
+  static const borderActive = Color(0x669F2436);
+  static const borderSelected = Color(0xB39F2436);
+  static const borderDanger = Color(0x99E15B64);
 }

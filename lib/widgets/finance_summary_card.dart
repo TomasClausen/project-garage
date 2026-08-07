@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
+import 'common/app_progress_bar.dart';
 
 import '../models/dashboard_summary.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_spacing.dart';
+import 'common/app_card.dart';
 
 class FinanceSummaryCard extends StatelessWidget {
   final DashboardSummary summary;
 
   const FinanceSummaryCard({super.key, required this.summary});
 
-  static const Color _cardColor = Color(0xFF18181C);
-  static const Color _accentColor = Color(0xFF9F2436);
+  static const Color _accentColor = AppColors.primary;
 
   String _formatMoney(int value) {
     final isNegative = value < 0;
@@ -44,14 +47,11 @@ class FinanceSummaryCard extends StatelessWidget {
 
     final isOverBudget = estimatedTotal > 0 && actualTotal > estimatedTotal;
 
-    return Container(
+    return AppCard(
       width: double.infinity,
-      padding: const EdgeInsets.all(22),
-      decoration: BoxDecoration(
-        color: _cardColor,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-      ),
+      padding: const EdgeInsets.all(AppSpacing.xl),
+      variant: AppCardVariant.highlight,
+      technical: true,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -64,12 +64,15 @@ class FinanceSummaryCard extends StatelessWidget {
                 size: 24,
               ),
               SizedBox(width: 10),
-              Text(
-                'Finanzas',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 21,
-                  fontWeight: FontWeight.w800,
+              Flexible(
+                child: Text(
+                  'Finanzas',
+                  maxLines: 2,
+                  style: TextStyle(
+                    color: AppColors.text,
+                    fontSize: 21,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
             ],
@@ -80,7 +83,7 @@ class FinanceSummaryCard extends StatelessWidget {
           Text(
             'Inversión registrada',
             style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.48),
+              color: AppColors.secondaryText,
               fontSize: 12,
               fontWeight: FontWeight.w600,
             ),
@@ -95,7 +98,7 @@ class FinanceSummaryCard extends StatelessWidget {
               _formatMoney(actualTotal),
               maxLines: 1,
               style: const TextStyle(
-                color: Colors.white,
+                color: AppColors.text,
                 fontSize: 36,
                 fontWeight: FontWeight.w900,
                 height: 1,
@@ -110,9 +113,7 @@ class FinanceSummaryCard extends StatelessWidget {
                 ? '$budgetPercentage% del presupuesto estimado'
                 : 'Todavía no hay presupuesto estimado',
             style: TextStyle(
-              color: isOverBudget
-                  ? Colors.redAccent
-                  : Colors.white.withValues(alpha: 0.5),
+              color: isOverBudget ? AppColors.danger : AppColors.secondaryText,
               fontSize: 12,
               fontWeight: FontWeight.w500,
             ),
@@ -120,16 +121,10 @@ class FinanceSummaryCard extends StatelessWidget {
 
           const SizedBox(height: 18),
 
-          ClipRRect(
-            borderRadius: BorderRadius.circular(20),
-            child: LinearProgressIndicator(
-              value: budgetProgress,
-              minHeight: 10,
-              backgroundColor: Colors.white.withValues(alpha: 0.07),
-              valueColor: AlwaysStoppedAnimation<Color>(
-                isOverBudget ? Colors.redAccent : _accentColor,
-              ),
-            ),
+          AppProgressBar(
+            value: budgetProgress,
+            height: 10,
+            color: isOverBudget ? AppColors.danger : _accentColor,
           ),
 
           const SizedBox(height: 22),
@@ -141,7 +136,7 @@ class FinanceSummaryCard extends StatelessWidget {
                   title: 'Estimado',
                   value: _formatMoney(summary.estimatedTotal),
                   icon: Icons.calculate_outlined,
-                  color: Colors.white70,
+                  color: AppColors.secondaryText,
                 ),
               ),
 
@@ -152,7 +147,7 @@ class FinanceSummaryCard extends StatelessWidget {
                   title: 'Gastado',
                   value: _formatMoney(summary.actualTotal),
                   icon: Icons.payments_outlined,
-                  color: Colors.lightBlueAccent,
+                  color: AppColors.info,
                 ),
               ),
             ],
@@ -195,9 +190,9 @@ class _FinanceMetric extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.03),
+        color: AppColors.surfaceElevated,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -218,7 +213,7 @@ class _FinanceMetric extends StatelessWidget {
           Text(
             title,
             style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.45),
+              color: AppColors.secondaryText,
               fontSize: 11,
               fontWeight: FontWeight.w500,
             ),
@@ -258,7 +253,7 @@ class _RemainingBudgetPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = isOverBudget ? Colors.redAccent : Colors.orangeAccent;
+    final color = isOverBudget ? AppColors.danger : AppColors.warning;
 
     return Container(
       width: double.infinity,
@@ -295,7 +290,7 @@ class _RemainingBudgetPanel extends StatelessWidget {
                 Text(
                   title,
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.5),
+                    color: AppColors.secondaryText,
                     fontSize: 11,
                     fontWeight: FontWeight.w500,
                   ),

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'common/app_progress_bar.dart';
 
 import '../core/formatters/money_formatter.dart';
 import '../models/repair.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_radius.dart';
 
 class NextGoalCard extends StatelessWidget {
   final Repair? repair;
@@ -9,10 +12,10 @@ class NextGoalCard extends StatelessWidget {
 
   const NextGoalCard({super.key, required this.repair, this.onTap});
 
-  static const Color _cardColor = Color(0xFF18181C);
-  static const Color _surfaceColor = Color(0xFF222228);
-  static const Color _primaryColor = Color(0xFF9F2436);
-  static const Color _secondaryTextColor = Color(0xFF9A9AA2);
+  static const Color _cardColor = AppColors.surface;
+  static const Color _surfaceColor = AppColors.surfaceElevated;
+  static const Color _primaryColor = AppColors.primary;
+  static const Color _secondaryTextColor = AppColors.secondaryText;
 
   @override
   Widget build(BuildContext context) {
@@ -28,13 +31,13 @@ class NextGoalCard extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadius.large),
         child: Ink(
           width: double.infinity,
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             color: _cardColor,
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(AppRadius.large),
             border: Border.all(color: _primaryColor.withValues(alpha: 0.25)),
           ),
           child: Column(
@@ -105,7 +108,7 @@ class NextGoalCard extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(vertical: 13),
                   decoration: BoxDecoration(
                     color: _primaryColor,
-                    borderRadius: BorderRadius.circular(15),
+                    borderRadius: BorderRadius.circular(AppRadius.medium),
                   ),
                   child: const Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -150,7 +153,7 @@ class _GoalHeader extends StatelessWidget {
           height: 42,
           decoration: BoxDecoration(
             color: NextGoalCard._primaryColor.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(AppRadius.small),
           ),
           child: const Icon(
             Icons.flag_outlined,
@@ -235,16 +238,10 @@ class _ProgressSection extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 8),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(999),
-          child: LinearProgressIndicator(
-            value: progress,
-            minHeight: 8,
-            backgroundColor: Colors.white.withValues(alpha: 0.07),
-            valueColor: const AlwaysStoppedAnimation<Color>(
-              NextGoalCard._primaryColor,
-            ),
-          ),
+        AppProgressBar(
+          value: progress,
+          height: 8,
+          color: NextGoalCard._primaryColor,
         ),
       ],
     );
@@ -268,7 +265,7 @@ class _GoalMetric extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: NextGoalCard._surfaceColor,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.medium),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -311,7 +308,7 @@ class _EmptyNextGoalCard extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: NextGoalCard._cardColor,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadius.large),
         border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
       ),
       child: const Row(
@@ -357,7 +354,7 @@ class _EmptyGoalIcon extends StatelessWidget {
       height: 44,
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.small),
       ),
       child: const Icon(
         Icons.flag_outlined,

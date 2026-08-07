@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/app_motion.dart';
 
 class AppAnimatedEntry extends StatefulWidget {
   final Widget child;
@@ -19,24 +20,37 @@ class _AppAnimatedEntryState extends State<AppAnimatedEntry>
   late final AnimationController _controller;
   late final Animation<double> _opacity;
   late final Animation<Offset> _offset;
+  bool _started = false;
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 280),
+      duration: AppDurations.emphasis,
     );
-    final curve = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
+    final curve = CurvedAnimation(
+      parent: _controller,
+      curve: AppCurves.entrance,
+    );
     _opacity = curve;
     _offset = Tween(
       begin: const Offset(0, 0.035),
       end: Offset.zero,
     ).animate(curve);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_started) return;
+    _started = true;
+    if (AppMotion.reduceMotion(context)) {
+      _controller.value = 1;
+      return;
+    }
     Future<void>.delayed(widget.delay, () {
-      if (mounted) {
-        _controller.forward();
-      }
+      if (mounted) _controller.forward();
     });
   }
 

@@ -13,6 +13,7 @@ import 'package:lancer_restoration/models/gallery_photo.dart';
 import 'package:lancer_restoration/models/maintenance.dart';
 import 'package:lancer_restoration/models/project_budget.dart';
 import 'package:lancer_restoration/models/project_report.dart';
+import 'package:lancer_restoration/models/project_profile.dart';
 import 'package:lancer_restoration/models/repair.dart';
 import 'package:lancer_restoration/models/repair_media.dart';
 import 'package:lancer_restoration/models/timeline_event.dart';
@@ -39,6 +40,7 @@ void main() {
     Hive.registerAdapter(FinanceTransactionAdapter());
     Hive.registerAdapter(ProjectBudgetAdapter());
     Hive.registerAdapter(AppPreferencesAdapter());
+    Hive.registerAdapter(ProjectProfileAdapter());
     await Hive.openBox<Repair>(HiveService.repairBox);
     await Hive.openBox<Vehicle>(HiveService.vehicleBox);
     await Hive.openBox<Maintenance>(HiveService.maintenanceBox);
@@ -48,6 +50,7 @@ void main() {
     await Hive.openBox<FinanceTransaction>(HiveService.financeTransactionBox);
     await Hive.openBox<ProjectBudget>(HiveService.projectBudgetBox);
     await Hive.openBox<AppPreferences>(HiveService.preferencesBox);
+    await Hive.openBox<ProjectProfile>(HiveService.projectProfileBox);
     await Hive.openBox<dynamic>(HiveService.settingsBox);
   });
   setUp(() async {
@@ -62,6 +65,7 @@ void main() {
     ).clear();
     await Hive.box<ProjectBudget>(HiveService.projectBudgetBox).clear();
     await Hive.box<AppPreferences>(HiveService.preferencesBox).clear();
+    await Hive.box<ProjectProfile>(HiveService.projectProfileBox).clear();
     await Hive.box<dynamic>(HiveService.settingsBox).clear();
     final appFiles = Directory('${root.path}/app');
     if (await appFiles.exists()) await appFiles.delete(recursive: true);
@@ -90,9 +94,18 @@ void main() {
         paid: false,
       ),
     );
-    await Hive.box<Vehicle>(
-      HiveService.vehicleBox,
-    ).put('lancer', Vehicle.lancer.copyWith(imagePath: media.path));
+    await Hive.box<Vehicle>(HiveService.vehicleBox).put(
+      'lancer',
+      Vehicle(
+        brand: 'Test',
+        model: 'Fixture',
+        year: 2000,
+        engine: '',
+        color: '',
+        kilometers: 0,
+        imagePath: media.path,
+      ),
+    );
     await Hive.box<Maintenance>(HiveService.maintenanceBox).put(
       'm1',
       Maintenance(

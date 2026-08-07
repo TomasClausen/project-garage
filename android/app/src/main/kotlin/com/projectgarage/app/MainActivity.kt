@@ -1,4 +1,4 @@
-package com.example.lancer_restoration
+package com.projectgarage.app
 
 import io.flutter.embedding.android.FlutterActivity
 

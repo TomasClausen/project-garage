@@ -9,6 +9,7 @@ import '../models/timeline_event.dart';
 import '../models/finance_transaction.dart';
 import '../models/project_budget.dart';
 import '../models/app_preferences.dart';
+import '../models/project_profile.dart';
 import '../core/errors/app_error.dart';
 import 'app_logger.dart';
 
@@ -23,6 +24,7 @@ class HiveService {
   static const String financeTransactionBox = "finance_transactions";
   static const String projectBudgetBox = "project_budget";
   static const String preferencesBox = "app_preferences";
+  static const String projectProfileBox = "project_profile";
 
   static Future<void> init() async {
     try {
@@ -39,7 +41,9 @@ class HiveService {
   }
 
   static Future<void> _init() async {
+    _log('hive_flutter_init_start');
     await Hive.initFlutter();
+    _log('hive_flutter_init_done');
 
     Hive.registerAdapter(RepairAdapter());
     Hive.registerAdapter(VehicleAdapter());
@@ -50,17 +54,49 @@ class HiveService {
     Hive.registerAdapter(FinanceTransactionAdapter());
     Hive.registerAdapter(ProjectBudgetAdapter());
     Hive.registerAdapter(AppPreferencesAdapter());
+    Hive.registerAdapter(ProjectProfileAdapter());
 
-    await Hive.openBox<Repair>(repairBox);
-    await Hive.openBox<Vehicle>(vehicleBox);
-    await Hive.openBox<Maintenance>(maintenanceBox);
-    await Hive.openBox<GalleryPhoto>(galleryBox);
-    await Hive.openBox<RepairMedia>(repairMediaBox);
-    await Hive.openBox<TimelineEvent>(timelineBox);
-    await Hive.openBox<FinanceTransaction>(financeTransactionBox);
-    await Hive.openBox<ProjectBudget>(projectBudgetBox);
-    await Hive.openBox<AppPreferences>(preferencesBox);
-
-    await Hive.openBox(settingsBox);
+    await _open(repairBox, () => Hive.openBox<Repair>(repairBox));
+    await _open(vehicleBox, () => Hive.openBox<Vehicle>(vehicleBox));
+    await _open(
+      maintenanceBox,
+      () => Hive.openBox<Maintenance>(maintenanceBox),
+    );
+    await _open(galleryBox, () => Hive.openBox<GalleryPhoto>(galleryBox));
+    await _open(
+      repairMediaBox,
+      () => Hive.openBox<RepairMedia>(repairMediaBox),
+    );
+    await _open(timelineBox, () => Hive.openBox<TimelineEvent>(timelineBox));
+    await _open(
+      financeTransactionBox,
+      () => Hive.openBox<FinanceTransaction>(financeTransactionBox),
+    );
+    await _open(
+      projectBudgetBox,
+      () => Hive.openBox<ProjectBudget>(projectBudgetBox),
+    );
+    await _open(
+      preferencesBox,
+      () => Hive.openBox<AppPreferences>(preferencesBox),
+    );
+    await _open(
+      projectProfileBox,
+      () => Hive.openBox<ProjectProfile>(projectProfileBox),
+    );
+    await _open(settingsBox, () => Hive.openBox(settingsBox));
   }
+
+  static Future<void> _open(
+    String name,
+    Future<Object> Function() action,
+  ) async {
+    _log('box_open_start name=$name');
+    await action();
+    _log('box_open_done name=$name');
+  }
+
+  static void _log(String message) =>
+      // ignore: avoid_print
+      print('[startup] $message');
 }

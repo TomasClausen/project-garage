@@ -8,6 +8,10 @@ import '../providers/maintenance_provider.dart';
 import '../screens/maintenance_detail_screen.dart';
 import 'common/app_dialog.dart';
 import 'common/app_swipe_actions.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_spacing.dart';
+import '../theme/app_text_styles.dart';
+import 'common/app_card.dart';
 
 class MaintenanceCard extends StatelessWidget {
   final Maintenance maintenance;
@@ -48,7 +52,7 @@ class MaintenanceCard extends StatelessWidget {
         AppSwipeAction(
           label: 'Completar',
           icon: Icons.check_rounded,
-          color: Colors.green,
+          color: AppColors.success,
           onPressed: () => context
               .read<MaintenanceProvider>()
               .completeMaintenance(maintenance, currentKm),
@@ -56,7 +60,7 @@ class MaintenanceCard extends StatelessWidget {
         AppSwipeAction(
           label: 'Editar',
           icon: Icons.edit_outlined,
-          color: Colors.orange,
+          color: AppColors.warning,
           onPressed: () => Navigator.push(
             context,
             MaterialPageRoute(
@@ -67,38 +71,22 @@ class MaintenanceCard extends StatelessWidget {
         AppSwipeAction(
           label: 'Eliminar',
           icon: Icons.delete_outline_rounded,
-          color: Colors.red,
+          color: AppColors.danger,
           onPressed: () => _confirmDelete(context),
         ),
       ],
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 15),
-
-        padding: const EdgeInsets.all(18),
-
-        decoration: BoxDecoration(
-          color: const Color(0xFF1E1E1E),
-
-          borderRadius: BorderRadius.circular(16),
-        ),
-
+      child: AppCard(
+        margin: const EdgeInsets.only(bottom: AppSpacing.lg),
+        padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
 
           children: [
-            Text(
-              maintenance.name,
-
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
+            Text(maintenance.name, style: AppTextStyles.sectionTitle),
 
             const SizedBox(height: 8),
 
-            Text(
-              maintenance.category,
-
-              style: const TextStyle(color: Colors.grey),
-            ),
+            Text(maintenance.category, style: AppTextStyles.caption),
 
             const SizedBox(height: 15),
 
@@ -108,9 +96,12 @@ class MaintenanceCard extends StatelessWidget {
 
             const SizedBox(height: 10),
 
-            Text(status, style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text(
+              _displayStatus(status),
+              style: AppTextStyles.label.copyWith(color: AppColors.warning),
+            ),
 
-            Text(message, style: const TextStyle(color: Colors.grey)),
+            Text(message, style: AppTextStyles.caption),
 
             const SizedBox(height: 15),
 
@@ -121,7 +112,7 @@ class MaintenanceCard extends StatelessWidget {
               child: FilledButton.icon(
                 icon: const Icon(Icons.edit),
 
-                label: const Text("EDITAR MANTENIMIENTO"),
+                label: const Text('Editar mantenimiento'),
 
                 onPressed: () async {
                   await Navigator.push(
@@ -145,7 +136,7 @@ class MaintenanceCard extends StatelessWidget {
               child: FilledButton.icon(
                 icon: const Icon(Icons.check),
 
-                label: const Text("REGISTRAR CAMBIO"),
+                label: const Text('Registrar cambio'),
 
                 onPressed: () async {
                   await context.read<MaintenanceProvider>().completeMaintenance(
@@ -164,12 +155,11 @@ class MaintenanceCard extends StatelessWidget {
               width: double.infinity,
 
               child: OutlinedButton.icon(
-                icon: const Icon(Icons.delete, color: Colors.red),
+                icon: const Icon(Icons.delete, color: AppColors.danger),
 
                 label: const Text(
-                  "ELIMINAR",
-
-                  style: TextStyle(color: Colors.red),
+                  'Eliminar',
+                  style: TextStyle(color: AppColors.danger),
                 ),
 
                 onPressed: () async {
@@ -196,4 +186,7 @@ class MaintenanceCard extends StatelessWidget {
       ),
     );
   }
+
+  static String _displayStatus(String value) =>
+      value.replaceFirst(RegExp(r'^[^\p{L}\p{N}]+', unicode: true), '');
 }

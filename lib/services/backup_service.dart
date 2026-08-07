@@ -16,6 +16,7 @@ import '../models/repair.dart';
 import '../models/repair_media.dart';
 import '../models/timeline_event.dart';
 import '../models/vehicle.dart';
+import '../models/project_profile.dart';
 import 'backup_mappers.dart';
 import 'hive_service.dart';
 import '../core/errors/app_error.dart';
@@ -25,7 +26,7 @@ class BackupService {
   BackupService({Directory? workingDirectory, this.testFailureHook})
     : _workingDirectory = workingDirectory;
   static const schemaVersion = 1;
-  static const appVersion = '0.9.1+16';
+  static const appVersion = '1.0.0+17';
   static const maxBackupBytes = 500 * 1024 * 1024;
   final Directory? _workingDirectory;
   final Future<void> Function(String step)? testFailureHook;
@@ -41,6 +42,7 @@ class BackupService {
     HiveService.financeTransactionBox,
     HiveService.projectBudgetBox,
     HiveService.preferencesBox,
+    HiveService.projectProfileBox,
   ];
 
   Future<Directory> _root() async =>
@@ -69,11 +71,13 @@ class BackupService {
     final backupDir = Directory('${root.path}/backups');
     await backupDir.create(recursive: true);
     final now = DateTime.now();
-    final stamp =
-        '${now.year}-${_two(now.month)}-${_two(now.day)}_${_two(now.hour)}-${_two(now.minute)}-${_two(now.second)}-${now.millisecond}';
-    final output = File(
-      '${backupDir.path}/${automatic ? 'auto_' : ''}project_garage_backup_$stamp.pgarage',
-    );
+    final stamp = automatic
+        ? '${now.year}-${_two(now.month)}-${_two(now.day)}_${_two(now.hour)}-${_two(now.minute)}-${_two(now.second)}-${now.millisecond}'
+        : '${now.year}-${_two(now.month)}-${_two(now.day)}_${_two(now.hour)}-${_two(now.minute)}';
+    final fileName = automatic
+        ? 'auto_project_garage_backup_$stamp.pgarage'
+        : 'Proyecto_$stamp.pgarage';
+    final output = File('${backupDir.path}/$fileName');
     final archive = Archive();
     final checksums = <String, String>{};
     final mediaMap = <String, String>{};
@@ -154,6 +158,9 @@ class BackupService {
           .entries
           .map((e) => _entitySetting(e.key.toString(), e.value))
           .toList(),
+      HiveService.projectProfileBox: Hive.box<ProjectProfile>(
+        HiveService.projectProfileBox,
+      ).values.map(ProjectProfileBackupMapper.toJson).toList(),
     };
     for (final entry in data.entries) {
       final name = 'data/${entry.key}.json';
@@ -196,7 +203,8 @@ class BackupService {
   }
 
   Future<BackupValidationResult> validate(File file) async {
-    if (!file.path.toLowerCase().endsWith('.pgarage'))
+    final lowerPath = file.path.toLowerCase();
+    if (!lowerPath.endsWith('.pgarage') && !lowerPath.endsWith('.pgarage.zip'))
       return const BackupValidationResult(
         BackupValidationStatus.incompatible,
         errors: ['La extensión debe ser .pgarage'],
@@ -370,6 +378,14 @@ class BackupService {
         restoredPaths[value?.toString() ?? ''] ?? '';
     List<Map<String, dynamic>> records(String box) {
       final entry = archive.findFile('data/$box.json')!;
+      return (jsonDecode(utf8.decode(entry.content)) as List)
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .toList();
+    }
+
+    List<Map<String, dynamic>> optionalRecords(String box) {
+      final entry = archive.findFile('data/$box.json');
+      if (entry == null) return const [];
       return (jsonDecode(utf8.decode(entry.content)) as List)
           .map((e) => Map<String, dynamic>.from(e as Map))
           .toList();
@@ -559,6 +575,35 @@ class BackupService {
       ).put(value.id, value);
       count++;
     }
+    final profiles = optionalRecords(HiveService.projectProfileBox);
+    if (profiles.isNotEmpty) {
+      for (final json in profiles) {
+        final value = ProjectProfileBackupMapper.fromJson(json);
+        await Hive.box<ProjectProfile>(
+          HiveService.projectProfileBox,
+        ).put(value.id, value);
+        count++;
+      }
+    } else {
+      final now = DateTime.now().toUtc().toIso8601String();
+      await Hive.box<ProjectProfile>(HiveService.projectProfileBox).put(
+        ProjectProfile.defaultId,
+        ProjectProfile(
+          name:
+              Hive.box<AppPreferences>(
+                HiveService.preferencesBox,
+              ).get(AppPreferences.defaultId)?.projectName ??
+              'Project Garage',
+          startDate: '',
+          createdAt: now,
+          updatedAt: now,
+          onboardingCompleted: true,
+          activeVehicleId: Hive.box<Vehicle>(HiveService.vehicleBox).isEmpty
+              ? ''
+              : 'lancer',
+        ),
+      );
+    }
     for (final json in records(HiveService.settingsBox)) {
       final f = Map<String, dynamic>.from(json['fields'] as Map);
       if (mode == BackupImportMode.replace ||
@@ -587,6 +632,7 @@ class BackupService {
     ).clear();
     await Hive.box<ProjectBudget>(HiveService.projectBudgetBox).clear();
     await Hive.box<AppPreferences>(HiveService.preferencesBox).clear();
+    await Hive.box<ProjectProfile>(HiveService.projectProfileBox).clear();
     await Hive.box<dynamic>(HiveService.settingsBox).clear();
   }
 

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_radius.dart';
 import '../../theme/app_spacing.dart';
+import '../../theme/app_motion.dart';
 
 class AppButton extends StatelessWidget {
   final String label;
@@ -44,7 +45,7 @@ class AppButton extends StatelessWidget {
         ),
       ),
       child: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 180),
+        duration: AppMotion.duration(context, AppDurations.fast),
         child: isLoading
             ? const SizedBox(
                 key: ValueKey('loading'),

@@ -5,11 +5,13 @@ import '../models/repair.dart';
 import '../providers/repair_provider.dart';
 import '../services/restoration_service.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_icons.dart';
 import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_text_styles.dart';
 import '../widgets/common/app_card.dart';
 import '../widgets/common/app_progress_bar.dart';
+import '../widgets/common/project_progress_module.dart';
 import '../widgets/common/app_search_field.dart';
 import '../widgets/common/empty_state.dart';
 import '../widgets/common/app_skeleton.dart';
@@ -175,7 +177,7 @@ class _RepairsScreenState extends State<RepairsScreen> {
       case RepairListFilter.pending:
         return Icons.schedule_rounded;
       case RepairListFilter.inProgress:
-        return Icons.handyman_rounded;
+        return AppIcons.workshop;
       case RepairListFilter.completed:
         return Icons.check_circle_rounded;
     }
@@ -277,7 +279,7 @@ class _RepairsScreenState extends State<RepairsScreen> {
                     const SizedBox(height: AppSpacing.xxl),
                     if (allRepairs.isEmpty)
                       EmptyState(
-                        icon: Icons.build_circle_outlined,
+                        icon: AppIcons.workshop,
                         title: 'Todavía no hay reparaciones',
                         message:
                             'Agregá el primer trabajo para empezar a organizar el proyecto.',
@@ -345,7 +347,7 @@ class _ScreenHeader extends StatelessWidget {
             borderRadius: BorderRadius.circular(AppRadius.medium),
           ),
           child: const Icon(
-            Icons.build_rounded,
+            AppIcons.workshop,
             color: AppColors.primary,
             size: 26,
           ),
@@ -393,40 +395,22 @@ class _ProjectSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final percentage = (progress * 100).round();
-
     return AppCard(
+      variant: AppCardVariant.progress,
+      technical: true,
       padding: const EdgeInsets.all(AppSpacing.xl),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              const Expanded(
-                child: Text(
-                  'Resumen del taller',
-                  style: AppTextStyles.cardTitle,
-                ),
-              ),
-              Text(
-                '$percentage%',
-                style: const TextStyle(
-                  color: AppColors.primary,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Text(
-            repairs.isEmpty
+          ProjectProgressModule(
+            title: 'Resumen del taller',
+            value: progress,
+            secondaryText: repairs.isEmpty
                 ? 'Sin trabajos registrados'
                 : '${repairs.length} trabajos en el proyecto',
-            style: AppTextStyles.caption,
+            icon: AppIcons.workshop,
+            variant: ProjectProgressVariant.compact,
           ),
-          const SizedBox(height: AppSpacing.lg),
-          AppProgressBar(value: progress, color: AppColors.primary, height: 10),
           const SizedBox(height: AppSpacing.xl),
           Row(
             children: [
@@ -444,7 +428,7 @@ class _ProjectSummary extends StatelessWidget {
                   label: 'En proceso',
                   value: inProgress,
                   color: AppColors.warning,
-                  icon: Icons.handyman_rounded,
+                  icon: AppIcons.workshop,
                 ),
               ),
               const SizedBox(width: AppSpacing.sm),

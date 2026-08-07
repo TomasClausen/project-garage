@@ -7,7 +7,7 @@
 
 
         <activity
-            android:name=".MainActivity"
+            android:name="com.projectgarage.app.MainActivity"
             android:exported="true"
             android:launchMode="singleTop"
             android:taskAffinity=""

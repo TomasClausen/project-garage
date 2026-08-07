@@ -1,5 +1,9 @@
 # Roadmap
 
+## v1.0.0 Public Release
+
+First run, migración aditiva, branding, privacidad, accesibilidad, firma externa, CI y preparación de Play Store. Sin sincronización cloud ni módulos de negocio nuevos.
+
 ## v0.4
 
 - Taller Pro

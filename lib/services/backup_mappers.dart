@@ -7,6 +7,7 @@ import '../models/repair.dart';
 import '../models/repair_media.dart';
 import '../models/timeline_event.dart';
 import '../models/vehicle.dart';
+import '../models/project_profile.dart';
 
 Map<String, dynamic> _entity(
   String type,
@@ -15,6 +16,32 @@ Map<String, dynamic> _entity(
 ) => {'type': type, 'schemaVersion': 1, 'id': id, 'fields': fields};
 Map<String, dynamic> _fields(Map<String, dynamic> json) =>
     Map<String, dynamic>.from(json['fields'] as Map);
+
+class ProjectProfileBackupMapper {
+  static Map<String, dynamic> toJson(ProjectProfile x) =>
+      _entity('projectProfile', x.id, {
+        'name': x.name,
+        'startDate': x.startDate,
+        'createdAt': x.createdAt,
+        'updatedAt': x.updatedAt,
+        'onboardingCompleted': x.onboardingCompleted,
+        'activeVehicleId': x.activeVehicleId,
+        'appDataVersion': x.appDataVersion,
+      });
+  static ProjectProfile fromJson(Map<String, dynamic> j) {
+    final f = _fields(j);
+    return ProjectProfile(
+      id: j['id'] as String? ?? ProjectProfile.defaultId,
+      name: f['name'] as String? ?? 'Project Garage',
+      startDate: f['startDate'] as String? ?? '',
+      createdAt: f['createdAt'] as String? ?? '',
+      updatedAt: f['updatedAt'] as String? ?? '',
+      onboardingCompleted: f['onboardingCompleted'] as bool? ?? true,
+      activeVehicleId: f['activeVehicleId'] as String? ?? '',
+      appDataVersion: (f['appDataVersion'] as num?)?.toInt() ?? 1,
+    );
+  }
+}
 
 class RepairBackupMapper {
   static Map<String, dynamic> toJson(Repair x) => _entity('repair', x.id, {

@@ -7,6 +7,7 @@ import '../screens/photo_viewer_screen.dart';
 import '../services/image_service.dart';
 import '../widgets/common/app_dialog.dart';
 import '../widgets/common/app_image.dart';
+import '../theme/app_text_styles.dart';
 
 class GalleryScreen extends StatelessWidget {
   const GalleryScreen({super.key});
@@ -77,7 +78,7 @@ class GalleryScreen extends StatelessWidget {
           ? const Center(
               child: Text(
                 'No hay fotos todavía',
-                style: TextStyle(fontSize: 18, color: Colors.grey),
+                style: AppTextStyles.cardTitle,
               ),
             )
           : GridView.builder(

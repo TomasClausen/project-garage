@@ -5,7 +5,11 @@ de restauración y mantenimiento de vehículos.
 
 ## Estado
 
-Versión actual: v0.9.1+16 — Data Safety & Product Core.
+Versión actual: v1.0.0+17 — Public Release.
+
+Package ID público definitivo: `com.projectgarage.app`. Los builds con IDs anteriores son aplicaciones distintas y sólo migran mediante backup/restore.
+
+La identidad visual vigente es Project Garage Design System 2.0. Su única fuente de marca es `assets/branding/project_garage_logo_1024.png`; tokens y pautas están documentados en `PROJECT_GARAGE_DESIGN_SYSTEM_2.md`.
 
 La interfaz utiliza un sistema visual grafito, técnico y automotriz documentado
 en `DESIGN_SYSTEM.md`. La release mantiene compatibilidad funcional y de datos

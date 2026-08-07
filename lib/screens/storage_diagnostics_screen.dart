@@ -85,7 +85,7 @@ class _StorageDiagnosticsScreenState extends State<StorageDiagnosticsScreen> {
       message:
           '${preview.repairable} referencias reparables y ${preview.notRepairable} no reparables. Sólo se limpiarán rutas de archivos inexistentes; los registros se preservan.',
       confirmLabel: 'Reparar',
-      icon: Icons.build_circle_outlined,
+      icon: Icons.auto_fix_high_outlined,
     );
     if (!ok) return;
     final result = await service.repairSafeReferences(data!);
@@ -137,7 +137,7 @@ class _StorageDiagnosticsScreenState extends State<StorageDiagnosticsScreen> {
                   ),
                   OutlinedButton.icon(
                     onPressed: _repair,
-                    icon: const Icon(Icons.build_outlined),
+                    icon: const Icon(Icons.auto_fix_high_outlined),
                     label: const Text(
                       'Vista previa y reparar referencias seguras',
                     ),

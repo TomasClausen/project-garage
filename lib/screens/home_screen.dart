@@ -24,6 +24,8 @@ import '../theme/app_text_styles.dart';
 import '../widgets/common/app_card.dart';
 import '../widgets/common/app_image.dart';
 import '../widgets/common/app_progress_bar.dart';
+import '../widgets/common/project_progress_module.dart';
+import '../widgets/common/project_garage_logo.dart';
 import '../widgets/common/app_skeleton.dart';
 import '../widgets/next_goal_card.dart';
 import 'maintenance_screen.dart';
@@ -254,19 +256,7 @@ class _Header extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            color: AppColors.primary.withValues(alpha: 0.14),
-            borderRadius: BorderRadius.circular(AppRadius.medium),
-          ),
-          child: const Icon(
-            Icons.garage_rounded,
-            color: AppColors.primary,
-            size: 25,
-          ),
-        ),
+        const ProjectGarageLogo(size: 48),
         const SizedBox(width: AppSpacing.md),
         Expanded(
           child: Column(
@@ -423,10 +413,11 @@ class _ProjectHero extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: AppSpacing.sm),
-                  AppProgressBar(
+                  ProjectProgressModule(
+                    title: 'Avance técnico',
                     value: progress,
-                    color: AppColors.primary,
-                    height: 9,
+                    segments: 10,
+                    variant: ProjectProgressVariant.compact,
                   ),
                 ],
               ),
@@ -570,7 +561,7 @@ class _OverviewGrid extends StatelessWidget {
                 label: 'Invertido',
                 value: MoneyFormatter.format(totalSpent),
                 helper: 'costo real',
-                color: Colors.lightBlueAccent,
+                color: AppColors.info,
               ),
             ),
           ],
@@ -799,7 +790,7 @@ class _FinanceCard extends StatelessWidget {
               Text(
                 MoneyFormatter.format(spent),
                 style: const TextStyle(
-                  color: Colors.lightBlueAccent,
+                  color: AppColors.info,
                   fontSize: 20,
                   fontWeight: FontWeight.w900,
                 ),
@@ -807,11 +798,7 @@ class _FinanceCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.md),
-          AppProgressBar(
-            value: progress,
-            color: Colors.lightBlueAccent,
-            height: 9,
-          ),
+          AppProgressBar(value: progress, color: AppColors.info, height: 9),
           const SizedBox(height: AppSpacing.lg),
           Row(
             children: [

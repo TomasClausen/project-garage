@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 
 import '../models/dashboard_summary.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_icons.dart';
+import '../theme/app_radius.dart';
+import '../theme/app_spacing.dart';
+import '../theme/app_text_styles.dart';
+import 'common/app_card.dart';
 
 class RepairSummaryCard extends StatelessWidget {
   final DashboardSummary summary;
 
   const RepairSummaryCard({super.key, required this.summary});
-
-  static const Color _cardColor = Color(0xFF18181C);
 
   @override
   Widget build(BuildContext context) {
@@ -16,34 +20,29 @@ class RepairSummaryCard extends StatelessWidget {
         summary.inProgressRepairs +
         summary.completedRepairs;
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(22),
-      decoration: BoxDecoration(
-        color: _cardColor,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-      ),
+    return AppCard(
+      padding: const EdgeInsets.all(AppSpacing.xl),
+      variant: AppCardVariant.progress,
+      technical: true,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
           const Row(
             children: [
-              Icon(Icons.build_rounded, color: Color(0xFF9F2436), size: 24),
-              SizedBox(width: 10),
-              Text(
-                'Reparaciones',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 21,
-                  fontWeight: FontWeight.w800,
+              Icon(AppIcons.workshop, color: AppColors.primary, size: 24),
+              SizedBox(width: AppSpacing.md),
+              Flexible(
+                child: Text(
+                  'Reparaciones',
+                  style: AppTextStyles.sectionTitle,
+                  maxLines: 2,
                 ),
               ),
             ],
           ),
 
-          const SizedBox(height: 22),
+          const SizedBox(height: AppSpacing.xl),
 
           Center(
             child: Column(
@@ -51,22 +50,10 @@ class RepairSummaryCard extends StatelessWidget {
               children: [
                 Text(
                   totalRepairs.toString(),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 42,
-                    fontWeight: FontWeight.w900,
-                    height: 1,
-                  ),
+                  style: AppTextStyles.metricValue.copyWith(fontSize: 30),
                 ),
                 const SizedBox(height: 7),
-                Text(
-                  'Reparaciones registradas',
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.48),
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
+                Text('Reparaciones registradas', style: AppTextStyles.caption),
               ],
             ),
           ),
@@ -88,7 +75,7 @@ class RepairSummaryCard extends StatelessWidget {
                   title: 'Pendientes',
                   value: summary.pendingRepairs,
                   icon: Icons.schedule_rounded,
-                  color: Colors.redAccent,
+                  color: AppColors.danger,
                 ),
               ),
               const SizedBox(width: 10),
@@ -96,8 +83,8 @@ class RepairSummaryCard extends StatelessWidget {
                 child: _RepairStatusItem(
                   title: 'En proceso',
                   value: summary.inProgressRepairs,
-                  icon: Icons.handyman_rounded,
-                  color: Colors.amber,
+                  icon: AppIcons.workshop,
+                  color: AppColors.warning,
                 ),
               ),
               const SizedBox(width: 10),
@@ -106,7 +93,7 @@ class RepairSummaryCard extends StatelessWidget {
                   title: 'Completadas',
                   value: summary.completedRepairs,
                   icon: Icons.check_circle_rounded,
-                  color: Colors.green,
+                  color: AppColors.success,
                 ),
               ),
             ],
@@ -137,14 +124,14 @@ class _RepairDistributionBar extends StatelessWidget {
         width: double.infinity,
         height: 10,
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.06),
-          borderRadius: BorderRadius.circular(20),
+          color: AppColors.surfaceHighlight,
+          borderRadius: BorderRadius.circular(AppRadius.small),
         ),
       );
     }
 
     return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(AppRadius.small),
       child: SizedBox(
         width: double.infinity,
         height: 10,
@@ -153,17 +140,17 @@ class _RepairDistributionBar extends StatelessWidget {
             if (completed > 0)
               Expanded(
                 flex: completed,
-                child: Container(color: Colors.green),
+                child: Container(color: AppColors.success),
               ),
             if (inProgress > 0)
               Expanded(
                 flex: inProgress,
-                child: Container(color: Colors.amber),
+                child: Container(color: AppColors.warning),
               ),
             if (pending > 0)
               Expanded(
                 flex: pending,
-                child: Container(color: Colors.redAccent),
+                child: Container(color: AppColors.danger),
               ),
           ],
         ),
@@ -190,9 +177,9 @@ class _RepairStatusItem extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 14),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.03),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+        color: AppColors.surfaceElevated,
+        borderRadius: BorderRadius.circular(AppRadius.medium),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -230,7 +217,7 @@ class _RepairStatusItem extends StatelessWidget {
                 textAlign: TextAlign.center,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.62),
+                  color: AppColors.secondaryText,
                   fontSize: 10.5,
                   fontWeight: FontWeight.w600,
                   height: 1.15,

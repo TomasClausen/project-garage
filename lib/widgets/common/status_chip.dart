@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../theme/app_colors.dart';
+import '../../theme/app_radius.dart';
 
 enum StatusChipType { completed, inProgress, pending, noData }
 
@@ -35,7 +36,7 @@ class StatusChip extends StatelessWidget {
         break;
 
       case StatusChipType.noData:
-        color = Colors.grey;
+        color = AppColors.disabledText;
         icon = Icons.help_outline_rounded;
         text = "Sin datos";
         break;
@@ -45,7 +46,7 @@ class StatusChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(100),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

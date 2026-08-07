@@ -23,7 +23,7 @@ class BackupRestoreScreen extends StatelessWidget {
   Future<void> _pick(BuildContext context) async {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
-      allowedExtensions: ['pgarage'],
+      allowedExtensions: ['pgarage', 'zip'],
     );
     final path = result?.files.single.path;
     if (path == null || !context.mounted) return;
@@ -195,6 +195,8 @@ class BackupRestoreScreen extends StatelessWidget {
                       final destination = await FilePicker.platform.saveFile(
                         dialogTitle: 'Guardar backup de Project Garage',
                         fileName: provider.lastBackup!.uri.pathSegments.last,
+                        type: FileType.custom,
+                        allowedExtensions: ['pgarage'],
                         bytes: await provider.lastBackup!.readAsBytes(),
                       );
                       if (destination != null && context.mounted) {

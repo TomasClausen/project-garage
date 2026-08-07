@@ -1,5 +1,7 @@
 # Project Garage — sistema visual
 
+La identidad pública conserva grafito + bordó. El símbolo combina garage y herramienta sin marcas. Onboarding y pantallas legales soportan escala de texto 2.0, SafeArea y objetivos táctiles Material.
+
 ## Filosofía
 
 Project Garage usa un lenguaje de tablero automotriz contemporáneo: oscuro,
@@ -104,3 +106,6 @@ categoría, estado textual y signo. Verde identifica ingresos o pagos completos,
 ámbar pagos parciales/cercanía al límite y rojo deuda o sobrecosto. El progreso
 de presupuesto se limita visualmente a 100 %; el exceso se expresa aparte como
 “Excedido por” y nunca como una cifra disponible negativa.
+# Design System 2.0
+
+La especificación vigente es [PROJECT_GARAGE_DESIGN_SYSTEM_2.md](PROJECT_GARAGE_DESIGN_SYSTEM_2.md). Este documento anterior se conserva como referencia histórica; ante diferencias prevalece la versión 2.0 y el logo oficial `assets/branding/project_garage_logo_1024.png`.

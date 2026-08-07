@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_radius.dart';
+import '../theme/app_spacing.dart';
+import '../theme/app_text_styles.dart';
+import 'common/app_card.dart';
 
 class InfoCard extends StatelessWidget {
   final String title;
@@ -17,57 +22,36 @@ class InfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return AppCard(
       margin: const EdgeInsets.only(bottom: 15),
-
-      padding: const EdgeInsets.all(18),
-
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E),
-
-        borderRadius: BorderRadius.circular(16),
-
-        border: Border.all(color: const Color(0xFF333333)),
-      ),
-
+      padding: const EdgeInsets.all(AppSpacing.lg),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(AppSpacing.md),
 
             decoration: BoxDecoration(
-              color: const Color(0xFF8B1E2D),
-
-              borderRadius: BorderRadius.circular(12),
+              color: AppColors.primary.withValues(alpha: .16),
+              borderRadius: BorderRadius.circular(AppRadius.small),
             ),
 
-            child: Icon(icon, color: Colors.white),
+            child: Icon(icon, color: AppColors.primary),
           ),
 
-          const SizedBox(width: 15),
+          const SizedBox(width: AppSpacing.lg),
 
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
 
-            children: [
-              Text(
-                title,
+              children: [
+                Text(title, style: AppTextStyles.caption),
 
-                style: const TextStyle(color: Colors.grey, fontSize: 14),
-              ),
+                const SizedBox(height: 5),
 
-              const SizedBox(height: 5),
-
-              Text(
-                value,
-
-                style: const TextStyle(
-                  fontSize: 18,
-
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
+                Text(value, style: AppTextStyles.cardTitle),
+              ],
+            ),
           ),
         ],
       ),

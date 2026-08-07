@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../theme/app_colors.dart';
+import '../../theme/app_radius.dart';
 
 enum AppSnackbarType { success, error, warning, info }
 
@@ -42,7 +43,7 @@ class AppSnackbar {
         const Duration(seconds: 4),
       ),
       AppSnackbarType.info => (
-        const Color(0xFF5B9DFF),
+        AppColors.info,
         Icons.info_rounded,
         const Duration(seconds: 3),
       ),
@@ -57,7 +58,7 @@ class AppSnackbar {
           backgroundColor: AppColors.surfaceLight,
           dismissDirection: DismissDirection.horizontal,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(AppRadius.small),
             side: BorderSide(color: color.withValues(alpha: 0.5)),
           ),
           content: Semantics(

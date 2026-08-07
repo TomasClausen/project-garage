@@ -11,6 +11,9 @@ import '../services/maintenance_service.dart';
 import '../widgets/maintenance_card.dart';
 import '../widgets/common/app_skeleton.dart';
 import '../widgets/common/empty_state.dart';
+import '../widgets/common/app_card.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_text_styles.dart';
 
 import 'add_maintenance_screen.dart';
 
@@ -53,7 +56,7 @@ class MaintenanceScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("🛠 Mantenimientos"),
+        title: const Text('Mantenimientos'),
 
         actions: [
           IconButton(
@@ -99,15 +102,9 @@ class MaintenanceScreen extends StatelessWidget {
                 },
               ),
             if (nextMaintenance != null)
-              Container(
-                padding: const EdgeInsets.all(20),
-
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1E1E1E),
-
-                  borderRadius: BorderRadius.circular(18),
-                ),
-
+              AppCard(
+                variant: AppCardVariant.warning,
+                technical: true,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
 
@@ -115,7 +112,7 @@ class MaintenanceScreen extends StatelessWidget {
                     const Text(
                       "Atención mantenimiento",
 
-                      style: TextStyle(color: Colors.grey, fontSize: 16),
+                      style: AppTextStyles.cardTitle,
                     ),
 
                     const SizedBox(height: 10),
@@ -123,19 +120,19 @@ class MaintenanceScreen extends StatelessWidget {
                     Text(
                       nextMaintenance.name,
 
-                      style: const TextStyle(
-                        fontSize: 22,
-
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: AppTextStyles.sectionTitle,
                     ),
 
                     const SizedBox(height: 8),
 
                     Text(
-                      MaintenanceService.status(nextMaintenance, currentKm),
-
-                      style: const TextStyle(fontSize: 18),
+                      _displayStatus(
+                        MaintenanceService.status(nextMaintenance, currentKm),
+                      ),
+                      style: AppTextStyles.body.copyWith(
+                        color: AppColors.warning,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
 
                     const SizedBox(height: 5),
@@ -149,13 +146,13 @@ class MaintenanceScreen extends StatelessWidget {
 
             const SizedBox(height: 30),
 
-            _section("🔴 Vencidos", overdue, currentKm),
+            _section('Vencidos', overdue, currentKm),
 
-            _section("🟡 Próximos", upcoming, currentKm),
+            _section('Próximos', upcoming, currentKm),
 
-            _section("🟢 Correctos", correct, currentKm),
+            _section('Correctos', correct, currentKm),
 
-            _section("⚪ Sin registrar", notRegistered, currentKm),
+            _section('Sin registrar', notRegistered, currentKm),
           ],
         ),
       ),
@@ -173,11 +170,7 @@ class MaintenanceScreen extends StatelessWidget {
       children: [
         const SizedBox(height: 20),
 
-        Text(
-          title,
-
-          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-        ),
+        Text(title, style: AppTextStyles.sectionTitle),
 
         const SizedBox(height: 10),
 
@@ -191,4 +184,7 @@ class MaintenanceScreen extends StatelessWidget {
       ],
     );
   }
+
+  static String _displayStatus(String value) =>
+      value.replaceFirst(RegExp(r'^[^\p{L}\p{N}]+', unicode: true), '');
 }

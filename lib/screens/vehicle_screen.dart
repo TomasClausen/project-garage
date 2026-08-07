@@ -15,6 +15,7 @@ import '../theme/app_text_styles.dart';
 import '../widgets/common/app_card.dart';
 import '../widgets/common/app_image.dart';
 import '../widgets/common/app_progress_bar.dart';
+import '../widgets/common/project_progress_module.dart';
 import '../widgets/common/app_skeleton.dart';
 import '../widgets/vehicle_maintenance_shortcut.dart';
 import 'edit_vehicle_screen.dart';
@@ -312,10 +313,11 @@ class _VehicleHero extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: AppSpacing.sm),
-                  AppProgressBar(
+                  ProjectProgressModule(
+                    title: 'Avance técnico',
                     value: progress,
-                    color: AppColors.primary,
-                    height: 9,
+                    segments: 10,
+                    variant: ProjectProgressVariant.compact,
                   ),
                 ],
               ),

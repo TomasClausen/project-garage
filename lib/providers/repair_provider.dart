@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hive_ce/hive_ce.dart';
 
-import '../data/repair_data.dart' as repair_data;
 import '../models/repair.dart';
 import '../services/hive_service.dart';
 import '../services/repair_deletion_service.dart';
@@ -45,30 +44,21 @@ class RepairProvider extends ChangeNotifier {
 
     final settings = Hive.box(HiveService.settingsBox);
 
-    final initialized = settings.get(
-      'repairs_initialized',
-      defaultValue: false,
-    );
-
-    if (!initialized) {
-      _repairs = List.from(repair_data.repairs);
-
-      await _box.addAll(_repairs);
-
+    if (settings.get('repairs_initialized', defaultValue: false) != true) {
       await settings.put('repairs_initialized', true);
-    } else {
-      _repairs = [];
-      for (final key in _box.keys) {
-        final repair = _box.get(key);
-        if (repair == null) {
-          continue;
-        }
-        final previousStatus = repair.status;
-        _normalized(repair);
-        _repairs.add(repair);
-        if (repair.status != previousStatus) {
-          await _box.put(key, repair);
-        }
+    }
+
+    _repairs = [];
+    for (final key in _box.keys) {
+      final repair = _box.get(key);
+      if (repair == null) {
+        continue;
+      }
+      final previousStatus = repair.status;
+      _normalized(repair);
+      _repairs.add(repair);
+      if (repair.status != previousStatus) {
+        await _box.put(key, repair);
       }
     }
 

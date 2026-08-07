@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:hive_ce/hive_ce.dart';
 
 import '../models/maintenance.dart';
-import '../data/maintenance_data.dart' as maintenance_data;
 import '../services/hive_service.dart';
 import '../services/timeline_service.dart';
 
@@ -25,13 +24,7 @@ class MaintenanceProvider extends ChangeNotifier {
     final initialized =
         settings.get('maintenance_initialized', defaultValue: false) as bool;
 
-    if (!initialized && _box.isEmpty) {
-      _maintenances = List.from(maintenance_data.maintenances);
-
-      await _box.addAll(_maintenances);
-    } else {
-      _maintenances = _box.values.toList();
-    }
+    _maintenances = _box.values.toList();
 
     if (!initialized) {
       await settings.put('maintenance_initialized', true);

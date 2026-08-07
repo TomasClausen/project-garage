@@ -240,7 +240,7 @@ class _BitacoraScreenState extends State<BitacoraScreen> {
             const ListTile(title: Text('Asociar con reparación')),
             ...repairs.map(
               (repair) => ListTile(
-                leading: const Icon(Icons.build_outlined),
+                leading: const Icon(Icons.precision_manufacturing_outlined),
                 title: Text(repair.name),
                 onTap: () => Navigator.pop(sheetContext, repair.id),
               ),
@@ -728,7 +728,7 @@ class _GroupSelector extends StatelessWidget {
         ),
         ButtonSegment(
           value: _GroupMode.repair,
-          icon: Icon(Icons.build_outlined),
+          icon: Icon(Icons.precision_manufacturing_outlined),
           label: Text('Por reparación'),
         ),
       ],
@@ -1005,7 +1005,7 @@ class _EventCard extends StatelessWidget {
 
   IconData _icon(String type) {
     if (type.startsWith('repair')) {
-      return Icons.build_rounded;
+      return Icons.precision_manufacturing_outlined;
     }
     if (type.startsWith('maintenance')) {
       return Icons.fact_check_outlined;
@@ -1148,7 +1148,7 @@ class _AddPhotoSheetState extends State<_AddPhotoSheet> {
                 initialValue: _repairId,
                 decoration: const InputDecoration(
                   labelText: 'Asociar a reparación',
-                  prefixIcon: Icon(Icons.build_outlined),
+                  prefixIcon: Icon(Icons.precision_manufacturing_outlined),
                 ),
                 items: [
                   const DropdownMenuItem<String>(

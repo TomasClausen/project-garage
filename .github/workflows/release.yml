@@ -1,0 +1,39 @@
+name: Release build
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.8'
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter test
+      - name: Verify definitive package ID
+        run: grep -q 'applicationId = "com.projectgarage.app"' android/app/build.gradle.kts
+      - name: Require signing secrets
+        run: test -n "$KEYSTORE_BASE64" && test -n "$KEY_PROPERTIES"
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEY_PROPERTIES: ${{ secrets.ANDROID_KEY_PROPERTIES }}
+      - name: Configure signing
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 --decode > android/app/upload.jks
+          printf '%s' "$KEY_PROPERTIES" > android/key.properties
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEY_PROPERTIES: ${{ secrets.ANDROID_KEY_PROPERTIES }}
+      - run: flutter build apk --release
+      - run: flutter build appbundle
+      - uses: actions/upload-artifact@v4
+        with:
+          name: project-garage-android
+          path: |
+            build/app/outputs/flutter-apk/app-release.apk
+            build/app/outputs/bundle/release/app-release.aab

@@ -10,9 +10,6 @@ class AppPreferencesProvider extends ChangeNotifier {
   AppPreferencesProvider({Box<AppPreferences>? box})
     : _box = box ?? Hive.box<AppPreferences>(HiveService.preferencesBox) {
     _preferences = _box.get(AppPreferences.defaultId) ?? const AppPreferences();
-    if (!_box.containsKey(AppPreferences.defaultId)) {
-      _box.put(AppPreferences.defaultId, _preferences);
-    }
     _configure();
   }
   final Box<AppPreferences> _box;

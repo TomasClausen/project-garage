@@ -29,6 +29,7 @@ class FinanceProvider extends ChangeNotifier {
   String _paymentFilter = '';
   String _categoryFilter = '';
   FinanceSort _sort = FinanceSort.newest;
+  bool _disposed = false;
 
   bool get loading => _loading;
   String? get error => _error;
@@ -106,8 +107,14 @@ class FinanceProvider extends ChangeNotifier {
       _error = error.toString();
     } finally {
       _loading = false;
-      notifyListeners();
+      if (!_disposed) notifyListeners();
     }
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
   }
 
   ProjectBudget _emptyBudget() {

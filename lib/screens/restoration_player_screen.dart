@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import '../widgets/common/app_progress_bar.dart';
 import '../models/timeline_event.dart';
 
 class RestorationPlayerScreen extends StatefulWidget {
@@ -70,9 +71,7 @@ class _RestorationPlayerScreenState extends State<RestorationPlayerScreen> {
                   const SizedBox(height: 4),
                   Text(e.description.isEmpty ? e.category : e.description),
                   const SizedBox(height: 8),
-                  LinearProgressIndicator(
-                    value: (index + 1) / widget.images.length,
-                  ),
+                  AppProgressBar(value: (index + 1) / widget.images.length),
                 ],
               ),
             ),

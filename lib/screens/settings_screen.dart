@@ -8,6 +8,9 @@ import '../services/app_logger.dart';
 import 'backup_restore_screen.dart';
 import 'project_report_options_screen.dart';
 import 'storage_diagnostics_screen.dart';
+import 'privacy_policy_screen.dart';
+import 'about_screen.dart';
+import '../services/support_diagnostics_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -151,21 +154,40 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         const SizedBox(height: 24),
         _title('Aplicación'),
-        const ListTile(
-          contentPadding: EdgeInsets.zero,
-          leading: Icon(Icons.info_outline_rounded),
-          title: Text('Project Garage'),
-          subtitle: Text(
-            'Versión 0.9.1 · build 16\nFlutter · Provider · Hive CE',
-          ),
+        _link(
+          context,
+          'Acerca de Project Garage',
+          Icons.info_outline_rounded,
+          const AboutScreen(),
         ),
-        const ListTile(
+        ListTile(
           contentPadding: EdgeInsets.zero,
-          leading: Icon(Icons.privacy_tip_outlined),
-          title: Text('Privacidad'),
-          subtitle: Text(
+          leading: const Icon(Icons.privacy_tip_outlined),
+          title: const Text('Privacidad'),
+          subtitle: const Text(
             'Tus datos permanecen localmente salvo cuando decidís compartir una exportación.',
           ),
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const PrivacyPolicyScreen()),
+          ),
+        ),
+        ListTile(
+          contentPadding: EdgeInsets.zero,
+          leading: const Icon(Icons.support_agent_outlined),
+          title: const Text('Exportar diagnóstico para soporte'),
+          subtitle: const Text(
+            'Incluye versión, conteos y errores sanitizados; no incluye fotos, rutas ni importes.',
+          ),
+          onTap: () async {
+            final file = await SupportDiagnosticsService().export();
+            await SharePlus.instance.share(
+              ShareParams(
+                files: [XFile(file.path)],
+                title: 'Soporte Project Garage',
+              ),
+            );
+          },
         ),
         ListTile(
           contentPadding: EdgeInsets.zero,
@@ -191,7 +213,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           onTap: () => showLicensePage(
             context: context,
             applicationName: 'Project Garage',
-            applicationVersion: '0.9.1+16',
+            applicationVersion: '1.0.0+17',
           ),
         ),
       ],

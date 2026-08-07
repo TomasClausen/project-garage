@@ -67,6 +67,34 @@ void main() {
     }
   });
 
+  test('clean installation does not seed repairs or maintenance', () async {
+    await settingsBox.clear();
+
+    final repairProvider = RepairProvider();
+    final maintenanceProvider = MaintenanceProvider();
+    await Future.wait([repairProvider.ready, maintenanceProvider.ready]);
+
+    expect(repairProvider.repairs, isEmpty);
+    expect(maintenanceProvider.maintenances, isEmpty);
+    expect(repairBox.values, isEmpty);
+    expect(maintenanceBox.values, isEmpty);
+    expect(settingsBox.get('repairs_initialized'), isTrue);
+    expect(settingsBox.get('maintenance_initialized'), isTrue);
+  });
+
+  test('repairs stay empty after deleting everything and restarting', () async {
+    await repairBox.put('repair-1', buildRepair());
+    final firstProvider = RepairProvider();
+    await firstProvider.ready;
+    await firstProvider.deleteRepair('repair-1');
+
+    final restartedProvider = RepairProvider();
+    await restartedProvider.ready;
+
+    expect(restartedProvider.repairs, isEmpty);
+    expect(repairBox.values, isEmpty);
+  });
+
   test(
     'records repair_completed only on the incomplete-to-complete transition',
     () async {
@@ -148,19 +176,16 @@ void main() {
     expect(mediaBox.values, isEmpty);
   });
 
-  test(
-    'maintenance seeds are not restored after the user deletes everything',
-    () async {
-      final firstProvider = MaintenanceProvider();
-      await firstProvider.ready;
-      expect(maintenanceBox.values, isNotEmpty);
-      expect(settingsBox.get('maintenance_initialized'), isTrue);
+  test('maintenance stays empty initially and after restart', () async {
+    final firstProvider = MaintenanceProvider();
+    await firstProvider.ready;
+    expect(maintenanceBox.values, isEmpty);
+    expect(settingsBox.get('maintenance_initialized'), isTrue);
 
-      await maintenanceBox.clear();
-      final restartedProvider = MaintenanceProvider();
-      await restartedProvider.ready;
+    await maintenanceBox.clear();
+    final restartedProvider = MaintenanceProvider();
+    await restartedProvider.ready;
 
-      expect(maintenanceBox.values, isEmpty);
-    },
-  );
+    expect(maintenanceBox.values, isEmpty);
+  });
 }

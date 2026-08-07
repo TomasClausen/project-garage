@@ -1,5 +1,7 @@
 # Formato Project Garage Backup
 
+Desde v1.0.0 incluye opcionalmente `project_profile`. El schema sigue en 1 para leer v0.9.1; si falta, restore crea un perfil completado. Schemas futuros se rechazan.
+
 Extensión `.pgarage`, contenedor ZIP y schema actual 1.
 
 - `manifest.json`: versión, schema, fecha UTC, plataforma, boxes, cantidades,

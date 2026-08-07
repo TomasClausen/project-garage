@@ -9,9 +9,8 @@ class AppSpacing {
 
   static const lg = 16.0;
 
-  static const xl = 20.0;
-
-  static const xxl = 24.0;
-
-  static const xxxl = 32.0;
+  static const xl = 24.0;
+  static const xxl = 32.0;
+  static const xxxl = 48.0;
+  static const huge = 64.0;
 }

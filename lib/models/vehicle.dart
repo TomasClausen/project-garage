@@ -91,17 +91,4 @@ class Vehicle {
       driveType: driveType ?? this.driveType,
     );
   }
-
-  static const Vehicle lancer = Vehicle(
-    brand: 'Mitsubishi',
-    model: 'Lancer GLXi',
-    year: 1998,
-    engine: '4G92 DOHC 1.6 16v',
-    color: 'Bordó P78',
-    kilometers: 177163,
-    version: 'GLXi',
-    transmission: 'Manual',
-    fuelType: 'Nafta',
-    driveType: 'Delantera',
-  );
 }

@@ -55,28 +55,28 @@ class _MainNavigationState extends State<MainNavigation> {
         },
         destinations: const [
           NavigationDestination(
-            icon: Icon(Icons.space_dashboard_outlined),
-            selectedIcon: Icon(AppIcons.home),
+            icon: Icon(AppIcons.home),
+            selectedIcon: Icon(AppIcons.home, fill: 1),
             label: 'Inicio',
           ),
           NavigationDestination(
-            icon: Icon(Icons.directions_car_outlined),
-            selectedIcon: Icon(AppIcons.vehicle),
+            icon: Icon(AppIcons.vehicle),
+            selectedIcon: Icon(AppIcons.vehicle, fill: 1),
             label: 'Vehículo',
           ),
           NavigationDestination(
-            icon: Icon(Icons.handyman_outlined),
-            selectedIcon: Icon(AppIcons.workshop),
+            icon: Icon(AppIcons.workshop),
+            selectedIcon: Icon(AppIcons.workshop, fill: 1),
             label: 'Taller',
           ),
           NavigationDestination(
-            icon: Icon(Icons.receipt_long_outlined),
-            selectedIcon: Icon(AppIcons.finance),
+            icon: Icon(AppIcons.finance),
+            selectedIcon: Icon(AppIcons.finance, fill: 1),
             label: 'Finanzas',
           ),
           NavigationDestination(
-            icon: Icon(Icons.auto_stories_outlined),
-            selectedIcon: Icon(AppIcons.logbook),
+            icon: Icon(AppIcons.logbook),
+            selectedIcon: Icon(AppIcons.logbook, fill: 1),
             label: 'Bitácora',
           ),
         ],

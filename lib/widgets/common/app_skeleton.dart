@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../theme/app_colors.dart';
+import '../../theme/app_motion.dart';
 import '../../theme/app_radius.dart';
 import '../../theme/app_spacing.dart';
 
@@ -29,7 +30,7 @@ class _AppSkeletonState extends State<AppSkeleton>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 900),
+      duration: AppDurations.emphasis,
     )..repeat(reverse: true);
   }
 
@@ -41,17 +42,23 @@ class _AppSkeletonState extends State<AppSkeleton>
 
   @override
   Widget build(BuildContext context) {
+    final block = Container(
+      width: widget.width,
+      height: widget.height,
+      decoration: BoxDecoration(
+        color: AppColors.surfaceLight,
+        borderRadius:
+            widget.borderRadius ?? BorderRadius.circular(AppRadius.medium),
+      ),
+    );
+    if (AppMotion.reduceMotion(context)) {
+      _controller.stop();
+      return block;
+    }
+    if (!_controller.isAnimating) _controller.repeat(reverse: true);
     return FadeTransition(
       opacity: Tween<double>(begin: 0.42, end: 0.9).animate(_controller),
-      child: Container(
-        width: widget.width,
-        height: widget.height,
-        decoration: BoxDecoration(
-          color: AppColors.surfaceLight,
-          borderRadius:
-              widget.borderRadius ?? BorderRadius.circular(AppRadius.medium),
-        ),
-      ),
+      child: block,
     );
   }
 }

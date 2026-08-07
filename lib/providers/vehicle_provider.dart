@@ -10,23 +10,36 @@ class VehicleProvider extends ChangeNotifier {
   late Box<Vehicle> _box;
   late final Future<void> ready;
 
-  Vehicle _vehicle = Vehicle.lancer;
+  Vehicle _vehicle = const Vehicle(
+    brand: '',
+    model: '',
+    year: 0,
+    engine: '',
+    color: '',
+    kilometers: 0,
+  );
 
   VehicleProvider() {
     ready = _loadVehicle();
   }
 
   Vehicle get vehicle => _vehicle;
+  bool get hasVehicle => _box.isNotEmpty;
 
   Future<void> _loadVehicle() async {
     _box = Hive.box<Vehicle>(HiveService.vehicleBox);
 
     if (_box.isEmpty) {
-      await _box.put("lancer", Vehicle.lancer);
-
-      _vehicle = Vehicle.lancer;
+      _vehicle = const Vehicle(
+        brand: '',
+        model: '',
+        year: 0,
+        engine: '',
+        color: '',
+        kilometers: 0,
+      );
     } else {
-      _vehicle = _box.get("lancer")!;
+      _vehicle = _box.get("lancer") ?? _box.values.first;
     }
 
     notifyListeners();
