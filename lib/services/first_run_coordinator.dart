@@ -28,6 +28,7 @@ class FirstRunCoordinator {
     );
     final timeline = Hive.box<TimelineEvent>(HiveService.timelineBox);
     final preferences = Hive.box<AppPreferences>(HiveService.preferencesBox);
+
     final profile = profiles.get(ProjectProfile.defaultId);
     if (profile != null) {
       return FirstRunDecision(
@@ -45,11 +46,16 @@ class FirstRunCoordinator {
         transactions.isNotEmpty ||
         timeline.isNotEmpty ||
         preferences.isNotEmpty;
+
     if (!hasLegacyData) {
       return const FirstRunDecision(FirstRunState.newInstallation, true);
     }
 
     final now = DateTime.now().toUtc().toIso8601String();
+    final legacyVehicleId = vehicles.isEmpty
+        ? ''
+        : vehicles.keys.first.toString();
+
     await profiles.put(
       ProjectProfile.defaultId,
       ProjectProfile(
@@ -58,9 +64,10 @@ class FirstRunCoordinator {
         createdAt: now,
         updatedAt: now,
         onboardingCompleted: true,
-        activeVehicleId: vehicles.isEmpty ? '' : 'lancer',
+        activeVehicleId: legacyVehicleId,
       ),
     );
+
     return const FirstRunDecision(FirstRunState.update, false);
   }
 }
