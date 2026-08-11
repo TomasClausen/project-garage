@@ -19,10 +19,9 @@ Future<void> _persistOnboarding({Vehicle? vehicle}) async {
   final now = DateTime.now().toUtc().toIso8601String();
 
   if (vehicle != null) {
-    await Hive.box<Vehicle>(HiveService.vehicleBox).put(
-      ProjectProfile.primaryVehicleId,
-      vehicle,
-    );
+    await Hive.box<Vehicle>(
+      HiveService.vehicleBox,
+    ).put(ProjectProfile.primaryVehicleId, vehicle);
   }
 
   await Hive.box<ProjectProfile>(HiveService.projectProfileBox).put(
@@ -33,9 +32,7 @@ Future<void> _persistOnboarding({Vehicle? vehicle}) async {
       createdAt: now,
       updatedAt: now,
       onboardingCompleted: true,
-      activeVehicleId: vehicle == null
-          ? ''
-          : ProjectProfile.primaryVehicleId,
+      activeVehicleId: vehicle == null ? '' : ProjectProfile.primaryVehicleId,
     ),
   );
 }
@@ -133,7 +130,6 @@ void main() {
     expect(profile, isNotNull);
     expect(profile!.onboardingCompleted, isTrue);
     expect(profile.activeVehicleId, isEmpty);
-
   });
 
   test('onboarding creates only the vehicle entered by the user', () async {
