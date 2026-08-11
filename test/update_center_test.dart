@@ -451,17 +451,20 @@ void main() {
       expect(source.calls, 0);
     });
 
-    test('notification permission rejection keeps automatic checks disabled', () async {
-      final store = _PreferencesStore(
-        const UpdatePreferences(automaticChecks: false),
-      );
-      final provider = _provider(
-        preferencesStore: store,
-        notifier: _Notifier(permission: false),
-      );
-      expect(await provider.setAutomaticChecks(true), isFalse);
-      expect(store.value.automaticChecks, isFalse);
-    });
+    test(
+      'notification permission rejection keeps automatic checks disabled',
+      () async {
+        final store = _PreferencesStore(
+          const UpdatePreferences(automaticChecks: false),
+        );
+        final provider = _provider(
+          preferencesStore: store,
+          notifier: _Notifier(permission: false),
+        );
+        expect(await provider.setAutomaticChecks(true), isFalse);
+        expect(store.value.automaticChecks, isFalse);
+      },
+    );
 
     testWidgets('notification tap opens Update Center', (tester) async {
       final notifier = _Notifier();
