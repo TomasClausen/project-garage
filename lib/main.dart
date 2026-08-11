@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import 'main_navigation.dart';
 import 'providers/app_preferences_provider.dart';
+import 'providers/app_update_provider.dart';
 import 'providers/backup_provider.dart';
 import 'providers/finance_provider.dart';
 import 'providers/gallery_provider.dart';
@@ -14,6 +15,7 @@ import 'providers/repair_provider.dart';
 import 'providers/timeline_provider.dart';
 import 'providers/vehicle_provider.dart';
 import 'screens/onboarding_screen.dart';
+import 'screens/update_center_screen.dart';
 import 'services/app_lifecycle_coordinator.dart';
 import 'services/app_logger.dart';
 import 'services/first_run_coordinator.dart';
@@ -120,6 +122,7 @@ class _Providers extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => FinanceProvider()),
         ChangeNotifierProvider(create: (_) => AppPreferencesProvider()),
         ChangeNotifierProvider(create: (_) => BackupProvider()),
+        ChangeNotifierProvider(create: (_) => AppUpdateProvider()),
       ],
       child: child,
     );
@@ -236,11 +239,46 @@ class _LancerAppState extends State<LancerApp> {
             await preferences.refresh();
             await vehicle.refresh();
           },
-          child: const MainNavigation(),
+          child: const AutomaticUpdateBootstrap(child: MainNavigation()),
         );
       },
     );
   }
+}
+
+class AutomaticUpdateBootstrap extends StatefulWidget {
+  const AutomaticUpdateBootstrap({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  State<AutomaticUpdateBootstrap> createState() =>
+      _AutomaticUpdateBootstrapState();
+}
+
+class _AutomaticUpdateBootstrapState extends State<AutomaticUpdateBootstrap> {
+  var _initialized = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_initialized) return;
+    _initialized = true;
+    final provider = context.read<AppUpdateProvider>();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await provider.notifier.setTapHandler(() {
+        if (!mounted) return;
+        Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const UpdateCenterScreen()));
+      });
+      await Future<void>.delayed(const Duration(milliseconds: 600));
+      if (mounted) await provider.check(manual: false);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }
 
 class StartupErrorView extends StatelessWidget {

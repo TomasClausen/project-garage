@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../providers/app_preferences_provider.dart';
@@ -8,6 +9,7 @@ import '../services/app_logger.dart';
 import 'backup_restore_screen.dart';
 import 'project_report_options_screen.dart';
 import 'storage_diagnostics_screen.dart';
+import 'update_center_screen.dart';
 import 'privacy_policy_screen.dart';
 import 'about_screen.dart';
 import '../services/support_diagnostics_service.dart';
@@ -151,6 +153,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
           'Diagnóstico de almacenamiento',
           Icons.storage_rounded,
           const StorageDiagnosticsScreen(),
+        ),
+        const SizedBox(height: 24),
+        _title('Actualizaciones'),
+        FutureBuilder<PackageInfo>(
+          future: PackageInfo.fromPlatform(),
+          builder: (context, snapshot) => ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.system_update_alt_rounded),
+            title: const Text('Garage Update Center'),
+            subtitle: Text(
+              snapshot.hasData
+                  ? 'Versión actual ${snapshot.data!.version} · Buscar actualizaciones'
+                  : 'Buscar actualizaciones',
+            ),
+            trailing: const Icon(Icons.chevron_right_rounded),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const UpdateCenterScreen()),
+            ),
+          ),
         ),
         const SizedBox(height: 24),
         _title('Aplicación'),
