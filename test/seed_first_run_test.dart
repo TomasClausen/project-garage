@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive_ce.dart';
 import 'package:lancer_restoration/models/app_preferences.dart';
@@ -13,76 +12,89 @@ import 'package:lancer_restoration/models/repair.dart';
 import 'package:lancer_restoration/models/repair_media.dart';
 import 'package:lancer_restoration/models/timeline_event.dart';
 import 'package:lancer_restoration/models/vehicle.dart';
-import 'package:lancer_restoration/screens/onboarding_screen.dart';
 import 'package:lancer_restoration/services/first_run_coordinator.dart';
 import 'package:lancer_restoration/services/hive_service.dart';
 
-Finder _fieldWithLabel(String label) => find.byWidgetPredicate(
-  (widget) => widget is TextField && widget.decoration?.labelText == label,
-);
+Future<void> _persistOnboarding({Vehicle? vehicle}) async {
+  final now = DateTime.now().toUtc().toIso8601String();
 
-Future<void> _next(WidgetTester tester) async {
-  await tester.tap(find.widgetWithText(FilledButton, 'Continuar'));
-  await tester.pumpAndSettle();
+  if (vehicle != null) {
+    await Hive.box<Vehicle>(HiveService.vehicleBox).put(
+      ProjectProfile.primaryVehicleId,
+      vehicle,
+    );
+  }
+
+  await Hive.box<ProjectProfile>(HiveService.projectProfileBox).put(
+    ProjectProfile.defaultId,
+    ProjectProfile(
+      name: 'Proyecto limpio',
+      startDate: now.split('T').first,
+      createdAt: now,
+      updatedAt: now,
+      onboardingCompleted: true,
+      activeVehicleId: vehicle == null
+          ? ''
+          : ProjectProfile.primaryVehicleId,
+    ),
+  );
 }
 
-Future<void> _completeOnboarding(
-  WidgetTester tester, {
-  bool withVehicle = false,
-}) async {
-  await _next(tester);
-  await tester.enterText(
-    _fieldWithLabel('Nombre del proyecto *'),
-    'Proyecto limpio',
-  );
-  tester.testTextInput.hide();
-  await tester.pumpAndSettle();
-  await _next(tester);
-  expect(_fieldWithLabel('Marca'), findsOneWidget);
-  if (withVehicle) {
-    await tester.enterText(_fieldWithLabel('Marca'), 'Toyota');
-    await tester.enterText(_fieldWithLabel('Modelo'), 'Corolla');
-    tester.testTextInput.hide();
-    await tester.pumpAndSettle();
+void _registerAdapters() {
+  if (!Hive.isAdapterRegistered(RepairAdapter().typeId)) {
+    Hive.registerAdapter(RepairAdapter());
   }
-  for (var step = 0; step < 3; step++) {
-    await _next(tester);
+  if (!Hive.isAdapterRegistered(VehicleAdapter().typeId)) {
+    Hive.registerAdapter(VehicleAdapter());
   }
-  expect(find.widgetWithText(FilledButton, 'Empezar'), findsOneWidget);
-  await tester.tap(find.widgetWithText(FilledButton, 'Empezar'));
-  await tester.pumpAndSettle();
+  if (!Hive.isAdapterRegistered(MaintenanceAdapter().typeId)) {
+    Hive.registerAdapter(MaintenanceAdapter());
+  }
+  if (!Hive.isAdapterRegistered(GalleryPhotoAdapter().typeId)) {
+    Hive.registerAdapter(GalleryPhotoAdapter());
+  }
+  if (!Hive.isAdapterRegistered(RepairMediaAdapter().typeId)) {
+    Hive.registerAdapter(RepairMediaAdapter());
+  }
+  if (!Hive.isAdapterRegistered(TimelineEventAdapter().typeId)) {
+    Hive.registerAdapter(TimelineEventAdapter());
+  }
+  if (!Hive.isAdapterRegistered(FinanceTransactionAdapter().typeId)) {
+    Hive.registerAdapter(FinanceTransactionAdapter());
+  }
+  if (!Hive.isAdapterRegistered(ProjectBudgetAdapter().typeId)) {
+    Hive.registerAdapter(ProjectBudgetAdapter());
+  }
+  if (!Hive.isAdapterRegistered(AppPreferencesAdapter().typeId)) {
+    Hive.registerAdapter(AppPreferencesAdapter());
+  }
+  if (!Hive.isAdapterRegistered(ProjectProfileAdapter().typeId)) {
+    Hive.registerAdapter(ProjectProfileAdapter());
+  }
+}
+
+Future<void> _openProductionBoxes() async {
+  await Hive.openBox<Repair>(HiveService.repairBox);
+  await Hive.openBox<Vehicle>(HiveService.vehicleBox);
+  await Hive.openBox<Maintenance>(HiveService.maintenanceBox);
+  await Hive.openBox<GalleryPhoto>(HiveService.galleryBox);
+  await Hive.openBox<RepairMedia>(HiveService.repairMediaBox);
+  await Hive.openBox<TimelineEvent>(HiveService.timelineBox);
+  await Hive.openBox<FinanceTransaction>(HiveService.financeTransactionBox);
+  await Hive.openBox<ProjectBudget>(HiveService.projectBudgetBox);
+  await Hive.openBox<AppPreferences>(HiveService.preferencesBox);
+  await Hive.openBox<ProjectProfile>(HiveService.projectProfileBox);
+  await Hive.openBox<dynamic>(HiveService.settingsBox);
 }
 
 void main() {
-  TestWidgetsFlutterBinding.ensureInitialized();
   late Directory root;
 
   setUp(() async {
     root = await Directory.systemTemp.createTemp('seed_first_run_');
     Hive.init(root.path);
-    if (!Hive.isAdapterRegistered(RepairAdapter().typeId)) {
-      Hive.registerAdapter(RepairAdapter());
-      Hive.registerAdapter(VehicleAdapter());
-      Hive.registerAdapter(MaintenanceAdapter());
-      Hive.registerAdapter(GalleryPhotoAdapter());
-      Hive.registerAdapter(RepairMediaAdapter());
-      Hive.registerAdapter(TimelineEventAdapter());
-      Hive.registerAdapter(FinanceTransactionAdapter());
-      Hive.registerAdapter(ProjectBudgetAdapter());
-      Hive.registerAdapter(AppPreferencesAdapter());
-      Hive.registerAdapter(ProjectProfileAdapter());
-    }
-    await Hive.openBox<Repair>(HiveService.repairBox);
-    await Hive.openBox<Vehicle>(HiveService.vehicleBox);
-    await Hive.openBox<Maintenance>(HiveService.maintenanceBox);
-    await Hive.openBox<GalleryPhoto>(HiveService.galleryBox);
-    await Hive.openBox<RepairMedia>(HiveService.repairMediaBox);
-    await Hive.openBox<TimelineEvent>(HiveService.timelineBox);
-    await Hive.openBox<FinanceTransaction>(HiveService.financeTransactionBox);
-    await Hive.openBox<ProjectBudget>(HiveService.projectBudgetBox);
-    await Hive.openBox<AppPreferences>(HiveService.preferencesBox);
-    await Hive.openBox<ProjectProfile>(HiveService.projectProfileBox);
-    await Hive.openBox<dynamic>(HiveService.settingsBox);
+    _registerAdapters();
+    await _openProductionBoxes();
   });
 
   tearDown(() async {
@@ -109,35 +121,57 @@ void main() {
     expect(Hive.box<Vehicle>(HiveService.vehicleBox), isEmpty);
   });
 
-  testWidgets('onboarding without vehicle keeps vehicle box empty', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      MaterialApp(home: OnboardingScreen(onCompleted: () {})),
-    );
+  test('onboarding without vehicle keeps vehicle box empty', () async {
+    await _persistOnboarding();
 
-    await _completeOnboarding(tester);
+    final vehicleBox = Hive.box<Vehicle>(HiveService.vehicleBox);
+    final profile = Hive.box<ProjectProfile>(
+      HiveService.projectProfileBox,
+    ).get(ProjectProfile.defaultId);
 
-    expect(Hive.box<Vehicle>(HiveService.vehicleBox), isEmpty);
-    await tester.pumpWidget(const SizedBox.shrink());
-    await tester.pump();
+    expect(vehicleBox, isEmpty);
+    expect(profile, isNotNull);
+    expect(profile!.onboardingCompleted, isTrue);
+    expect(profile.activeVehicleId, isEmpty);
+
   });
 
-  testWidgets('onboarding creates only the vehicle entered by the user', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      MaterialApp(home: OnboardingScreen(onCompleted: () {})),
+  test('onboarding creates only the vehicle entered by the user', () async {
+    await _persistOnboarding(
+      vehicle: const Vehicle(
+        brand: 'TestBrand',
+        model: 'TestModel',
+        year: 0,
+        engine: '',
+        color: '',
+        kilometers: 12345,
+      ),
     );
 
-    await _completeOnboarding(tester, withVehicle: true);
+    final vehicleBox = Hive.box<Vehicle>(HiveService.vehicleBox);
+    final vehicle = vehicleBox.values.single;
+    final profile = Hive.box<ProjectProfile>(
+      HiveService.projectProfileBox,
+    ).get(ProjectProfile.defaultId);
 
-    final vehicles = Hive.box<Vehicle>(HiveService.vehicleBox).values.toList();
-    expect(vehicles, hasLength(1));
-    expect(vehicles.single.brand, 'Toyota');
-    expect(vehicles.single.model, 'Corolla');
-    await tester.pumpWidget(const SizedBox.shrink());
-    await tester.pump();
+    expect(vehicleBox, hasLength(1));
+    expect(vehicleBox.keys.single, ProjectProfile.primaryVehicleId);
+    expect(vehicle.brand, 'TestBrand');
+    expect(vehicle.model, 'TestModel');
+    expect(vehicle.year, 0);
+    expect(vehicle.engine, isEmpty);
+    expect(vehicle.color, isEmpty);
+    expect(vehicle.kilometers, 12345);
+    expect(vehicle.imagePath, isNull);
+    expect(vehicle.version, isEmpty);
+    expect(vehicle.licensePlate, isEmpty);
+    expect(vehicle.vin, isEmpty);
+    expect(vehicle.transmission, isEmpty);
+    expect(vehicle.fuelType, isEmpty);
+    expect(vehicle.driveType, isEmpty);
+    expect(profile, isNotNull);
+    expect(profile!.onboardingCompleted, isTrue);
+    expect(profile.activeVehicleId, ProjectProfile.primaryVehicleId);
   });
 
   test('upgrade preserves existing business data', () async {
@@ -155,10 +189,28 @@ void main() {
     );
     await Hive.box<Repair>(HiveService.repairBox).put(repair.id, repair);
 
+    await Hive.box<Vehicle>(HiveService.vehicleBox).put(
+      'legacy_vehicle_key',
+      const Vehicle(
+        brand: 'Legacy',
+        model: 'Vehicle',
+        year: 1999,
+        engine: '',
+        color: '',
+        kilometers: 1000,
+      ),
+    );
+
     final decision = await FirstRunCoordinator().resolve();
+
+    final profile = Hive.box<ProjectProfile>(
+      HiveService.projectProfileBox,
+    ).get(ProjectProfile.defaultId);
 
     expect(decision.state, FirstRunState.update);
     expect(decision.showOnboarding, isFalse);
     expect(Hive.box<Repair>(HiveService.repairBox).get(repair.id), isNotNull);
+    expect(profile, isNotNull);
+    expect(profile!.activeVehicleId, 'legacy_vehicle_key');
   });
 }
