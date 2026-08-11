@@ -19,9 +19,7 @@ Future<void> _persistOnboarding({Vehicle? vehicle}) async {
   final now = DateTime.now().toUtc().toIso8601String();
 
   if (vehicle != null) {
-    await Hive.box<Vehicle>(
-      HiveService.vehicleBox,
-    ).put(ProjectProfile.primaryVehicleId, vehicle);
+    await Hive.box<Vehicle>(HiveService.vehicleBox).put('lancer', vehicle);
   }
 
   await Hive.box<ProjectProfile>(HiveService.projectProfileBox).put(
@@ -32,7 +30,7 @@ Future<void> _persistOnboarding({Vehicle? vehicle}) async {
       createdAt: now,
       updatedAt: now,
       onboardingCompleted: true,
-      activeVehicleId: vehicle == null ? '' : ProjectProfile.primaryVehicleId,
+      activeVehicleId: vehicle == null ? '' : 'lancer',
     ),
   );
 }
@@ -151,7 +149,7 @@ void main() {
     ).get(ProjectProfile.defaultId);
 
     expect(vehicleBox, hasLength(1));
-    expect(vehicleBox.keys.single, ProjectProfile.primaryVehicleId);
+    expect(vehicleBox.keys.single, 'lancer');
     expect(vehicle.brand, 'TestBrand');
     expect(vehicle.model, 'TestModel');
     expect(vehicle.year, 0);
@@ -167,7 +165,7 @@ void main() {
     expect(vehicle.driveType, isEmpty);
     expect(profile, isNotNull);
     expect(profile!.onboardingCompleted, isTrue);
-    expect(profile.activeVehicleId, ProjectProfile.primaryVehicleId);
+    expect(profile.activeVehicleId, 'lancer');
   });
 
   test('upgrade preserves existing business data', () async {
