@@ -74,26 +74,43 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       !isNavigating &&
       (currentStep != 1 || project.text.trim().isNotEmpty);
 
+  bool get hasVehicleData {
+    final normalizedBrand = brand.text.trim();
+    final normalizedModel = model.text.trim();
+    final normalizedKilometers = kilometers.text.trim();
+    final hasMeaningfulKilometers =
+        normalizedKilometers.isNotEmpty &&
+        normalizedKilometers != '0' &&
+        (int.tryParse(normalizedKilometers) ?? 0) > 0;
+
+    return normalizedBrand.isNotEmpty ||
+        normalizedModel.isNotEmpty ||
+        hasMeaningfulKilometers;
+  }
+
   Future<void> _persist() async {
     debugPrint('[startup] onboarding_save_start');
     final now = DateTime.now().toUtc().toIso8601String();
     debugPrint('[startup] project_saved');
-    final hasVehicle =
-        brand.text.trim().isNotEmpty || model.text.trim().isNotEmpty;
+
+    final hasVehicle = hasVehicleData;
     if (hasVehicle) {
       await Hive.box<Vehicle>(HiveService.vehicleBox).put(
-        'lancer',
+        ProjectProfile.primaryVehicleId,
         Vehicle(
           brand: brand.text.trim(),
           model: model.text.trim(),
           year: 0,
           engine: '',
           color: '',
-          kilometers: int.tryParse(kilometers.text) ?? 0,
+          kilometers: int.tryParse(kilometers.text.trim()) ?? 0,
         ),
       );
+      debugPrint('[startup] vehicle_saved');
+    } else {
+      debugPrint('[startup] vehicle_skipped');
     }
-    debugPrint('[startup] vehicle_saved');
+
     final amount = int.tryParse(budget.text.replaceAll(RegExp(r'\D'), '')) ?? 0;
     if (amount > 0) {
       await Hive.box<ProjectBudget>(HiveService.projectBudgetBox).put(
@@ -102,6 +119,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       );
     }
     debugPrint('[startup] budget_saved');
+
     await Hive.box<AppPreferences>(HiveService.preferencesBox).put(
       AppPreferences.defaultId,
       AppPreferences(
@@ -111,6 +129,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       ),
     );
     debugPrint('[startup] preferences_saved');
+
     await Hive.box<ProjectProfile>(HiveService.projectProfileBox).put(
       ProjectProfile.defaultId,
       ProjectProfile(
@@ -119,7 +138,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         createdAt: now,
         updatedAt: now,
         onboardingCompleted: true,
-        activeVehicleId: hasVehicle ? 'lancer' : '',
+        activeVehicleId: hasVehicle ? ProjectProfile.primaryVehicleId : '',
       ),
     );
     debugPrint('[startup] onboarding_completed_saved');
@@ -129,6 +148,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     if (isCompleting || project.text.trim().isEmpty) return;
     FocusManager.instance.primaryFocus?.unfocus();
     setState(() => isCompleting = true);
+
     try {
       await (widget.saveOverride?.call() ?? _persist());
     } catch (error, stackTrace) {
@@ -138,8 +158,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           context,
           'No pudimos guardar la configuración. Intentá nuevamente.',
         );
+        setState(() => isCompleting = false);
       }
-      if (mounted) setState(() => isCompleting = false);
       return;
     }
 
@@ -150,6 +170,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     }
 
     if (!mounted) return;
+
     try {
       await widget.onCompleted();
     } catch (error, stackTrace) {

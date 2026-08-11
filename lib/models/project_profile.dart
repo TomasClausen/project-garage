@@ -16,6 +16,8 @@ class ProjectProfile {
   });
 
   static const defaultId = 'main_project';
+  static const primaryVehicleId = 'primary_vehicle';
+
   @HiveField(0)
   final String id;
   @HiveField(1)
