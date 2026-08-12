@@ -71,7 +71,8 @@ class AppUpdateProvider extends ChangeNotifier {
     final version = preferences.downloadedVersion;
     if (path == null || version == null) return;
     final file = File(path);
-    final safeFolder = file.parent.path.replaceAll('\\', '/').split('/').last == 'updates';
+    final safeFolder =
+        file.parent.path.replaceAll('\\', '/').split('/').last == 'updates';
     final valid =
         safeFolder &&
         path.toLowerCase().endsWith('.apk') &&
