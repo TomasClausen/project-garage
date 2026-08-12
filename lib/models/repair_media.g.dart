@@ -19,13 +19,14 @@ class RepairMediaAdapter extends TypeAdapter<RepairMedia> {
       stage: fields[3] as String,
       note: fields[4] as String,
       createdAt: fields[5] as String,
+      projectId: fields[6] as String? ?? '',
     );
   }
 
   @override
   void write(BinaryWriter writer, RepairMedia obj) {
     writer
-      ..writeByte(6)
+      ..writeByte(7)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -37,7 +38,9 @@ class RepairMediaAdapter extends TypeAdapter<RepairMedia> {
       ..writeByte(4)
       ..write(obj.note)
       ..writeByte(5)
-      ..write(obj.createdAt);
+      ..write(obj.createdAt)
+      ..writeByte(6)
+      ..write(obj.projectId);
   }
 
   @override

@@ -12,6 +12,7 @@ import '../models/app_preferences.dart';
 import '../models/project_profile.dart';
 import '../core/errors/app_error.dart';
 import 'app_logger.dart';
+import 'multi_garage_service.dart';
 
 class HiveService {
   static const String repairBox = "repairs";
@@ -85,6 +86,7 @@ class HiveService {
       () => Hive.openBox<ProjectProfile>(projectProfileBox),
     );
     await _open(settingsBox, () => Hive.openBox(settingsBox));
+    await MultiGarageService().initialize();
   }
 
   static Future<void> _open(

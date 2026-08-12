@@ -19,13 +19,14 @@ class ProjectProfileAdapter extends TypeAdapter<ProjectProfile> {
       onboardingCompleted: fields[5] as bool? ?? false,
       activeVehicleId: fields[6] as String? ?? '',
       appDataVersion: (fields[7] as num?)?.toInt() ?? 1,
+      identityColor: (fields[8] as num?)?.toInt() ?? 0xFF9F2436,
     );
   }
 
   @override
   void write(BinaryWriter writer, ProjectProfile value) {
     writer
-      ..writeByte(8)
+      ..writeByte(9)
       ..writeByte(0)
       ..write(value.id)
       ..writeByte(1)
@@ -41,6 +42,8 @@ class ProjectProfileAdapter extends TypeAdapter<ProjectProfile> {
       ..writeByte(6)
       ..write(value.activeVehicleId)
       ..writeByte(7)
-      ..write(value.appDataVersion);
+      ..write(value.appDataVersion)
+      ..writeByte(8)
+      ..write(value.identityColor);
   }
 }

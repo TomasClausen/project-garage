@@ -20,11 +20,15 @@ class AppSwipeAction {
 class AppSwipeActions extends StatefulWidget {
   final Widget child;
   final List<AppSwipeAction> actions;
+  final BorderRadius borderRadius;
 
   const AppSwipeActions({
     super.key,
     required this.child,
     required this.actions,
+    this.borderRadius = const BorderRadius.all(
+      Radius.circular(AppRadius.large),
+    ),
   });
 
   @override
@@ -51,7 +55,7 @@ class _AppSwipeActionsState extends State<AppSwipeActions> {
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(AppRadius.large),
+      borderRadius: widget.borderRadius,
       child: Stack(
         alignment: Alignment.centerRight,
         children: [

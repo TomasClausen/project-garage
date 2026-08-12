@@ -6,6 +6,7 @@ import '../services/hive_service.dart';
 import '../services/repair_deletion_service.dart';
 import '../services/restoration_service.dart';
 import '../services/timeline_service.dart';
+import '../services/multi_garage_service.dart';
 
 class RepairProvider extends ChangeNotifier {
   late Box<Repair> _box;
@@ -54,6 +55,9 @@ class RepairProvider extends ChangeNotifier {
       if (repair == null) {
         continue;
       }
+      if (!MultiGarageService.belongsToActiveProject(repair.projectId)) {
+        continue;
+      }
       final previousStatus = repair.status;
       _normalized(repair);
       _repairs.add(repair);
@@ -68,6 +72,7 @@ class RepairProvider extends ChangeNotifier {
   Future<void> refresh() => _loadRepairs();
 
   Future<void> addRepair(Repair repair) async {
+    repair.projectId = MultiGarageService.activeProjectId;
     _normalized(repair);
     await _box.put(repair.id, repair);
 
@@ -124,7 +129,9 @@ class RepairProvider extends ChangeNotifier {
         mediaBox: Hive.box(HiveService.repairMediaBox),
         timelineBox: Hive.box(HiveService.timelineBox),
       );
-      _repairs = _box.values.toList();
+      _repairs = _box.values
+          .where((x) => MultiGarageService.belongsToActiveProject(x.projectId))
+          .toList();
     }
 
     notifyListeners();

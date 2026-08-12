@@ -9,6 +9,7 @@ import '../models/project_profile.dart';
 import '../models/vehicle.dart';
 import '../services/app_logger.dart';
 import '../services/hive_service.dart';
+import '../services/multi_garage_service.dart';
 import '../theme/app_icons.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_text_styles.dart';
@@ -104,6 +105,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           engine: '',
           color: '',
           kilometers: int.tryParse(kilometers.text.trim()) ?? 0,
+          projectId: ProjectProfile.defaultId,
         ),
       );
       debugPrint('[startup] vehicle_saved');
@@ -115,7 +117,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     if (amount > 0) {
       await Hive.box<ProjectBudget>(HiveService.projectBudgetBox).put(
         ProjectBudget.defaultId,
-        ProjectBudget(totalBudget: amount, createdAt: now, updatedAt: now),
+        ProjectBudget(
+          totalBudget: amount,
+          createdAt: now,
+          updatedAt: now,
+          projectId: ProjectProfile.defaultId,
+        ),
       );
     }
     debugPrint('[startup] budget_saved');
@@ -128,6 +135,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         firstRunInitialized: true,
       ),
     );
+    await Hive.box<dynamic>(
+      HiveService.settingsBox,
+    ).put(MultiGarageService.activeProjectKey, ProjectProfile.defaultId);
     debugPrint('[startup] preferences_saved');
 
     await Hive.box<ProjectProfile>(HiveService.projectProfileBox).put(
@@ -141,6 +151,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         activeVehicleId: hasVehicle ? ProjectProfile.primaryVehicleId : '',
       ),
     );
+    await MultiGarageService().initialize();
     debugPrint('[startup] onboarding_completed_saved');
   }
 

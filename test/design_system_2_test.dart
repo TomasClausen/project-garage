@@ -113,18 +113,14 @@ void main() {
     expect(TimelineEventIconMapper.from('foto'), Icons.photo_outlined);
   });
 
-  test('navigation keeps five ordered destinations', () {
+  test('navigation keeps four ordered destinations and a central action', () {
     final source = File('lib/main_navigation.dart').readAsStringSync();
-    expect('NavigationDestination('.allMatches(source), hasLength(5));
+    expect('_item('.allMatches(source), hasLength(5));
+    expect(source, contains("label: 'Abrir acciones rápidas'"));
+    expect(source, contains('onTap: onAdd'));
     var cursor = -1;
-    for (final label in [
-      'Inicio',
-      'Vehículo',
-      'Taller',
-      'Finanzas',
-      'Bitácora',
-    ]) {
-      final next = source.indexOf("label: '$label'");
+    for (final label in ['INICIO', 'TRABAJOS', 'BITÁCORA', 'GARAGE']) {
+      final next = source.indexOf("'$label'");
       expect(next, greaterThan(cursor));
       cursor = next;
     }

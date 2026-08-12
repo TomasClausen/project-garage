@@ -9,14 +9,15 @@ import '../screens/maintenance_detail_screen.dart';
 import 'common/app_dialog.dart';
 import 'common/app_swipe_actions.dart';
 import '../theme/app_colors.dart';
-import '../theme/app_spacing.dart';
 import '../theme/app_text_styles.dart';
 import 'common/app_card.dart';
+import '../theme/garage_ds3.dart';
 
 class MaintenanceCard extends StatelessWidget {
   final Maintenance maintenance;
 
   final int currentKm;
+  final Color accentColor;
 
   const MaintenanceCard({
     super.key,
@@ -24,6 +25,7 @@ class MaintenanceCard extends StatelessWidget {
     required this.maintenance,
 
     required this.currentKm,
+    this.accentColor = GarageDs3.fallbackIdentity,
   });
 
   Future<void> _confirmDelete(BuildContext context) async {
@@ -76,110 +78,94 @@ class MaintenanceCard extends StatelessWidget {
         ),
       ],
       child: AppCard(
-        margin: const EdgeInsets.only(bottom: AppSpacing.lg),
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-
+        margin: const EdgeInsets.only(bottom: 7),
+        padding: const EdgeInsets.fromLTRB(10, 9, 3, 9),
+        technical: true,
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => MaintenanceDetailScreen(maintenance: maintenance),
+          ),
+        ),
+        child: Row(
           children: [
-            Text(maintenance.name, style: AppTextStyles.sectionTitle),
-
-            const SizedBox(height: 8),
-
-            Text(maintenance.category, style: AppTextStyles.caption),
-
-            const SizedBox(height: 15),
-
-            Text("Último cambio: ${maintenance.lastKm} km"),
-
-            Text("Próximo: $nextKm km"),
-
-            const SizedBox(height: 10),
-
-            Text(
-              _displayStatus(status),
-              style: AppTextStyles.label.copyWith(color: AppColors.warning),
+            Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: accentColor.withValues(alpha: .10),
+                borderRadius: BorderRadius.circular(3),
+                border: Border.all(color: accentColor.withValues(alpha: .45)),
+              ),
+              child: Icon(
+                Icons.fact_check_outlined,
+                color: accentColor,
+                size: 17,
+              ),
             ),
-
-            Text(message, style: AppTextStyles.caption),
-
-            const SizedBox(height: 15),
-
-            // EDITAR
-            SizedBox(
-              width: double.infinity,
-
-              child: FilledButton.icon(
-                icon: const Icon(Icons.edit),
-
-                label: const Text('Editar mantenimiento'),
-
-                onPressed: () async {
-                  await Navigator.push(
+            const SizedBox(width: 9),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    maintenance.category.toUpperCase(),
+                    style: TextStyle(
+                      color: accentColor,
+                      fontSize: 8,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: .6,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(maintenance.name, style: AppTextStyles.cardTitle),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${maintenance.lastKm} KM  →  $nextKm KM  /  ${_displayStatus(status).toUpperCase()}',
+                    style: const TextStyle(
+                      color: Colors.white54,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: .35,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    message,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.caption,
+                  ),
+                ],
+              ),
+            ),
+            PopupMenuButton<String>(
+              onSelected: (value) {
+                if (value == 'complete') {
+                  context.read<MaintenanceProvider>().completeMaintenance(
+                    maintenance,
+                    currentKm,
+                  );
+                } else if (value == 'edit') {
+                  Navigator.push(
                     context,
-
                     MaterialPageRoute(
                       builder: (_) =>
                           MaintenanceDetailScreen(maintenance: maintenance),
                     ),
                   );
-                },
-              ),
-            ),
-
-            const SizedBox(height: 10),
-
-            // REGISTRAR CAMBIO
-            SizedBox(
-              width: double.infinity,
-
-              child: FilledButton.icon(
-                icon: const Icon(Icons.check),
-
-                label: const Text('Registrar cambio'),
-
-                onPressed: () async {
-                  await context.read<MaintenanceProvider>().completeMaintenance(
-                    maintenance,
-
-                    currentKm,
-                  );
-                },
-              ),
-            ),
-
-            const SizedBox(height: 10),
-
-            // ELIMINAR
-            SizedBox(
-              width: double.infinity,
-
-              child: OutlinedButton.icon(
-                icon: const Icon(Icons.delete, color: AppColors.danger),
-
-                label: const Text(
-                  'Eliminar',
-                  style: TextStyle(color: AppColors.danger),
+                } else if (value == 'delete') {
+                  _confirmDelete(context);
+                }
+              },
+              itemBuilder: (_) => const [
+                PopupMenuItem(
+                  value: 'complete',
+                  child: Text('Registrar cambio'),
                 ),
-
-                onPressed: () async {
-                  final maintenanceProvider = context
-                      .read<MaintenanceProvider>();
-
-                  final confirm = await AppDialog.confirm(
-                    context,
-                    title: 'Eliminar mantenimiento',
-                    message: '¿Seguro que querés eliminar ${maintenance.name}?',
-                    confirmLabel: 'Eliminar',
-                    icon: Icons.delete_outline_rounded,
-                    destructive: true,
-                  );
-
-                  if (confirm == true) {
-                    await maintenanceProvider.deleteMaintenance(maintenance);
-                  }
-                },
-              ),
+                PopupMenuItem(value: 'edit', child: Text('Editar')),
+                PopupMenuItem(value: 'delete', child: Text('Eliminar')),
+              ],
             ),
           ],
         ),

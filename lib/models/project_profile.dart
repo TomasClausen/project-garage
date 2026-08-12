@@ -13,6 +13,7 @@ class ProjectProfile {
     required this.onboardingCompleted,
     this.activeVehicleId = '',
     this.appDataVersion = 1,
+    this.identityColor = 0xFF9F2436,
   });
 
   static const defaultId = 'main_project';
@@ -34,4 +35,8 @@ class ProjectProfile {
   final String activeVehicleId;
   @HiveField(7)
   final int appDataVersion;
+  @HiveField(8)
+  final int identityColor;
+
+  String? get vehicleId => activeVehicleId.isEmpty ? null : activeVehicleId;
 }

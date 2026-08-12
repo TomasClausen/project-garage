@@ -34,10 +34,11 @@ class PriorityChip extends StatelessWidget {
     final label = priority.trim().isEmpty ? 'Sin datos' : priority.trim();
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(100),
+        borderRadius: BorderRadius.circular(3),
+        border: Border.all(color: color.withValues(alpha: .48)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -49,7 +50,8 @@ class PriorityChip extends StatelessWidget {
             style: TextStyle(
               color: color,
               fontWeight: FontWeight.w700,
-              fontSize: 12,
+              fontSize: 9,
+              letterSpacing: .5,
             ),
           ),
         ],

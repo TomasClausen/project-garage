@@ -2,6 +2,7 @@ import 'package:hive_ce/hive_ce.dart';
 
 import '../models/timeline_event.dart';
 import 'hive_service.dart';
+import 'multi_garage_service.dart';
 
 class TimelineService {
   TimelineService._();
@@ -31,6 +32,7 @@ class TimelineService {
       tags: tags,
       isFeatured: isFeatured,
       repairId: repairId,
+      projectId: MultiGarageService.activeProjectId,
     );
 
     await Hive.box<TimelineEvent>(HiveService.timelineBox).put(event.id, event);
@@ -46,8 +48,9 @@ class TimelineService {
         .entries
         .where((entry) {
           final event = entry.value;
-          return (relatedId.isNotEmpty && event.relatedId == relatedId) ||
-              (repairId.isNotEmpty && event.repairId == repairId);
+          return MultiGarageService.belongsToActiveProject(event.projectId) &&
+              ((relatedId.isNotEmpty && event.relatedId == relatedId) ||
+                  (repairId.isNotEmpty && event.repairId == repairId));
         })
         .map((entry) => entry.key)
         .toList();

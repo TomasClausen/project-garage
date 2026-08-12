@@ -25,13 +25,14 @@ class TimelineEventAdapter extends TypeAdapter<TimelineEvent> {
       tags: (fields[8] as List?)?.cast<String>() ?? const [],
       isFeatured: fields[9] as bool? ?? false,
       repairId: fields[10] as String? ?? '',
+      projectId: fields[11] as String? ?? '',
     );
   }
 
   @override
   void write(BinaryWriter writer, TimelineEvent obj) {
     writer
-      ..writeByte(11)
+      ..writeByte(12)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -53,6 +54,8 @@ class TimelineEventAdapter extends TypeAdapter<TimelineEvent> {
       ..writeByte(9)
       ..write(obj.isFeatured)
       ..writeByte(10)
-      ..write(obj.repairId);
+      ..write(obj.repairId)
+      ..writeByte(11)
+      ..write(obj.projectId);
   }
 }

@@ -5,6 +5,7 @@ import 'package:hive_ce/hive_ce.dart';
 
 import '../models/timeline_event.dart';
 import '../services/hive_service.dart';
+import '../services/multi_garage_service.dart';
 
 class TimelineProvider extends ChangeNotifier {
   late final Box<TimelineEvent> _box;
@@ -36,7 +37,13 @@ class TimelineProvider extends ChangeNotifier {
   }
 
   void _reload() {
-    _events = _box.values.toList()..sort((a, b) => b.date.compareTo(a.date));
+    _events =
+        _box.values
+            .where(
+              (x) => MultiGarageService.belongsToActiveProject(x.projectId),
+            )
+            .toList()
+          ..sort((a, b) => b.date.compareTo(a.date));
 
     notifyListeners();
   }

@@ -11,6 +11,7 @@ class EmptyState extends StatelessWidget {
   final String message;
   final String? actionLabel;
   final VoidCallback? onAction;
+  final Color? accentColor;
 
   const EmptyState({
     super.key,
@@ -19,10 +20,12 @@ class EmptyState extends StatelessWidget {
     required this.message,
     this.actionLabel,
     this.onAction,
+    this.accentColor,
   });
 
   @override
   Widget build(BuildContext context) {
+    final accent = accentColor ?? AppColors.primary;
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 360),
@@ -35,10 +38,10 @@ class EmptyState extends StatelessWidget {
                 width: 72,
                 height: 72,
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.12),
+                  color: accent.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(AppRadius.large),
                 ),
-                child: Icon(icon, size: 34, color: AppColors.primary),
+                child: Icon(icon, size: 34, color: accent),
               ),
               const SizedBox(height: AppSpacing.xl),
               Text(
@@ -67,6 +70,7 @@ class EmptyState extends StatelessWidget {
                   onPressed: onAction,
                   isExpanded: false,
                   icon: Icons.add_rounded,
+                  backgroundColor: accent,
                 ),
               ],
             ],

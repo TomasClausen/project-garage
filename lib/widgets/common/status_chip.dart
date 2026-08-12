@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../theme/app_colors.dart';
-import '../../theme/app_radius.dart';
 
 enum StatusChipType { completed, inProgress, pending, noData }
 
@@ -43,10 +42,11 @@ class StatusChip extends StatelessWidget {
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(AppRadius.pill),
+        borderRadius: BorderRadius.circular(3),
+        border: Border.all(color: color.withValues(alpha: .48)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -58,7 +58,8 @@ class StatusChip extends StatelessWidget {
             style: TextStyle(
               color: color,
               fontWeight: FontWeight.w700,
-              fontSize: 12,
+              fontSize: 9,
+              letterSpacing: .5,
             ),
           ),
         ],

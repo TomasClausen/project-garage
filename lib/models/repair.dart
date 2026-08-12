@@ -34,6 +34,9 @@ class Repair {
   @HiveField(9)
   bool paid;
 
+  @HiveField(10)
+  String projectId;
+
   Repair({
     required this.id,
 
@@ -54,5 +57,6 @@ class Repair {
     required this.actualCost,
 
     required this.paid,
+    this.projectId = '',
   });
 }

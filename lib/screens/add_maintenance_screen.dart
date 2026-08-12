@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:hive_ce/hive_ce.dart';
 import 'package:provider/provider.dart';
 
 import '../models/maintenance.dart';
+import '../models/project_profile.dart';
 import '../providers/maintenance_provider.dart';
 import '../widgets/common/app_button.dart';
 import '../widgets/common/app_unsaved_changes_guard.dart';
+import '../services/hive_service.dart';
+import '../services/multi_garage_service.dart';
+import '../theme/garage_ds3.dart';
 
 class AddMaintenanceScreen extends StatefulWidget {
   const AddMaintenanceScreen({super.key});
@@ -79,92 +84,111 @@ class _AddMaintenanceScreenState extends State<AddMaintenanceScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ProjectProfile? profile;
+    for (final item in Hive.box<ProjectProfile>(
+      HiveService.projectProfileBox,
+    ).values) {
+      if (item.id == MultiGarageService.activeProjectId) {
+        profile = item;
+        break;
+      }
+    }
+    final identity = GarageDs3.identity(profile?.identityColor ?? 0);
+    final baseTheme = Theme.of(context);
     return AppUnsavedChangesGuard(
       hasChanges:
           !_saving &&
           (nameController.text.isNotEmpty ||
               intervalController.text.isNotEmpty ||
               notesController.text.isNotEmpty),
-      child: Scaffold(
-        appBar: AppBar(title: const Text("Agregar mantenimiento")),
+      child: Theme(
+        data: baseTheme.copyWith(
+          colorScheme: baseTheme.colorScheme.copyWith(primary: identity),
+        ),
+        child: Scaffold(
+          backgroundColor: GarageDs3.foundation,
+          appBar: AppBar(title: const Text("AGREGAR MANTENIMIENTO")),
 
-        body: Padding(
-          padding: const EdgeInsets.all(20),
+          body: Padding(
+            padding: const EdgeInsets.all(20),
 
-          child: Form(
-            key: _formKey,
-            autovalidateMode: AutovalidateMode.onUserInteraction,
-            child: SingleChildScrollView(
-              child: Column(
-                children: [
-                  TextFormField(
-                    controller: nameController,
-                    textInputAction: TextInputAction.next,
-                    decoration: const InputDecoration(labelText: "Nombre"),
-                    validator: (value) => value == null || value.trim().isEmpty
-                        ? 'Ingresá un nombre'
-                        : null,
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  DropdownButtonFormField<String>(
-                    initialValue: category,
-
-                    decoration: const InputDecoration(labelText: "Categoría"),
-
-                    items: categories.map((item) {
-                      return DropdownMenuItem(value: item, child: Text(item));
-                    }).toList(),
-
-                    onChanged: (value) {
-                      setState(() {
-                        category = value!;
-                      });
-                    },
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  TextFormField(
-                    controller: intervalController,
-                    textInputAction: TextInputAction.next,
-                    keyboardType: TextInputType.number,
-
-                    decoration: const InputDecoration(
-                      labelText: "Intervalo en km",
-
-                      hintText: "Ej: 10000",
+            child: Form(
+              key: _formKey,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    TextFormField(
+                      controller: nameController,
+                      textInputAction: TextInputAction.next,
+                      decoration: const InputDecoration(labelText: "Nombre"),
+                      validator: (value) =>
+                          value == null || value.trim().isEmpty
+                          ? 'Ingresá un nombre'
+                          : null,
                     ),
-                    validator: (value) =>
-                        (int.tryParse(value?.trim() ?? '') ?? 0) <= 0
-                        ? 'Ingresá un intervalo válido'
-                        : null,
-                  ),
 
-                  const SizedBox(height: 20),
+                    const SizedBox(height: 20),
 
-                  TextField(
-                    controller: notesController,
+                    DropdownButtonFormField<String>(
+                      initialValue: category,
 
-                    maxLines: 3,
+                      decoration: const InputDecoration(labelText: "Categoría"),
 
-                    decoration: const InputDecoration(labelText: "Notas"),
-                  ),
+                      items: categories.map((item) {
+                        return DropdownMenuItem(value: item, child: Text(item));
+                      }).toList(),
 
-                  const SizedBox(height: 30),
-
-                  SizedBox(
-                    width: double.infinity,
-
-                    child: AppButton(
-                      label: 'Guardar',
-                      icon: Icons.save_outlined,
-                      isLoading: _saving,
-                      onPressed: _saving || !_canSave ? null : _save,
+                      onChanged: (value) {
+                        setState(() {
+                          category = value!;
+                        });
+                      },
                     ),
-                  ),
-                ],
+
+                    const SizedBox(height: 20),
+
+                    TextFormField(
+                      controller: intervalController,
+                      textInputAction: TextInputAction.next,
+                      keyboardType: TextInputType.number,
+
+                      decoration: const InputDecoration(
+                        labelText: "Intervalo en km",
+
+                        hintText: "Ej: 10000",
+                      ),
+                      validator: (value) =>
+                          (int.tryParse(value?.trim() ?? '') ?? 0) <= 0
+                          ? 'Ingresá un intervalo válido'
+                          : null,
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    TextField(
+                      controller: notesController,
+
+                      maxLines: 3,
+
+                      decoration: const InputDecoration(labelText: "Notas"),
+                    ),
+
+                    const SizedBox(height: 30),
+
+                    SizedBox(
+                      width: double.infinity,
+
+                      child: AppButton(
+                        label: 'Guardar',
+                        icon: Icons.save_outlined,
+                        isLoading: _saving,
+                        onPressed: _saving || !_canSave ? null : _save,
+                        backgroundColor: identity,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

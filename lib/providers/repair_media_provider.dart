@@ -6,6 +6,7 @@ import 'package:hive_ce/hive_ce.dart';
 import '../models/repair_media.dart';
 import '../services/hive_service.dart';
 import '../services/timeline_service.dart';
+import '../services/multi_garage_service.dart';
 
 class RepairMediaProvider extends ChangeNotifier {
   late Box<RepairMedia> _box;
@@ -27,8 +28,13 @@ class RepairMediaProvider extends ChangeNotifier {
   Future<void> refresh() => _load();
 
   void _reload() {
-    _items = _box.values.toList()
-      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    _items =
+        _box.values
+            .where(
+              (x) => MultiGarageService.belongsToActiveProject(x.projectId),
+            )
+            .toList()
+          ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
     notifyListeners();
   }
@@ -54,7 +60,16 @@ class RepairMediaProvider extends ChangeNotifier {
     List<String> tags = const [],
     bool isFeatured = false,
   }) async {
-    await _box.put(media.id, media);
+    final scoped = RepairMedia(
+      id: media.id,
+      repairId: media.repairId,
+      path: media.path,
+      stage: media.stage,
+      note: media.note,
+      createdAt: media.createdAt,
+      projectId: MultiGarageService.activeProjectId,
+    );
+    await _box.put(scoped.id, scoped);
 
     await TimelineService.record(
       type: media.stage == 'invoice' ? 'invoice' : 'photo',

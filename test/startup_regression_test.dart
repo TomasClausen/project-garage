@@ -98,7 +98,8 @@ void main() {
         child: MaterialApp(home: ProjectGarageLogo(animate: true)),
       ),
     );
-    expect(find.byType(Image), findsOneWidget);
+    expect(find.byType(ProjectGarageLogo), findsOneWidget);
+    expect(find.byType(CustomPaint), findsWidgets);
     expect(find.byType(TweenAnimationBuilder<double>), findsNothing);
   });
 

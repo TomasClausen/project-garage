@@ -19,13 +19,14 @@ import '../models/vehicle.dart';
 import '../models/project_profile.dart';
 import 'backup_mappers.dart';
 import 'hive_service.dart';
+import 'multi_garage_service.dart';
 import '../core/errors/app_error.dart';
 import 'app_logger.dart';
 
 class BackupService {
   BackupService({Directory? workingDirectory, this.testFailureHook})
     : _workingDirectory = workingDirectory;
-  static const schemaVersion = 1;
+  static const schemaVersion = 2;
   static const appVersion = '1.0.0+17';
   static const maxBackupBytes = 500 * 1024 * 1024;
   final Directory? _workingDirectory;
@@ -50,6 +51,7 @@ class BackupService {
 
   Future<File> exportBackup({bool automatic = false}) async {
     try {
+      await MultiGarageService().initialize();
       return await _exportBackup(automatic: automatic);
     } catch (cause) {
       final error = AppError(
@@ -103,11 +105,14 @@ class BackupService {
       HiveService.repairBox: Hive.box<Repair>(
         HiveService.repairBox,
       ).values.map(RepairBackupMapper.toJson).toList(),
-      HiveService.vehicleBox: Hive.box<Vehicle>(HiveService.vehicleBox).values
+      HiveService.vehicleBox: Hive.box<Vehicle>(HiveService.vehicleBox)
+          .toMap()
+          .entries
           .map(
-            (x) => VehicleBackupMapper.toJson(
-              x,
-              imagePath: includeMedia(x.imagePath ?? ''),
+            (entry) => VehicleBackupMapper.toJson(
+              entry.value,
+              id: entry.key.toString(),
+              imagePath: includeMedia(entry.value.imagePath ?? ''),
             ),
           )
           .toList(),
@@ -434,7 +439,7 @@ class BackupService {
     for (final json in records(HiveService.vehicleBox)) {
       final f = Map<String, dynamic>.from(json['fields'] as Map);
       await Hive.box<Vehicle>(HiveService.vehicleBox).put(
-        'lancer',
+        json['id'] as String? ?? 'lancer',
         VehicleBackupMapper.fromJson(
           json,
           imagePath: mediaPath(f['imagePath']),
@@ -600,7 +605,7 @@ class BackupService {
           onboardingCompleted: true,
           activeVehicleId: Hive.box<Vehicle>(HiveService.vehicleBox).isEmpty
               ? ''
-              : 'lancer',
+              : Hive.box<Vehicle>(HiveService.vehicleBox).keys.first.toString(),
         ),
       );
     }
@@ -612,6 +617,10 @@ class BackupService {
           HiveService.settingsBox,
         ).put(json['id'], f['value']);
     }
+    await Hive.box<dynamic>(
+      HiveService.settingsBox,
+    ).delete(MultiGarageService.migrationKey);
+    await MultiGarageService().initialize();
     return BackupImportResult(
       success: true,
       importedRecords: count,

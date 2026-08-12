@@ -8,10 +8,9 @@ import '../models/vehicle.dart';
 import '../providers/vehicle_provider.dart';
 import '../services/image_service.dart';
 import '../theme/app_colors.dart';
-import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_text_styles.dart';
-import '../widgets/common/app_card.dart';
+import '../theme/garage_ds3.dart';
 
 class EditVehicleScreen extends StatefulWidget {
   const EditVehicleScreen({super.key});
@@ -167,17 +166,17 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
       hintText: hint,
       prefixIcon: Icon(icon),
       filled: true,
-      fillColor: AppColors.surfaceLight,
+      fillColor: GarageDs3.structure,
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppRadius.medium),
-        borderSide: BorderSide.none,
+        borderRadius: BorderRadius.circular(4),
+        borderSide: const BorderSide(color: GarageDs3.technicalLine),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppRadius.medium),
-        borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
+        borderRadius: BorderRadius.circular(4),
+        borderSide: const BorderSide(color: GarageDs3.technicalLine),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppRadius.medium),
+        borderRadius: BorderRadius.circular(4),
         borderSide: const BorderSide(color: AppColors.primary, width: 1.4),
       ),
     );
@@ -191,270 +190,276 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
         File(_imagePath!).existsSync();
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: GarageDs3.foundation,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
-        title: const Text('Editar vehículo'),
+        backgroundColor: GarageDs3.foundation,
+        title: const Text(
+          'EDITAR VEHÍCULO',
+          style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: .8),
+        ),
       ),
-      body: SafeArea(
-        child: Form(
-          key: _formKey,
-          autovalidateMode: AutovalidateMode.onUserInteraction,
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.xl,
-              AppSpacing.lg,
-              AppSpacing.xl,
-              AppSpacing.xxxl,
-            ),
-            children: [
-              Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: _pickImage,
-                  borderRadius: BorderRadius.circular(AppRadius.large),
-                  child: Ink(
-                    height: 220,
-                    decoration: BoxDecoration(
-                      color: AppColors.surfaceLight,
-                      borderRadius: BorderRadius.circular(AppRadius.large),
-                      image: hasImage
-                          ? DecorationImage(
-                              image: FileImage(File(_imagePath!)),
-                              fit: BoxFit.cover,
-                            )
-                          : null,
-                    ),
-                    child: Stack(
-                      children: [
-                        if (!hasImage)
-                          const Center(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.add_a_photo_outlined,
-                                  size: 42,
-                                  color: AppColors.secondaryText,
-                                ),
-                                SizedBox(height: AppSpacing.sm),
-                                Text(
-                                  'Agregar foto del vehículo',
-                                  style: AppTextStyles.subtitle,
-                                ),
-                              ],
-                            ),
-                          ),
-                        Positioned(
-                          right: AppSpacing.md,
-                          bottom: AppSpacing.md,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: AppSpacing.md,
-                              vertical: AppSpacing.sm,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.68),
-                              borderRadius: BorderRadius.circular(100),
-                            ),
-                            child: const Row(
-                              children: [
-                                Icon(
-                                  Icons.photo_camera_outlined,
-                                  size: 16,
-                                  color: Colors.white,
-                                ),
-                                SizedBox(width: 6),
-                                Text(
-                                  'Cambiar foto',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w700,
+      body: GarageBackdrop(
+        child: SafeArea(
+          child: Form(
+            key: _formKey,
+            autovalidateMode: AutovalidateMode.onUserInteraction,
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.xl,
+                AppSpacing.lg,
+                AppSpacing.xl,
+                AppSpacing.xxxl,
+              ),
+              children: [
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: _pickImage,
+                    borderRadius: BorderRadius.circular(5),
+                    child: Ink(
+                      height: 220,
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceLight,
+                        borderRadius: BorderRadius.circular(5),
+                        border: Border.all(color: GarageDs3.technicalLine),
+                        image: hasImage
+                            ? DecorationImage(
+                                image: FileImage(File(_imagePath!)),
+                                fit: BoxFit.cover,
+                              )
+                            : null,
+                      ),
+                      child: Stack(
+                        children: [
+                          if (!hasImage)
+                            const Center(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.add_a_photo_outlined,
+                                    size: 42,
+                                    color: AppColors.secondaryText,
                                   ),
-                                ),
-                              ],
+                                  SizedBox(height: AppSpacing.sm),
+                                  Text(
+                                    'Agregar foto del vehículo',
+                                    style: AppTextStyles.subtitle,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          Positioned(
+                            right: AppSpacing.md,
+                            bottom: AppSpacing.md,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppSpacing.md,
+                                vertical: AppSpacing.sm,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.68),
+                                borderRadius: BorderRadius.circular(100),
+                              ),
+                              child: const Row(
+                                children: [
+                                  Icon(
+                                    Icons.photo_camera_outlined,
+                                    size: 16,
+                                    color: Colors.white,
+                                  ),
+                                  SizedBox(width: 6),
+                                  Text(
+                                    'Cambiar foto',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(height: AppSpacing.xxl),
-              const _FormSectionHeader(
-                title: 'Identidad',
-                subtitle: 'Datos principales del vehículo',
-              ),
-              const SizedBox(height: AppSpacing.md),
-              AppCard(
-                child: Column(
-                  children: [
-                    TextFormField(
-                      controller: _brandController,
-                      textCapitalization: TextCapitalization.words,
-                      decoration: _decoration(
-                        label: 'Marca',
-                        icon: Icons.business_outlined,
-                      ),
-                      validator: (value) => _requiredText(value, 'la marca'),
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-                    TextFormField(
-                      controller: _modelController,
-                      textCapitalization: TextCapitalization.words,
-                      decoration: _decoration(
-                        label: 'Modelo',
-                        icon: Icons.directions_car_outlined,
-                      ),
-                      validator: (value) => _requiredText(value, 'el modelo'),
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-                    TextFormField(
-                      controller: _versionController,
-                      textCapitalization: TextCapitalization.words,
-                      decoration: _decoration(
-                        label: 'Versión',
-                        hint: 'Ej. GLXi',
-                        icon: Icons.badge_outlined,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-                    TextFormField(
-                      controller: _yearController,
-                      keyboardType: TextInputType.number,
-                      decoration: _decoration(
-                        label: 'Año',
-                        icon: Icons.calendar_today_outlined,
-                      ),
-                      validator: (value) => _positiveNumber(
-                        value,
-                        'el año',
-                        min: 1886,
-                        max: DateTime.now().year + 1,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-                    TextFormField(
-                      controller: _colorController,
-                      textCapitalization: TextCapitalization.words,
-                      decoration: _decoration(
-                        label: 'Color',
-                        icon: Icons.palette_outlined,
-                      ),
-                      validator: (value) => _requiredText(value, 'el color'),
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-                    TextFormField(
-                      controller: _kilometersController,
-                      keyboardType: TextInputType.number,
-                      decoration: _decoration(
-                        label: 'Kilometraje',
-                        icon: Icons.speed_rounded,
-                      ),
-                      validator: (value) =>
-                          _positiveNumber(value, 'el kilometraje'),
-                    ),
-                  ],
+                const SizedBox(height: AppSpacing.xxl),
+                const _FormSectionHeader(
+                  title: 'Identidad',
+                  subtitle: 'Datos principales del vehículo',
                 ),
-              ),
-              const SizedBox(height: AppSpacing.xxl),
-              const _FormSectionHeader(
-                title: 'Especificaciones',
-                subtitle: 'Configuración mecánica principal',
-              ),
-              const SizedBox(height: AppSpacing.md),
-              AppCard(
-                child: Column(
-                  children: [
-                    TextFormField(
-                      controller: _engineController,
-                      textCapitalization: TextCapitalization.sentences,
-                      decoration: _decoration(
-                        label: 'Motor',
-                        icon: Icons.settings_outlined,
+                const SizedBox(height: AppSpacing.md),
+                GaragePanel(
+                  child: Column(
+                    children: [
+                      TextFormField(
+                        controller: _brandController,
+                        textCapitalization: TextCapitalization.words,
+                        decoration: _decoration(
+                          label: 'Marca',
+                          icon: Icons.business_outlined,
+                        ),
+                        validator: (value) => _requiredText(value, 'la marca'),
                       ),
-                      validator: (value) => _requiredText(value, 'el motor'),
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-                    TextFormField(
-                      controller: _transmissionController,
-                      textCapitalization: TextCapitalization.words,
-                      decoration: _decoration(
-                        label: 'Transmisión',
-                        hint: 'Ej. Manual',
-                        icon: Icons.swap_horiz_rounded,
+                      const SizedBox(height: AppSpacing.lg),
+                      TextFormField(
+                        controller: _modelController,
+                        textCapitalization: TextCapitalization.words,
+                        decoration: _decoration(
+                          label: 'Modelo',
+                          icon: Icons.directions_car_outlined,
+                        ),
+                        validator: (value) => _requiredText(value, 'el modelo'),
                       ),
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-                    TextFormField(
-                      controller: _fuelTypeController,
-                      textCapitalization: TextCapitalization.words,
-                      decoration: _decoration(
-                        label: 'Combustible',
-                        hint: 'Ej. Nafta',
-                        icon: Icons.local_gas_station_outlined,
+                      const SizedBox(height: AppSpacing.lg),
+                      TextFormField(
+                        controller: _versionController,
+                        textCapitalization: TextCapitalization.words,
+                        decoration: _decoration(
+                          label: 'Versión',
+                          hint: 'Ej. GLXi',
+                          icon: Icons.badge_outlined,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-                    TextFormField(
-                      controller: _driveTypeController,
-                      textCapitalization: TextCapitalization.words,
-                      decoration: _decoration(
-                        label: 'Tracción',
-                        hint: 'Ej. Delantera',
-                        icon: Icons.tire_repair_outlined,
+                      const SizedBox(height: AppSpacing.lg),
+                      TextFormField(
+                        controller: _yearController,
+                        keyboardType: TextInputType.number,
+                        decoration: _decoration(
+                          label: 'Año',
+                          icon: Icons.calendar_today_outlined,
+                        ),
+                        validator: (value) => _positiveNumber(
+                          value,
+                          'el año',
+                          min: 1886,
+                          max: DateTime.now().year + 1,
+                        ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: AppSpacing.lg),
+                      TextFormField(
+                        controller: _colorController,
+                        textCapitalization: TextCapitalization.words,
+                        decoration: _decoration(
+                          label: 'Color',
+                          icon: Icons.palette_outlined,
+                        ),
+                        validator: (value) => _requiredText(value, 'el color'),
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                      TextFormField(
+                        controller: _kilometersController,
+                        keyboardType: TextInputType.number,
+                        decoration: _decoration(
+                          label: 'Kilometraje',
+                          icon: Icons.speed_rounded,
+                        ),
+                        validator: (value) =>
+                            _positiveNumber(value, 'el kilometraje'),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: AppSpacing.xxl),
-              const _FormSectionHeader(
-                title: 'Identificación',
-                subtitle: 'Documentación básica del vehículo',
-              ),
-              const SizedBox(height: AppSpacing.md),
-              AppCard(
-                child: Column(
-                  children: [
-                    TextFormField(
-                      controller: _licensePlateController,
-                      textCapitalization: TextCapitalization.characters,
-                      decoration: _decoration(
-                        label: 'Patente',
-                        icon: Icons.confirmation_number_outlined,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-                    TextFormField(
-                      controller: _vinController,
-                      textCapitalization: TextCapitalization.characters,
-                      decoration: _decoration(
-                        label: 'VIN / Chasis',
-                        icon: Icons.fingerprint_rounded,
-                      ),
-                    ),
-                  ],
+                const SizedBox(height: AppSpacing.xxl),
+                const _FormSectionHeader(
+                  title: 'Especificaciones',
+                  subtitle: 'Configuración mecánica principal',
                 ),
-              ),
-              const SizedBox(height: AppSpacing.xxl),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton.icon(
-                  onPressed: _saving ? null : _save,
-                  icon: _saving
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.save_rounded),
-                  label: Text(_saving ? 'Guardando...' : 'Guardar vehículo'),
+                const SizedBox(height: AppSpacing.md),
+                GaragePanel(
+                  child: Column(
+                    children: [
+                      TextFormField(
+                        controller: _engineController,
+                        textCapitalization: TextCapitalization.sentences,
+                        decoration: _decoration(
+                          label: 'Motor',
+                          icon: Icons.settings_outlined,
+                        ),
+                        validator: (value) => _requiredText(value, 'el motor'),
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                      TextFormField(
+                        controller: _transmissionController,
+                        textCapitalization: TextCapitalization.words,
+                        decoration: _decoration(
+                          label: 'Transmisión',
+                          hint: 'Ej. Manual',
+                          icon: Icons.swap_horiz_rounded,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                      TextFormField(
+                        controller: _fuelTypeController,
+                        textCapitalization: TextCapitalization.words,
+                        decoration: _decoration(
+                          label: 'Combustible',
+                          hint: 'Ej. Nafta',
+                          icon: Icons.local_gas_station_outlined,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                      TextFormField(
+                        controller: _driveTypeController,
+                        textCapitalization: TextCapitalization.words,
+                        decoration: _decoration(
+                          label: 'Tracción',
+                          hint: 'Ej. Delantera',
+                          icon: Icons.tire_repair_outlined,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(height: AppSpacing.xxl),
+                const _FormSectionHeader(
+                  title: 'Identificación',
+                  subtitle: 'Documentación básica del vehículo',
+                ),
+                const SizedBox(height: AppSpacing.md),
+                GaragePanel(
+                  child: Column(
+                    children: [
+                      TextFormField(
+                        controller: _licensePlateController,
+                        textCapitalization: TextCapitalization.characters,
+                        decoration: _decoration(
+                          label: 'Patente',
+                          icon: Icons.confirmation_number_outlined,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                      TextFormField(
+                        controller: _vinController,
+                        textCapitalization: TextCapitalization.characters,
+                        decoration: _decoration(
+                          label: 'VIN / Chasis',
+                          icon: Icons.fingerprint_rounded,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xxl),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: _saving ? null : _save,
+                    icon: _saving
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.save_rounded),
+                    label: Text(_saving ? 'Guardando...' : 'Guardar vehículo'),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

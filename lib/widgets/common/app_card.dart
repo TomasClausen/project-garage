@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../theme/app_colors.dart';
-import '../../theme/app_radius.dart';
 import '../../theme/app_shadows.dart';
-import '../../theme/app_spacing.dart';
 import '../../theme/app_motion.dart';
 import 'technical_card_border.dart';
 
@@ -35,7 +33,7 @@ class AppCard extends StatelessWidget {
   const AppCard({
     super.key,
     required this.child,
-    this.padding = const EdgeInsets.all(AppSpacing.xl),
+    this.padding = const EdgeInsets.all(12),
     this.margin,
     this.width,
     this.onTap,
@@ -64,7 +62,7 @@ class AppCard extends StatelessWidget {
         variant == AppCardVariant.standard ||
         variant == AppCardVariant.elevated ||
         variant == AppCardVariant.image;
-    final radius = BorderRadius.circular(AppRadius.large);
+    final radius = BorderRadius.circular(5);
     final borderColor = selected
         ? AppColors.borderSelected
         : isNeutral

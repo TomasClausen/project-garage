@@ -4,6 +4,7 @@ import 'package:hive_ce/hive_ce.dart';
 import '../models/maintenance.dart';
 import '../services/hive_service.dart';
 import '../services/timeline_service.dart';
+import '../services/multi_garage_service.dart';
 
 class MaintenanceProvider extends ChangeNotifier {
   late Box<Maintenance> _box;
@@ -24,7 +25,9 @@ class MaintenanceProvider extends ChangeNotifier {
     final initialized =
         settings.get('maintenance_initialized', defaultValue: false) as bool;
 
-    _maintenances = _box.values.toList();
+    _maintenances = _box.values
+        .where((x) => MultiGarageService.belongsToActiveProject(x.projectId))
+        .toList();
 
     if (!initialized) {
       await settings.put('maintenance_initialized', true);
@@ -36,9 +39,12 @@ class MaintenanceProvider extends ChangeNotifier {
   Future<void> refresh() => _loadMaintenances();
 
   Future<void> addMaintenance(Maintenance maintenance) async {
+    maintenance.projectId = MultiGarageService.activeProjectId;
     await _box.put(maintenance.id, maintenance);
 
-    _maintenances = _box.values.toList();
+    _maintenances = _box.values
+        .where((x) => MultiGarageService.belongsToActiveProject(x.projectId))
+        .toList();
 
     notifyListeners();
   }
@@ -90,7 +96,9 @@ class MaintenanceProvider extends ChangeNotifier {
       await _box.delete(key);
     }
 
-    _maintenances = _box.values.toList();
+    _maintenances = _box.values
+        .where((x) => MultiGarageService.belongsToActiveProject(x.projectId))
+        .toList();
 
     notifyListeners();
   }

@@ -4,6 +4,7 @@ import 'app_colors.dart';
 import 'app_radius.dart';
 import 'app_spacing.dart';
 import 'app_text_styles.dart';
+import 'garage_ds3.dart';
 
 class AppTheme {
   AppTheme._();
@@ -13,28 +14,28 @@ class AppTheme {
         ColorScheme.fromSeed(
           seedColor: AppColors.primary,
           brightness: Brightness.dark,
-          surface: AppColors.surface,
+          surface: GarageDs3.structure,
           error: AppColors.danger,
         ).copyWith(
           primary: AppColors.primary,
           onPrimary: AppColors.text,
-          surface: AppColors.surface,
+          surface: GarageDs3.structure,
           onSurface: AppColors.text,
           outline: AppColors.border,
           outlineVariant: AppColors.divider,
         );
 
     final inputBorder = OutlineInputBorder(
-      borderRadius: BorderRadius.circular(AppRadius.medium),
-      borderSide: const BorderSide(color: AppColors.border),
+      borderRadius: BorderRadius.circular(4),
+      borderSide: const BorderSide(color: GarageDs3.technicalLine),
     );
 
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
       colorScheme: scheme,
-      scaffoldBackgroundColor: AppColors.background,
-      canvasColor: AppColors.surface,
+      scaffoldBackgroundColor: GarageDs3.foundation,
+      canvasColor: GarageDs3.structure,
       dividerColor: AppColors.divider,
       splashColor: AppColors.primary.withValues(alpha: 0.08),
       highlightColor: AppColors.primary.withValues(alpha: 0.04),
@@ -48,7 +49,7 @@ class AppTheme {
         labelLarge: AppTextStyles.label,
       ),
       appBarTheme: const AppBarTheme(
-        backgroundColor: AppColors.background,
+        backgroundColor: GarageDs3.foundation,
         foregroundColor: AppColors.text,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
@@ -83,10 +84,10 @@ class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.surfaceLight,
+        fillColor: GarageDs3.structure,
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.lg,
-          vertical: AppSpacing.lg,
+          horizontal: 12,
+          vertical: 13,
         ),
         labelStyle: const TextStyle(color: AppColors.secondaryText),
         hintStyle: const TextStyle(color: AppColors.disabledText),
@@ -110,8 +111,8 @@ class AppTheme {
           foregroundColor: AppColors.text,
           backgroundColor: AppColors.primary,
           textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.medium),
+          shape: const BeveledRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(3)),
           ),
         ),
       ),
@@ -120,8 +121,8 @@ class AppTheme {
           minimumSize: const Size(48, 48),
           foregroundColor: AppColors.text,
           side: const BorderSide(color: AppColors.border),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.medium),
+          shape: const BeveledRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(3)),
           ),
         ),
       ),
@@ -142,7 +143,7 @@ class AppTheme {
         selectedColor: AppColors.primary.withValues(alpha: 0.18),
         disabledColor: AppColors.surfaceLight.withValues(alpha: 0.5),
         side: const BorderSide(color: AppColors.border),
-        shape: const StadiumBorder(),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(3)),
         labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
       ),
@@ -163,27 +164,27 @@ class AppTheme {
         linearTrackColor: AppColors.surfaceLight,
       ),
       dialogTheme: DialogThemeData(
-        backgroundColor: AppColors.surfaceElevated,
+        backgroundColor: GarageDs3.structureRaised,
         surfaceTintColor: Colors.transparent,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.large),
-          side: const BorderSide(color: AppColors.border),
+        shape: const BeveledRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(5)),
+          side: BorderSide(color: GarageDs3.technicalLine),
         ),
       ),
       popupMenuTheme: PopupMenuThemeData(
-        color: AppColors.surfaceElevated,
+        color: GarageDs3.structureRaised,
         surfaceTintColor: Colors.transparent,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.medium),
-          side: const BorderSide(color: AppColors.border),
+        shape: const BeveledRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(4)),
+          side: BorderSide(color: GarageDs3.technicalLine),
         ),
       ),
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
         backgroundColor: AppColors.primary,
         foregroundColor: AppColors.text,
         elevation: 2,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(AppRadius.medium)),
+        shape: BeveledRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(4)),
         ),
       ),
       tooltipTheme: TooltipThemeData(

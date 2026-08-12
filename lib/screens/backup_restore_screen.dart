@@ -14,6 +14,7 @@ import '../providers/repair_provider.dart';
 import '../providers/timeline_provider.dart';
 import '../providers/vehicle_provider.dart';
 import '../theme/app_spacing.dart';
+import '../theme/garage_ds3.dart';
 import '../widgets/common/app_card.dart';
 import '../widgets/common/app_dialog.dart';
 import '../widgets/common/app_snackbar.dart';
@@ -121,121 +122,129 @@ class BackupRestoreScreen extends StatelessWidget {
       BackupOperationState.calculating,
     }.contains(provider.state);
     return Scaffold(
-      appBar: AppBar(title: const Text('Backup y restauración')),
-      body: ListView(
-        padding: const EdgeInsets.all(AppSpacing.xl),
-        children: [
-          AppCard(
-            variant: AppCardVariant.highlight,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Protegé tu proyecto',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Incluye datos, fotos, evidencias, comprobantes, preferencias y metadatos.',
-                ),
-                if (busy) ...[
-                  const SizedBox(height: 16),
-                  const LinearProgressIndicator(),
-                ],
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          FilledButton.icon(
-            onPressed: busy
-                ? null
-                : () async {
-                    final file = await provider.createBackup();
-                    if (file != null && context.mounted) {
-                      AppSnackbar.success(
-                        context,
-                        'Backup verificado y guardado',
-                      );
-                    }
-                  },
-            icon: const Icon(Icons.backup_rounded),
-            label: const Text('Crear backup ahora'),
-          ),
-          const SizedBox(height: 12),
-          OutlinedButton.icon(
-            onPressed: busy ? null : () => _pick(context),
-            icon: const Icon(Icons.upload_file_rounded),
-            label: const Text('Importar backup'),
-          ),
-          if (provider.lastBackup != null) ...[
-            const SizedBox(height: 24),
+      backgroundColor: GarageDs3.foundation,
+      appBar: AppBar(
+        title: const Text(
+          'BACKUP / RESTAURACIÓN',
+          style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: .7),
+        ),
+      ),
+      body: GarageBackdrop(
+        child: ListView(
+          padding: const EdgeInsets.all(AppSpacing.xl),
+          children: [
             AppCard(
+              variant: AppCardVariant.highlight,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Último backup',
-                    style: TextStyle(fontWeight: FontWeight.w800),
+                    'Protegé tu proyecto',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
                   ),
                   const SizedBox(height: 8),
-                  Text(provider.lastBackup!.uri.pathSegments.last),
-                  const SizedBox(height: 12),
-                  OutlinedButton.icon(
-                    onPressed: () => SharePlus.instance.share(
-                      ShareParams(
-                        files: [XFile(provider.lastBackup!.path)],
-                        title: 'Backup Project Garage',
-                      ),
-                    ),
-                    icon: const Icon(Icons.share_rounded),
-                    label: const Text('Compartir'),
+                  const Text(
+                    'Incluye datos, fotos, evidencias, comprobantes, preferencias y metadatos.',
                   ),
-                  OutlinedButton.icon(
-                    onPressed: () async {
-                      final destination = await FilePicker.platform.saveFile(
-                        dialogTitle: 'Guardar backup de Project Garage',
-                        fileName: provider.lastBackup!.uri.pathSegments.last,
-                        type: FileType.custom,
-                        allowedExtensions: ['pgarage'],
-                        bytes: await provider.lastBackup!.readAsBytes(),
-                      );
-                      if (destination != null && context.mounted) {
-                        AppSnackbar.success(context, 'Backup guardado');
-                      }
-                    },
-                    icon: const Icon(Icons.save_alt_rounded),
-                    label: const Text('Guardar en…'),
-                  ),
-                  TextButton.icon(
-                    onPressed: () async {
-                      final confirmed = await AppDialog.confirm(
-                        context,
-                        title: 'Borrar backup local',
-                        message: 'Esta copia local será eliminada.',
-                        confirmLabel: 'Borrar',
-                        icon: Icons.delete_outline_rounded,
-                        destructive: true,
-                      );
-                      if (confirmed && await provider.lastBackup!.exists()) {
-                        await provider.lastBackup!.delete();
-                        provider.reset();
-                      }
-                    },
-                    icon: const Icon(Icons.delete_outline_rounded),
-                    label: const Text('Borrar copia local'),
-                  ),
+                  if (busy) ...[
+                    const SizedBox(height: 16),
+                    const LinearProgressIndicator(),
+                  ],
                 ],
               ),
             ),
-          ],
-          if (provider.validation?.warnings.isNotEmpty == true) ...[
             const SizedBox(height: 16),
-            AppCard(
-              variant: AppCardVariant.warning,
-              child: Text(provider.validation!.warnings.join('\n')),
+            FilledButton.icon(
+              onPressed: busy
+                  ? null
+                  : () async {
+                      final file = await provider.createBackup();
+                      if (file != null && context.mounted) {
+                        AppSnackbar.success(
+                          context,
+                          'Backup verificado y guardado',
+                        );
+                      }
+                    },
+              icon: const Icon(Icons.backup_rounded),
+              label: const Text('Crear backup ahora'),
             ),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: busy ? null : () => _pick(context),
+              icon: const Icon(Icons.upload_file_rounded),
+              label: const Text('Importar backup'),
+            ),
+            if (provider.lastBackup != null) ...[
+              const SizedBox(height: 24),
+              AppCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Último backup',
+                      style: TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(provider.lastBackup!.uri.pathSegments.last),
+                    const SizedBox(height: 12),
+                    OutlinedButton.icon(
+                      onPressed: () => SharePlus.instance.share(
+                        ShareParams(
+                          files: [XFile(provider.lastBackup!.path)],
+                          title: 'Backup Project Garage',
+                        ),
+                      ),
+                      icon: const Icon(Icons.share_rounded),
+                      label: const Text('Compartir'),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: () async {
+                        final destination = await FilePicker.platform.saveFile(
+                          dialogTitle: 'Guardar backup de Project Garage',
+                          fileName: provider.lastBackup!.uri.pathSegments.last,
+                          type: FileType.custom,
+                          allowedExtensions: ['pgarage'],
+                          bytes: await provider.lastBackup!.readAsBytes(),
+                        );
+                        if (destination != null && context.mounted) {
+                          AppSnackbar.success(context, 'Backup guardado');
+                        }
+                      },
+                      icon: const Icon(Icons.save_alt_rounded),
+                      label: const Text('Guardar en…'),
+                    ),
+                    TextButton.icon(
+                      onPressed: () async {
+                        final confirmed = await AppDialog.confirm(
+                          context,
+                          title: 'Borrar backup local',
+                          message: 'Esta copia local será eliminada.',
+                          confirmLabel: 'Borrar',
+                          icon: Icons.delete_outline_rounded,
+                          destructive: true,
+                        );
+                        if (confirmed && await provider.lastBackup!.exists()) {
+                          await provider.lastBackup!.delete();
+                          provider.reset();
+                        }
+                      },
+                      icon: const Icon(Icons.delete_outline_rounded),
+                      label: const Text('Borrar copia local'),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            if (provider.validation?.warnings.isNotEmpty == true) ...[
+              const SizedBox(height: 16),
+              AppCard(
+                variant: AppCardVariant.warning,
+                child: Text(provider.validation!.warnings.join('\n')),
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }

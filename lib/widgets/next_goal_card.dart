@@ -1,136 +1,139 @@
 import 'package:flutter/material.dart';
-import 'common/app_progress_bar.dart';
 
 import '../core/formatters/money_formatter.dart';
 import '../models/repair.dart';
 import '../theme/app_colors.dart';
-import '../theme/app_radius.dart';
+import '../theme/app_icons.dart';
+import '../theme/garage_ds3.dart';
 
 class NextGoalCard extends StatelessWidget {
+  const NextGoalCard({
+    super.key,
+    required this.repair,
+    this.onTap,
+    this.identity = GarageDs3.fallbackIdentity,
+  });
+
   final Repair? repair;
   final VoidCallback? onTap;
-
-  const NextGoalCard({super.key, required this.repair, this.onTap});
-
-  static const Color _cardColor = AppColors.surface;
-  static const Color _surfaceColor = AppColors.surfaceElevated;
-  static const Color _primaryColor = AppColors.primary;
-  static const Color _secondaryTextColor = AppColors.secondaryText;
+  final Color identity;
 
   @override
   Widget build(BuildContext context) {
-    final currentRepair = repair;
+    final item = repair;
+    if (item == null) return _EmptyNextGoalCard(identity: identity);
 
-    if (currentRepair == null) {
-      return const _EmptyNextGoalCard();
-    }
+    final progress = item.progress.clamp(0.0, 1.0);
+    final critical = item.priority.trim().toLowerCase() == 'alta';
+    final accent = progress >= 1
+        ? AppColors.success
+        : critical
+        ? AppColors.danger
+        : identity;
 
-    final progress = currentRepair.progress.clamp(0.0, 1.0);
-
-    return Material(
-      color: Colors.transparent,
+    return Semantics(
+      button: onTap != null,
+      label: 'Próximo objetivo: ${item.name}',
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(AppRadius.large),
-        child: Ink(
-          width: double.infinity,
-          padding: const EdgeInsets.all(20),
+        borderRadius: BorderRadius.circular(4),
+        child: Container(
           decoration: BoxDecoration(
-            color: _cardColor,
-            borderRadius: BorderRadius.circular(AppRadius.large),
-            border: Border.all(color: _primaryColor.withValues(alpha: 0.25)),
+            color: GarageDs3.structure,
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(
+              color: critical
+                  ? AppColors.danger.withValues(alpha: .65)
+                  : GarageDs3.technicalLine,
+            ),
           ),
+          padding: const EdgeInsets.fromLTRB(11, 10, 9, 9),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _GoalHeader(priority: currentRepair.priority),
-              const SizedBox(height: 20),
-              Text(
-                currentRepair.name,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 22,
-                  height: 1.1,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 8),
               Row(
                 children: [
-                  const Icon(
-                    Icons.category_outlined,
-                    size: 15,
-                    color: _secondaryTextColor,
-                  ),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      currentRepair.category,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: _secondaryTextColor,
-                      ),
+                  Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      color: GarageDs3.foundationRaised,
+                      borderRadius: BorderRadius.circular(3),
+                      border: Border.all(color: accent.withValues(alpha: .45)),
+                    ),
+                    child: Icon(
+                      RepairCategoryIconMapper.from(item.category),
+                      size: 17,
+                      color: accent,
                     ),
                   ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              _ProgressSection(progress: progress),
-              const SizedBox(height: 18),
-              Row(
-                children: [
+                  const SizedBox(width: 9),
                   Expanded(
-                    child: _GoalMetric(
-                      icon: Icons.payments_outlined,
-                      label: 'Costo estimado',
-                      value: MoneyFormatter.format(currentRepair.estimatedCost),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _GoalMetric(
-                      icon: Icons.priority_high_rounded,
-                      label: 'Prioridad',
-                      value: currentRepair.priority,
-                    ),
-                  ),
-                ],
-              ),
-              if (onTap != null) ...[
-                const SizedBox(height: 18),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 13),
-                  decoration: BoxDecoration(
-                    color: _primaryColor,
-                    borderRadius: BorderRadius.circular(AppRadius.medium),
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'Ver reparación',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          item.name.toUpperCase(),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: .45,
+                          ),
                         ),
-                      ),
-                      SizedBox(width: 6),
-                      Icon(
-                        Icons.arrow_forward_rounded,
-                        size: 18,
-                        color: Colors.white,
-                      ),
-                    ],
+                        const SizedBox(height: 3),
+                        Text(
+                          '${item.category.toUpperCase()}  /  ${item.status.toUpperCase()}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: accent,
+                            fontSize: 7.5,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: .65,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                  if (critical) _TechnicalLabel(text: 'CRÍTICO', color: accent),
+                  const SizedBox(width: 8),
+                  Text(
+                    '${(progress * 100).round()}%',
+                    style: TextStyle(
+                      color: accent,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 9),
+              Row(
+                children: [
+                  Expanded(
+                    child: SegmentedGarageProgress(
+                      value: progress,
+                      color: accent,
+                      segments: 14,
+                      height: 5,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    MoneyFormatter.format(item.estimatedCost),
+                    style: const TextStyle(
+                      color: Colors.white60,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  if (onTap != null) ...[
+                    const SizedBox(width: 7),
+                    Icon(Icons.chevron_right, color: accent, size: 18),
+                  ],
+                ],
+              ),
             ],
           ),
         ),
@@ -139,227 +142,61 @@ class NextGoalCard extends StatelessWidget {
   }
 }
 
-class _GoalHeader extends StatelessWidget {
-  final String priority;
-
-  const _GoalHeader({required this.priority});
-
+class _TechnicalLabel extends StatelessWidget {
+  const _TechnicalLabel({required this.text, required this.color});
+  final String text;
+  final Color color;
   @override
-  Widget build(BuildContext context) {
-    return Row(
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 3),
+    decoration: BoxDecoration(
+      color: color.withValues(alpha: .10),
+      border: Border.all(color: color.withValues(alpha: .5)),
+      borderRadius: BorderRadius.circular(2),
+    ),
+    child: Text(
+      text,
+      style: TextStyle(
+        color: color,
+        fontSize: 6.5,
+        fontWeight: FontWeight.w900,
+        letterSpacing: .6,
+      ),
+    ),
+  );
+}
+
+class _EmptyNextGoalCard extends StatelessWidget {
+  const _EmptyNextGoalCard({required this.identity});
+  final Color identity;
+  @override
+  Widget build(BuildContext context) => GaragePanel(
+    padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 10),
+    child: Row(
       children: [
-        Container(
-          width: 42,
-          height: 42,
-          decoration: BoxDecoration(
-            color: NextGoalCard._primaryColor.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(AppRadius.small),
-          ),
-          child: const Icon(
-            Icons.flag_outlined,
-            color: NextGoalCard._primaryColor,
-          ),
-        ),
-        const SizedBox(width: 12),
+        Icon(Icons.flag_outlined, size: 18, color: identity),
+        const SizedBox(width: 9),
         const Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Próximo objetivo',
+                'SIN OBJETIVO ACTIVO',
                 style: TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
+                  fontSize: 9,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: .7,
                 ),
               ),
               SizedBox(height: 3),
               Text(
-                'La siguiente tarea recomendada',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: NextGoalCard._secondaryTextColor,
-                ),
+                'Agregá un trabajo para iniciar el plan.',
+                style: TextStyle(color: Colors.white38, fontSize: 9),
               ),
             ],
           ),
         ),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          decoration: BoxDecoration(
-            color: NextGoalCard._primaryColor.withValues(alpha: 0.14),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Text(
-            priority.toUpperCase(),
-            style: const TextStyle(
-              fontSize: 10,
-              letterSpacing: 0.7,
-              fontWeight: FontWeight.w700,
-              color: NextGoalCard._primaryColor,
-            ),
-          ),
-        ),
       ],
-    );
-  }
-}
-
-class _ProgressSection extends StatelessWidget {
-  final double progress;
-
-  const _ProgressSection({required this.progress});
-
-  @override
-  Widget build(BuildContext context) {
-    final percentage = (progress * 100).round();
-
-    return Column(
-      children: [
-        Row(
-          children: [
-            const Text(
-              'Progreso',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: NextGoalCard._secondaryTextColor,
-              ),
-            ),
-            const Spacer(),
-            Text(
-              '$percentage%',
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        AppProgressBar(
-          value: progress,
-          height: 8,
-          color: NextGoalCard._primaryColor,
-        ),
-      ],
-    );
-  }
-}
-
-class _GoalMetric extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-
-  const _GoalMetric({
-    required this.icon,
-    required this.label,
-    required this.value,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: NextGoalCard._surfaceColor,
-        borderRadius: BorderRadius.circular(AppRadius.medium),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: 19, color: Colors.white70),
-          const SizedBox(height: 10),
-          Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 11,
-              color: NextGoalCard._secondaryTextColor,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _EmptyNextGoalCard extends StatelessWidget {
-  const _EmptyNextGoalCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: NextGoalCard._cardColor,
-        borderRadius: BorderRadius.circular(AppRadius.large),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
-      ),
-      child: const Row(
-        children: [
-          _EmptyGoalIcon(),
-          SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Próximo objetivo',
-                  style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                  ),
-                ),
-                SizedBox(height: 5),
-                Text(
-                  'Sin datos',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: NextGoalCard._secondaryTextColor,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _EmptyGoalIcon extends StatelessWidget {
-  const _EmptyGoalIcon();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 44,
-      height: 44,
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(AppRadius.small),
-      ),
-      child: const Icon(
-        Icons.flag_outlined,
-        color: NextGoalCard._secondaryTextColor,
-      ),
-    );
-  }
+    ),
+  );
 }

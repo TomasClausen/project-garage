@@ -40,6 +40,8 @@ class FinanceTransaction {
   final int paidAmount;
   @HiveField(17)
   final bool importedFromLegacy;
+  @HiveField(18)
+  final String projectId;
 
   const FinanceTransaction({
     required this.id,
@@ -60,6 +62,7 @@ class FinanceTransaction {
     required this.updatedAt,
     this.paidAmount = 0,
     this.importedFromLegacy = false,
+    this.projectId = '',
   });
 
   DateTime get transactionDate =>
@@ -90,6 +93,7 @@ class FinanceTransaction {
     String? updatedAt,
     int? paidAmount,
     bool? importedFromLegacy,
+    String? projectId,
   }) => FinanceTransaction(
     id: id ?? this.id,
     title: title ?? this.title,
@@ -109,6 +113,7 @@ class FinanceTransaction {
     updatedAt: updatedAt ?? this.updatedAt,
     paidAmount: paidAmount ?? this.paidAmount,
     importedFromLegacy: importedFromLegacy ?? this.importedFromLegacy,
+    projectId: projectId ?? this.projectId,
   );
 }
 

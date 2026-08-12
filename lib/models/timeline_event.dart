@@ -37,6 +37,9 @@ class TimelineEvent {
   @HiveField(10)
   final String repairId;
 
+  @HiveField(11)
+  final String projectId;
+
   const TimelineEvent({
     required this.id,
     required this.type,
@@ -49,6 +52,7 @@ class TimelineEvent {
     this.tags = const [],
     this.isFeatured = false,
     this.repairId = '',
+    this.projectId = '',
   });
 
   DateTime get date =>
@@ -66,6 +70,7 @@ class TimelineEvent {
     List<String>? tags,
     bool? isFeatured,
     String? repairId,
+    String? projectId,
   }) {
     return TimelineEvent(
       id: id ?? this.id,
@@ -79,6 +84,7 @@ class TimelineEvent {
       tags: tags ?? this.tags,
       isFeatured: isFeatured ?? this.isFeatured,
       repairId: repairId ?? this.repairId,
+      projectId: projectId ?? this.projectId,
     );
   }
 }

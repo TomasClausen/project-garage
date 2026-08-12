@@ -6,9 +6,9 @@ import '../providers/finance_provider.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_text_styles.dart';
+import '../theme/garage_ds3.dart';
 import '../screens/add_finance_transaction_screen.dart';
 import '../screens/finance_transaction_detail_screen.dart';
-import 'common/app_card.dart';
 import 'finance_transaction_card.dart';
 
 class LinkedFinanceSection extends StatelessWidget {
@@ -37,7 +37,8 @@ class LinkedFinanceSection extends StatelessWidget {
     final paid = hasTransactions
         ? expenses.fold<int>(0, (s, e) => s + e.normalizedPaidAmount)
         : 0;
-    return AppCard(
+    return GaragePanel(
+      padding: const EdgeInsets.all(11),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -70,15 +71,27 @@ class LinkedFinanceSection extends StatelessWidget {
                 ),
             ],
           ),
-          const SizedBox(height: AppSpacing.lg),
-          Wrap(
-            spacing: 20,
-            runSpacing: 12,
+          const SizedBox(height: 9),
+          Row(
             children: [
-              _metric('Gastado', total),
-              _metric('Pagado', paid),
-              _metric('Pendiente', (total - paid).clamp(0, 1 << 62)),
-              _metric('Movimientos', items.length),
+              Expanded(child: _metric('Gastado', total)),
+              const SizedBox(
+                height: 34,
+                child: VerticalDivider(color: GarageDs3.technicalLine),
+              ),
+              Expanded(child: _metric('Pagado', paid)),
+              const SizedBox(
+                height: 34,
+                child: VerticalDivider(color: GarageDs3.technicalLine),
+              ),
+              Expanded(
+                child: _metric('Pendiente', (total - paid).clamp(0, 1 << 62)),
+              ),
+              const SizedBox(
+                height: 34,
+                child: VerticalDivider(color: GarageDs3.technicalLine),
+              ),
+              Expanded(child: _metric('Mov.', items.length)),
             ],
           ),
           if (!hasTransactions && legacyCost > 0) ...[
@@ -105,11 +118,11 @@ class LinkedFinanceSection extends StatelessWidget {
                   ),
                 ),
           ],
-          const SizedBox(height: AppSpacing.md),
+          const SizedBox(height: 8),
           Row(
             children: [
               Expanded(
-                child: FilledButton.icon(
+                child: OutlinedButton.icon(
                   onPressed: () => Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -120,7 +133,20 @@ class LinkedFinanceSection extends StatelessWidget {
                     ),
                   ),
                   icon: const Icon(Icons.add_rounded),
-                  label: const Text('Agregar gasto'),
+                  style: OutlinedButton.styleFrom(
+                    shape: const BeveledRectangleBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(3)),
+                    ),
+                    side: const BorderSide(color: GarageDs3.technicalLine),
+                  ),
+                  label: const Text(
+                    'AGREGAR GASTO',
+                    style: TextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: .6,
+                    ),
+                  ),
                 ),
               ),
               if (items.length > 3) ...[
@@ -169,21 +195,25 @@ class LinkedFinanceSection extends StatelessWidget {
     );
   }
 
-  Widget _metric(String label, int value) => SizedBox(
-    width: 115,
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(color: AppColors.secondaryText, fontSize: 11),
+  Widget _metric(String label, int value) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        label,
+        style: const TextStyle(
+          color: AppColors.secondaryText,
+          fontSize: 7,
+          fontWeight: FontWeight.w800,
+          letterSpacing: .4,
         ),
-        const SizedBox(height: 3),
-        Text(
-          label == 'Movimientos' ? '$value' : MoneyFormatter.format(value),
-          style: const TextStyle(fontWeight: FontWeight.w800),
-        ),
-      ],
-    ),
+      ),
+      const SizedBox(height: 3),
+      Text(
+        label == 'Mov.' ? '$value' : MoneyFormatter.format(value),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900),
+      ),
+    ],
   );
 }

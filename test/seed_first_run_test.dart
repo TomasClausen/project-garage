@@ -14,6 +14,9 @@ import 'package:lancer_restoration/models/timeline_event.dart';
 import 'package:lancer_restoration/models/vehicle.dart';
 import 'package:lancer_restoration/services/first_run_coordinator.dart';
 import 'package:lancer_restoration/services/hive_service.dart';
+import 'package:lancer_restoration/services/multi_garage_service.dart';
+import 'package:lancer_restoration/repositories/finance_transaction_repository.dart';
+import 'package:lancer_restoration/services/project_management_service.dart';
 
 Future<void> _persistOnboarding({Vehicle? vehicle}) async {
   final now = DateTime.now().toUtc().toIso8601String();
@@ -206,5 +209,232 @@ void main() {
     expect(Hive.box<Repair>(HiveService.repairBox).get(repair.id), isNotNull);
     expect(profile, isNotNull);
     expect(profile!.activeVehicleId, 'legacy_vehicle_key');
+    expect(
+      Hive.box<Repair>(HiveService.repairBox).get(repair.id)!.projectId,
+      ProjectProfile.defaultId,
+    );
+    expect(MultiGarageService.activeProjectId, ProjectProfile.defaultId);
+  });
+
+  test('legacy migration is idempotent and preserves ids', () async {
+    final repair = Repair(
+      id: 'legacy-id',
+      name: 'Legacy',
+      category: 'Motor',
+      priority: 'Media',
+      progress: 0,
+      estimatedCost: 1,
+      status: 'Pendiente',
+      weight: 1,
+      actualCost: 0,
+      paid: false,
+    );
+    await Hive.box<Repair>(HiveService.repairBox).put(repair.id, repair);
+    final service = MultiGarageService();
+    await service.initialize();
+    await service.initialize();
+    expect(
+      Hive.box<ProjectProfile>(HiveService.projectProfileBox),
+      hasLength(1),
+    );
+    expect(Hive.box<Repair>(HiveService.repairBox), hasLength(1));
+    expect(
+      Hive.box<Repair>(HiveService.repairBox).get('legacy-id')!.projectId,
+      ProjectProfile.defaultId,
+    );
+  });
+
+  test('invalid active project recovers deterministically', () async {
+    final now = DateTime.now().toIso8601String();
+    await Hive.box<ProjectProfile>(HiveService.projectProfileBox).put(
+      'b',
+      ProjectProfile(
+        id: 'b',
+        name: 'B',
+        startDate: '',
+        createdAt: now,
+        updatedAt: now,
+        onboardingCompleted: true,
+      ),
+    );
+    await Hive.box<ProjectProfile>(HiveService.projectProfileBox).put(
+      'a',
+      ProjectProfile(
+        id: 'a',
+        name: 'A',
+        startDate: '',
+        createdAt: now,
+        updatedAt: now,
+        onboardingCompleted: true,
+      ),
+    );
+    await Hive.box<dynamic>(
+      HiveService.settingsBox,
+    ).put(MultiGarageService.activeProjectKey, 'missing');
+    await MultiGarageService().initialize();
+    expect(MultiGarageService.activeProjectId, 'a');
+  });
+
+  test('setActiveProject changes repository scope', () async {
+    final now = DateTime.now().toIso8601String();
+    final profiles = Hive.box<ProjectProfile>(HiveService.projectProfileBox);
+    for (final id in ['a', 'b']) {
+      await profiles.put(
+        id,
+        ProjectProfile(
+          id: id,
+          name: id,
+          startDate: '',
+          createdAt: now,
+          updatedAt: now,
+          onboardingCompleted: true,
+        ),
+      );
+    }
+    final box = Hive.box<FinanceTransaction>(HiveService.financeTransactionBox);
+    FinanceTransaction item(String id, String projectId) => FinanceTransaction(
+      id: id,
+      title: id,
+      amount: 1,
+      date: now,
+      createdAt: now,
+      updatedAt: now,
+      projectId: projectId,
+    );
+    await box.put('a-item', item('a-item', 'a'));
+    await box.put('b-item', item('b-item', 'b'));
+    final service = MultiGarageService();
+    await service.setActiveProject('a');
+    expect(FinanceTransactionRepository(box: box).getAll().map((x) => x.id), [
+      'a-item',
+    ]);
+    await service.setActiveProject('b');
+    expect(FinanceTransactionRepository(box: box).getAll().map((x) => x.id), [
+      'b-item',
+    ]);
+    await expectLater(service.setActiveProject('missing'), throwsArgumentError);
+  });
+
+  test('creates a unique second project with optional vehicle', () async {
+    final service = ProjectManagementService();
+    final first = await service.create(const ProjectDraft(name: 'Auto'));
+    final second = await service.create(
+      const ProjectDraft(name: 'Moto', brand: 'Suzuki', model: 'AX100'),
+    );
+    expect(first.id, isNot(second.id));
+    expect(first.id, startsWith('project_'));
+    expect(first.activeVehicleId, isEmpty);
+    expect(second.activeVehicleId, startsWith('vehicle_'));
+    expect(
+      Hive.box<Vehicle>(
+        HiveService.vehicleBox,
+      ).get(second.activeVehicleId)!.projectId,
+      second.id,
+    );
+    expect(MultiGarageService.activeProjectId, second.id);
+  });
+
+  test('editing adds then updates one vehicle without duplication', () async {
+    final service = ProjectManagementService();
+    final project = await service.create(const ProjectDraft(name: 'Proyecto'));
+    final withVehicle = await service.update(
+      project.id,
+      const ProjectDraft(name: 'Proyecto editado', brand: 'Honda'),
+    );
+    final vehicleId = withVehicle.activeVehicleId;
+    await service.update(
+      project.id,
+      const ProjectDraft(
+        name: 'Proyecto editado',
+        brand: 'Honda',
+        model: 'CB',
+        kilometers: 50,
+      ),
+    );
+    expect(Hive.box<Vehicle>(HiveService.vehicleBox), hasLength(1));
+    expect(
+      Hive.box<Vehicle>(HiveService.vehicleBox).get(vehicleId)!.model,
+      'CB',
+    );
+  });
+
+  test('cascade deletes only target and selects remaining project', () async {
+    final service = ProjectManagementService();
+    final a = await service.create(const ProjectDraft(name: 'A'));
+    final b = await service.create(const ProjectDraft(name: 'B'));
+    final aRepair = Repair(
+      id: 'a',
+      name: 'A',
+      category: '',
+      priority: '',
+      progress: 0,
+      estimatedCost: 0,
+      status: '',
+      weight: 1,
+      actualCost: 0,
+      paid: false,
+      projectId: a.id,
+    );
+    final bRepair = Repair(
+      id: 'b',
+      name: 'B',
+      category: '',
+      priority: '',
+      progress: 0,
+      estimatedCost: 0,
+      status: '',
+      weight: 1,
+      actualCost: 0,
+      paid: false,
+      projectId: b.id,
+    );
+    await Hive.box<Repair>(
+      HiveService.repairBox,
+    ).putAll({'a': aRepair, 'b': bRepair});
+    await service.delete(b.id);
+    expect(Hive.box<Repair>(HiveService.repairBox).containsKey('a'), isTrue);
+    expect(Hive.box<Repair>(HiveService.repairBox).containsKey('b'), isFalse);
+    expect(MultiGarageService.activeProjectId, a.id);
+  });
+
+  test('deleting last project leaves garage empty and keeps globals', () async {
+    final service = ProjectManagementService();
+    final project = await service.create(const ProjectDraft(name: 'Solo'));
+    await Hive.box<dynamic>(
+      HiveService.settingsBox,
+    ).put('updater.channel', 'beta');
+    await Hive.box<dynamic>(
+      HiveService.settingsBox,
+    ).put('global.setting', true);
+    await service.delete(project.id);
+    expect(service.projects, isEmpty);
+    expect(MultiGarageService.activeProjectId, isEmpty);
+    expect(
+      Hive.box<dynamic>(HiveService.settingsBox).get('updater.channel'),
+      'beta',
+    );
+    expect(
+      Hive.box<dynamic>(HiveService.settingsBox).get('global.setting'),
+      isTrue,
+    );
+  });
+
+  test('cascade tolerates missing and shared files', () async {
+    final rootFile = File('${root.path}/shared.jpg');
+    await rootFile.writeAsString('shared');
+    final service = ProjectManagementService();
+    final a = await service.create(const ProjectDraft(name: 'A'));
+    final b = await service.create(const ProjectDraft(name: 'B'));
+    await Hive.box<GalleryPhoto>(HiveService.galleryBox).putAll({
+      'a': GalleryPhoto(id: 'a', path: rootFile.path, projectId: a.id),
+      'b': GalleryPhoto(id: 'b', path: rootFile.path, projectId: b.id),
+      'missing': GalleryPhoto(
+        id: 'missing',
+        path: '${root.path}/missing.jpg',
+        projectId: b.id,
+      ),
+    });
+    await service.delete(b.id);
+    expect(await rootFile.exists(), isTrue);
   });
 }

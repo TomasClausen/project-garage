@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../theme/app_colors.dart';
-import '../../theme/app_radius.dart';
 import '../../theme/app_spacing.dart';
 
 class AppSearchField extends StatelessWidget {
@@ -10,6 +9,7 @@ class AppSearchField extends StatelessWidget {
   final ValueChanged<String>? onChanged;
   final VoidCallback? onClear;
   final FocusNode? focusNode;
+  final Color? accentColor;
 
   const AppSearchField({
     super.key,
@@ -18,6 +18,7 @@ class AppSearchField extends StatelessWidget {
     this.onChanged,
     this.onClear,
     this.focusNode,
+    this.accentColor,
   });
 
   @override
@@ -58,25 +59,25 @@ class AppSearchField extends StatelessWidget {
                   )
                 : null,
             filled: true,
-            fillColor: AppColors.surfaceLight,
+            fillColor: AppColors.surface,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: AppSpacing.lg,
               vertical: AppSpacing.lg,
             ),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.medium),
-              borderSide: BorderSide.none,
+              borderRadius: BorderRadius.circular(4),
+              borderSide: const BorderSide(color: AppColors.border),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.medium),
+              borderRadius: BorderRadius.circular(4),
               borderSide: BorderSide(
                 color: Colors.white.withValues(alpha: 0.05),
               ),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.medium),
-              borderSide: const BorderSide(
-                color: AppColors.primary,
+              borderRadius: BorderRadius.circular(4),
+              borderSide: BorderSide(
+                color: accentColor ?? AppColors.primary,
                 width: 1.4,
               ),
             ),

@@ -29,13 +29,14 @@ class FinanceTransactionAdapter extends TypeAdapter<FinanceTransaction> {
       updatedAt: fields[15] as String,
       paidAmount: (fields[16] as num?)?.toInt() ?? 0,
       importedFromLegacy: fields[17] as bool? ?? false,
+      projectId: fields[18] as String? ?? '',
     );
   }
 
   @override
   void write(BinaryWriter writer, FinanceTransaction obj) {
     writer
-      ..writeByte(18)
+      ..writeByte(19)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -71,6 +72,8 @@ class FinanceTransactionAdapter extends TypeAdapter<FinanceTransaction> {
       ..writeByte(16)
       ..write(obj.paidAmount)
       ..writeByte(17)
-      ..write(obj.importedFromLegacy);
+      ..write(obj.importedFromLegacy)
+      ..writeByte(18)
+      ..write(obj.projectId);
   }
 }

@@ -25,6 +25,9 @@ class Maintenance {
   @HiveField(6)
   String notes;
 
+  @HiveField(7)
+  String projectId;
+
   Maintenance({
     required this.id,
 
@@ -39,5 +42,6 @@ class Maintenance {
     required this.lastDate,
 
     required this.notes,
+    this.projectId = '',
   });
 }

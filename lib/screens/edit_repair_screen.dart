@@ -5,11 +5,9 @@ import 'package:provider/provider.dart';
 import '../models/repair.dart';
 import '../providers/repair_provider.dart';
 import '../theme/app_colors.dart';
-import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_text_styles.dart';
-import '../widgets/common/app_card.dart';
-import '../widgets/common/app_progress_bar.dart';
+import '../theme/garage_ds3.dart';
 
 class EditRepairScreen extends StatefulWidget {
   final Repair repair;
@@ -75,17 +73,17 @@ class _EditRepairScreenState extends State<EditRepairScreen> {
       labelText: label,
       prefixIcon: Icon(icon),
       filled: true,
-      fillColor: AppColors.surfaceLight,
+      fillColor: GarageDs3.structure,
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppRadius.medium),
-        borderSide: BorderSide.none,
+        borderRadius: BorderRadius.circular(4),
+        borderSide: const BorderSide(color: GarageDs3.technicalLine),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppRadius.medium),
-        borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
+        borderRadius: BorderRadius.circular(4),
+        borderSide: const BorderSide(color: GarageDs3.technicalLine),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppRadius.medium),
+        borderRadius: BorderRadius.circular(4),
         borderSide: const BorderSide(color: AppColors.primary, width: 1.4),
       ),
     );
@@ -151,186 +149,198 @@ class _EditRepairScreenState extends State<EditRepairScreen> {
     final percentage = (_previewProgress * 100).round();
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: GarageDs3.foundation,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
-        title: const Text('Editar reparación'),
+        backgroundColor: GarageDs3.foundation,
+        title: const Text(
+          'EDITAR TRABAJO',
+          style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: .8),
+        ),
       ),
-      body: SafeArea(
-        child: Form(
-          key: _formKey,
-          autovalidateMode: AutovalidateMode.onUserInteraction,
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.xl,
-              AppSpacing.lg,
-              AppSpacing.xl,
-              AppSpacing.xxxl,
+      body: GarageBackdrop(
+        child: SafeArea(
+          child: Form(
+            key: _formKey,
+            autovalidateMode: AutovalidateMode.onUserInteraction,
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.xl,
+                AppSpacing.lg,
+                AppSpacing.xl,
+                AppSpacing.xxxl,
+              ),
+              children: [
+                Text(widget.repair.name, style: AppTextStyles.screenTitle),
+                const SizedBox(height: AppSpacing.xs),
+                Text(widget.repair.category, style: AppTextStyles.subtitle),
+                const SizedBox(height: AppSpacing.xxl),
+                GaragePanel(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Expanded(
+                            child: Text(
+                              'Progreso del trabajo',
+                              style: AppTextStyles.cardTitle,
+                            ),
+                          ),
+                          Text(
+                            '$percentage%',
+                            style: const TextStyle(
+                              color: AppColors.primary,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                      SegmentedGarageProgress(
+                        value: _previewProgress,
+                        color: AppColors.primary,
+                        segments: 14,
+                        height: 8,
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                      TextFormField(
+                        controller: _progressController,
+                        keyboardType: TextInputType.number,
+                        decoration: _inputDecoration(
+                          label: 'Progreso %',
+                          icon: Icons.percent_rounded,
+                        ),
+                        validator: (value) => _validateNumber(
+                          value,
+                          field: 'el progreso',
+                          max: 100,
+                        ),
+                        onChanged: (_) {
+                          setState(() {});
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xxl),
+                GaragePanel(
+                  child: Column(
+                    children: [
+                      DropdownButtonFormField<String>(
+                        initialValue: _selectedPriority,
+                        decoration: _inputDecoration(
+                          label: 'Prioridad',
+                          icon: Icons.priority_high_rounded,
+                        ),
+                        items: _priorities
+                            .map(
+                              (item) => DropdownMenuItem(
+                                value: item,
+                                child: Text(item),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() {
+                              _selectedPriority = value;
+                            });
+                          }
+                        },
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                      DropdownButtonFormField<String>(
+                        initialValue: _selectedStatus,
+                        decoration: _inputDecoration(
+                          label: 'Estado',
+                          icon: Icons.flag_outlined,
+                        ),
+                        items: _statuses
+                            .map(
+                              (item) => DropdownMenuItem(
+                                value: item,
+                                child: Text(item),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() {
+                              _selectedStatus = value;
+                            });
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xxl),
+                GaragePanel(
+                  child: Column(
+                    children: [
+                      TextFormField(
+                        controller: _estimatedCostController,
+                        keyboardType: TextInputType.number,
+                        decoration: _inputDecoration(
+                          label: 'Costo estimado',
+                          icon: Icons.calculate_outlined,
+                        ),
+                        validator: (value) =>
+                            _validateNumber(value, field: 'el costo estimado'),
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                      TextFormField(
+                        controller: _actualCostController,
+                        keyboardType: TextInputType.number,
+                        decoration: _inputDecoration(
+                          label: 'Costo real',
+                          icon: Icons.payments_outlined,
+                        ),
+                        validator: (value) =>
+                            _validateNumber(value, field: 'el costo real'),
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      SwitchListTile.adaptive(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('Pagado'),
+                        subtitle: const Text(
+                          'Marcá esta opción cuando el gasto esté cubierto.',
+                        ),
+                        value: _paid,
+                        activeThumbColor: AppColors.primary,
+                        onChanged: (value) {
+                          setState(() {
+                            _paid = value;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xxl),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: _saving ? null : _save,
+                    style: FilledButton.styleFrom(
+                      shape: const BeveledRectangleBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(4)),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    icon: _saving
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.save_rounded),
+                    label: Text(_saving ? 'Guardando...' : 'Guardar cambios'),
+                  ),
+                ),
+              ],
             ),
-            children: [
-              Text(widget.repair.name, style: AppTextStyles.screenTitle),
-              const SizedBox(height: AppSpacing.xs),
-              Text(widget.repair.category, style: AppTextStyles.subtitle),
-              const SizedBox(height: AppSpacing.xxl),
-              AppCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const Expanded(
-                          child: Text(
-                            'Progreso del trabajo',
-                            style: AppTextStyles.cardTitle,
-                          ),
-                        ),
-                        Text(
-                          '$percentage%',
-                          style: const TextStyle(
-                            color: AppColors.primary,
-                            fontSize: 20,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-                    AppProgressBar(
-                      value: _previewProgress,
-                      color: AppColors.primary,
-                      height: 10,
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-                    TextFormField(
-                      controller: _progressController,
-                      keyboardType: TextInputType.number,
-                      decoration: _inputDecoration(
-                        label: 'Progreso %',
-                        icon: Icons.percent_rounded,
-                      ),
-                      validator: (value) => _validateNumber(
-                        value,
-                        field: 'el progreso',
-                        max: 100,
-                      ),
-                      onChanged: (_) {
-                        setState(() {});
-                      },
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: AppSpacing.xxl),
-              AppCard(
-                child: Column(
-                  children: [
-                    DropdownButtonFormField<String>(
-                      initialValue: _selectedPriority,
-                      decoration: _inputDecoration(
-                        label: 'Prioridad',
-                        icon: Icons.priority_high_rounded,
-                      ),
-                      items: _priorities
-                          .map(
-                            (item) => DropdownMenuItem(
-                              value: item,
-                              child: Text(item),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (value) {
-                        if (value != null) {
-                          setState(() {
-                            _selectedPriority = value;
-                          });
-                        }
-                      },
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-                    DropdownButtonFormField<String>(
-                      initialValue: _selectedStatus,
-                      decoration: _inputDecoration(
-                        label: 'Estado',
-                        icon: Icons.flag_outlined,
-                      ),
-                      items: _statuses
-                          .map(
-                            (item) => DropdownMenuItem(
-                              value: item,
-                              child: Text(item),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (value) {
-                        if (value != null) {
-                          setState(() {
-                            _selectedStatus = value;
-                          });
-                        }
-                      },
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: AppSpacing.xxl),
-              AppCard(
-                child: Column(
-                  children: [
-                    TextFormField(
-                      controller: _estimatedCostController,
-                      keyboardType: TextInputType.number,
-                      decoration: _inputDecoration(
-                        label: 'Costo estimado',
-                        icon: Icons.calculate_outlined,
-                      ),
-                      validator: (value) =>
-                          _validateNumber(value, field: 'el costo estimado'),
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-                    TextFormField(
-                      controller: _actualCostController,
-                      keyboardType: TextInputType.number,
-                      decoration: _inputDecoration(
-                        label: 'Costo real',
-                        icon: Icons.payments_outlined,
-                      ),
-                      validator: (value) =>
-                          _validateNumber(value, field: 'el costo real'),
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    SwitchListTile.adaptive(
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text('Pagado'),
-                      subtitle: const Text(
-                        'Marcá esta opción cuando el gasto esté cubierto.',
-                      ),
-                      value: _paid,
-                      activeThumbColor: AppColors.primary,
-                      onChanged: (value) {
-                        setState(() {
-                          _paid = value;
-                        });
-                      },
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: AppSpacing.xxl),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton.icon(
-                  onPressed: _saving ? null : _save,
-                  icon: _saving
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.save_rounded),
-                  label: Text(_saving ? 'Guardando...' : 'Guardar cambios'),
-                ),
-              ),
-            ],
           ),
         ),
       ),

@@ -5,11 +5,10 @@ import 'package:provider/provider.dart';
 import '../models/repair.dart';
 import '../providers/repair_provider.dart';
 import '../theme/app_colors.dart';
-import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_text_styles.dart';
+import '../theme/garage_ds3.dart';
 import '../utils/id_generator.dart';
-import '../widgets/common/app_card.dart';
 import '../widgets/common/app_unsaved_changes_guard.dart';
 
 class AddRepairScreen extends StatefulWidget {
@@ -108,17 +107,17 @@ class _AddRepairScreenState extends State<AddRepairScreen> {
       hintText: hint,
       prefixIcon: Icon(icon),
       filled: true,
-      fillColor: AppColors.surfaceLight,
+      fillColor: GarageDs3.structure,
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppRadius.medium),
-        borderSide: BorderSide.none,
+        borderRadius: BorderRadius.circular(4),
+        borderSide: const BorderSide(color: GarageDs3.technicalLine),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppRadius.medium),
-        borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
+        borderRadius: BorderRadius.circular(4),
+        borderSide: const BorderSide(color: GarageDs3.technicalLine),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppRadius.medium),
+        borderRadius: BorderRadius.circular(4),
         borderSide: const BorderSide(color: AppColors.primary, width: 1.4),
       ),
     );
@@ -131,142 +130,153 @@ class _AddRepairScreenState extends State<AddRepairScreen> {
           !_saving &&
           (_nameController.text.isNotEmpty || _costController.text.isNotEmpty),
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: GarageDs3.foundation,
         appBar: AppBar(
-          backgroundColor: AppColors.background,
-          title: const Text('Nueva reparación'),
+          backgroundColor: GarageDs3.foundation,
+          title: const Text(
+            'NUEVO TRABAJO',
+            style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: .8),
+          ),
         ),
-        body: SafeArea(
-          child: Form(
-            key: _formKey,
-            autovalidateMode: AutovalidateMode.onUserInteraction,
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.xl,
-                AppSpacing.lg,
-                AppSpacing.xl,
-                AppSpacing.xxxl,
-              ),
-              children: [
-                const Text(
-                  'Datos del trabajo',
-                  style: AppTextStyles.sectionTitle,
+        body: GarageBackdrop(
+          child: SafeArea(
+            child: Form(
+              key: _formKey,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.xl,
+                  AppSpacing.lg,
+                  AppSpacing.xl,
+                  AppSpacing.xxxl,
                 ),
-                const SizedBox(height: AppSpacing.xs),
-                const Text(
-                  'El progreso se calculará automáticamente según las reparaciones de cada categoría.',
-                  style: AppTextStyles.subtitle,
-                ),
-                const SizedBox(height: AppSpacing.xxl),
-                AppCard(
-                  child: Column(
-                    children: [
-                      TextFormField(
-                        controller: _nameController,
-                        textCapitalization: TextCapitalization.sentences,
-                        decoration: _inputDecoration(
-                          label: 'Nombre del trabajo',
-                          hint: 'Ej. Amortiguadores delanteros',
-                          icon: Icons.build_outlined,
-                        ),
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'Ingresá un nombre';
-                          }
-
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: AppSpacing.lg),
-                      DropdownButtonFormField<String>(
-                        initialValue: _category,
-                        decoration: _inputDecoration(
-                          label: 'Categoría',
-                          icon: Icons.category_outlined,
-                        ),
-                        items: _categories
-                            .map(
-                              (item) => DropdownMenuItem(
-                                value: item,
-                                child: Text(item),
-                              ),
-                            )
-                            .toList(),
-                        onChanged: (value) {
-                          if (value != null) {
-                            setState(() {
-                              _category = value;
-                            });
-                          }
-                        },
-                      ),
-                      const SizedBox(height: AppSpacing.lg),
-                      DropdownButtonFormField<String>(
-                        initialValue: _priority,
-                        decoration: _inputDecoration(
-                          label: 'Prioridad',
-                          icon: Icons.priority_high_rounded,
-                        ),
-                        items: _priorities
-                            .map(
-                              (item) => DropdownMenuItem(
-                                value: item,
-                                child: Text(item),
-                              ),
-                            )
-                            .toList(),
-                        onChanged: (value) {
-                          if (value != null) {
-                            setState(() {
-                              _priority = value;
-                            });
-                          }
-                        },
-                      ),
-                      const SizedBox(height: AppSpacing.lg),
-                      TextFormField(
-                        controller: _costController,
-                        keyboardType: TextInputType.number,
-                        decoration: _inputDecoration(
-                          label: 'Costo estimado',
-                          hint: '0',
-                          icon: Icons.payments_outlined,
-                        ),
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return null;
-                          }
-
-                          final parsed = int.tryParse(value.trim());
-
-                          if (parsed == null || parsed < 0) {
-                            return 'Ingresá un número válido';
-                          }
-
-                          return null;
-                        },
-                      ),
-                    ],
+                children: [
+                  const Text(
+                    'Datos del trabajo',
+                    style: AppTextStyles.sectionTitle,
                   ),
-                ),
-                const SizedBox(height: AppSpacing.xxl),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton.icon(
-                    onPressed: _saving || !_canSave ? null : _save,
-                    icon: _saving
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.save_rounded),
-                    label: Text(
-                      _saving ? 'Guardando...' : 'Guardar reparación',
+                  const SizedBox(height: AppSpacing.xs),
+                  const Text(
+                    'El progreso se calculará automáticamente según las reparaciones de cada categoría.',
+                    style: AppTextStyles.subtitle,
+                  ),
+                  const SizedBox(height: AppSpacing.xxl),
+                  GaragePanel(
+                    child: Column(
+                      children: [
+                        TextFormField(
+                          controller: _nameController,
+                          textCapitalization: TextCapitalization.sentences,
+                          decoration: _inputDecoration(
+                            label: 'Nombre del trabajo',
+                            hint: 'Ej. Amortiguadores delanteros',
+                            icon: Icons.build_outlined,
+                          ),
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'Ingresá un nombre';
+                            }
+
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: AppSpacing.lg),
+                        DropdownButtonFormField<String>(
+                          initialValue: _category,
+                          decoration: _inputDecoration(
+                            label: 'Categoría',
+                            icon: Icons.category_outlined,
+                          ),
+                          items: _categories
+                              .map(
+                                (item) => DropdownMenuItem(
+                                  value: item,
+                                  child: Text(item),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: (value) {
+                            if (value != null) {
+                              setState(() {
+                                _category = value;
+                              });
+                            }
+                          },
+                        ),
+                        const SizedBox(height: AppSpacing.lg),
+                        DropdownButtonFormField<String>(
+                          initialValue: _priority,
+                          decoration: _inputDecoration(
+                            label: 'Prioridad',
+                            icon: Icons.priority_high_rounded,
+                          ),
+                          items: _priorities
+                              .map(
+                                (item) => DropdownMenuItem(
+                                  value: item,
+                                  child: Text(item),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: (value) {
+                            if (value != null) {
+                              setState(() {
+                                _priority = value;
+                              });
+                            }
+                          },
+                        ),
+                        const SizedBox(height: AppSpacing.lg),
+                        TextFormField(
+                          controller: _costController,
+                          keyboardType: TextInputType.number,
+                          decoration: _inputDecoration(
+                            label: 'Costo estimado',
+                            hint: '0',
+                            icon: Icons.payments_outlined,
+                          ),
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return null;
+                            }
+
+                            final parsed = int.tryParse(value.trim());
+
+                            if (parsed == null || parsed < 0) {
+                              return 'Ingresá un número válido';
+                            }
+
+                            return null;
+                          },
+                        ),
+                      ],
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: AppSpacing.xxl),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      onPressed: _saving || !_canSave ? null : _save,
+                      style: FilledButton.styleFrom(
+                        shape: const BeveledRectangleBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(4)),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                      icon: _saving
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.save_rounded),
+                      label: Text(
+                        _saving ? 'Guardando...' : 'Guardar reparación',
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

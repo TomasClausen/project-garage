@@ -5,6 +5,7 @@ import '../providers/app_update_provider.dart';
 import '../models/update_preferences.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_text_styles.dart';
+import '../theme/garage_ds3.dart';
 import '../widgets/common/app_card.dart';
 import '../widgets/common/app_dialog.dart';
 import '../widgets/common/app_snackbar.dart';
@@ -68,119 +69,127 @@ class _UpdateCenterView extends StatelessWidget {
   Widget build(BuildContext context) {
     final provider = context.watch<AppUpdateProvider>();
     return Scaffold(
-      appBar: AppBar(title: const Text('Garage Update Center')),
-      body: ListView(
-        padding: const EdgeInsets.all(AppSpacing.xl),
-        children: [
-          const Text('Project Garage', style: AppTextStyles.screenTitle),
-          const SizedBox(height: AppSpacing.xs),
-          Text(
-            'Versión instalada: ${provider.installed?.version ?? '—'}'
-            '${provider.installed?.buildNumber.isNotEmpty == true ? ' (${provider.installed!.buildNumber})' : ''}',
-            style: AppTextStyles.subtitle,
-          ),
-          const SizedBox(height: AppSpacing.xl),
-          const Text(
-            'Canal de actualizaciones',
-            style: AppTextStyles.sectionTitle,
-          ),
-          const SizedBox(height: AppSpacing.md),
-          SegmentedButton<UpdateChannel>(
-            segments: const [
-              ButtonSegment(
-                value: UpdateChannel.stable,
-                label: Text('Estable'),
-              ),
-              ButtonSegment(value: UpdateChannel.beta, label: Text('Beta')),
-            ],
-            selected: {provider.preferences.channel},
-            onSelectionChanged: (selection) =>
-                provider.setChannel(selection.first),
-          ),
-          if (provider.preferences.channel == UpdateChannel.beta) ...[
-            const SizedBox(height: AppSpacing.sm),
+      backgroundColor: GarageDs3.foundation,
+      appBar: AppBar(
+        title: const Text(
+          'Garage Update Center',
+          style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: .7),
+        ),
+      ),
+      body: GarageBackdrop(
+        child: ListView(
+          padding: const EdgeInsets.all(AppSpacing.xl),
+          children: [
+            const Text('Project Garage', style: AppTextStyles.screenTitle),
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              'Versión instalada: ${provider.installed?.version ?? '—'}'
+              '${provider.installed?.buildNumber.isNotEmpty == true ? ' (${provider.installed!.buildNumber})' : ''}',
+              style: AppTextStyles.subtitle,
+            ),
+            const SizedBox(height: AppSpacing.xl),
             const Text(
-              'Las versiones beta pueden contener errores.',
+              'Canal de actualizaciones',
+              style: AppTextStyles.sectionTitle,
+            ),
+            const SizedBox(height: AppSpacing.md),
+            SegmentedButton<UpdateChannel>(
+              segments: const [
+                ButtonSegment(
+                  value: UpdateChannel.stable,
+                  label: Text('Estable'),
+                ),
+                ButtonSegment(value: UpdateChannel.beta, label: Text('Beta')),
+              ],
+              selected: {provider.preferences.channel},
+              onSelectionChanged: (selection) =>
+                  provider.setChannel(selection.first),
+            ),
+            if (provider.preferences.channel == UpdateChannel.beta) ...[
+              const SizedBox(height: AppSpacing.sm),
+              const Text(
+                'Las versiones beta pueden contener errores.',
+                style: AppTextStyles.caption,
+              ),
+            ],
+            const SizedBox(height: AppSpacing.md),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Buscar actualizaciones automáticamente'),
+              value: provider.preferences.automaticChecks,
+              onChanged: (enabled) async {
+                if (enabled && provider.notifier.supported) {
+                  final proceed = await AppDialog.confirm(
+                    context,
+                    title: 'Notificaciones de actualizaciones',
+                    message:
+                        'Project Garage puede avisarte cuando exista una nueva versión. No descargará nada automáticamente.',
+                    confirmLabel: 'Continuar',
+                    icon: Icons.notifications_outlined,
+                  );
+                  if (!proceed) return;
+                }
+                final changed = await provider.setAutomaticChecks(enabled);
+                if (!changed && context.mounted) {
+                  AppSnackbar.warning(
+                    context,
+                    'El chequeo manual seguirá disponible sin notificaciones.',
+                  );
+                }
+              },
+            ),
+            Text(
+              'Última comprobación: ${_lastChecked(provider.preferences.lastCheckedAt)}',
               style: AppTextStyles.caption,
             ),
-          ],
-          const SizedBox(height: AppSpacing.md),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('Buscar actualizaciones automáticamente'),
-            value: provider.preferences.automaticChecks,
-            onChanged: (enabled) async {
-              if (enabled && provider.notifier.supported) {
-                final proceed = await AppDialog.confirm(
-                  context,
-                  title: 'Notificaciones de actualizaciones',
-                  message:
-                      'Project Garage puede avisarte cuando exista una nueva versión. No descargará nada automáticamente.',
-                  confirmLabel: 'Continuar',
-                  icon: Icons.notifications_outlined,
-                );
-                if (!proceed) return;
-              }
-              final changed = await provider.setAutomaticChecks(enabled);
-              if (!changed && context.mounted) {
-                AppSnackbar.warning(
-                  context,
-                  'El chequeo manual seguirá disponible sin notificaciones.',
-                );
-              }
-            },
-          ),
-          Text(
-            'Última comprobación: ${_lastChecked(provider.preferences.lastCheckedAt)}',
-            style: AppTextStyles.caption,
-          ),
-          const SizedBox(height: AppSpacing.xl),
-          _status(context, provider),
-          if (provider.history.isNotEmpty) ...[
             const SizedBox(height: AppSpacing.xl),
-            const Text('Historial', style: AppTextStyles.sectionTitle),
-            const SizedBox(height: AppSpacing.md),
-            ...provider.history.map(
-              (item) => AppCard(
-                child: Material(
-                  color: Colors.transparent,
-                  child: ExpansionTile(
-                    tilePadding: EdgeInsets.zero,
-                    title: Text('v${item.version} · ${item.name}'),
-                    subtitle: Text(_releaseState(provider, item.version)),
-                    children: [
-                      if (item.publishedAt != null)
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            _releaseDate(item.publishedAt!),
-                            style: AppTextStyles.caption,
+            _status(context, provider),
+            if (provider.history.isNotEmpty) ...[
+              const SizedBox(height: AppSpacing.xl),
+              const Text('Historial', style: AppTextStyles.sectionTitle),
+              const SizedBox(height: AppSpacing.md),
+              ...provider.history.map(
+                (item) => AppCard(
+                  child: Material(
+                    color: Colors.transparent,
+                    child: ExpansionTile(
+                      tilePadding: EdgeInsets.zero,
+                      title: Text('v${item.version} · ${item.name}'),
+                      subtitle: Text(_releaseState(provider, item.version)),
+                      children: [
+                        if (item.publishedAt != null)
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              _releaseDate(item.publishedAt!),
+                              style: AppTextStyles.caption,
+                            ),
                           ),
-                        ),
-                      if (item.changelog.trim().isNotEmpty) ...[
-                        const SizedBox(height: AppSpacing.sm),
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: ChangelogView(item.changelog),
-                        ),
+                        if (item.changelog.trim().isNotEmpty) ...[
+                          const SizedBox(height: AppSpacing.sm),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: ChangelogView(item.changelog),
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
                 ),
               ),
+            ],
+            const SizedBox(height: AppSpacing.xl),
+            OutlinedButton.icon(
+              onPressed:
+                  provider.status == AppUpdateStatus.checking ||
+                      provider.status == AppUpdateStatus.downloading
+                  ? null
+                  : provider.check,
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text('Buscar ahora'),
             ),
           ],
-          const SizedBox(height: AppSpacing.xl),
-          OutlinedButton.icon(
-            onPressed:
-                provider.status == AppUpdateStatus.checking ||
-                    provider.status == AppUpdateStatus.downloading
-                ? null
-                : provider.check,
-            icon: const Icon(Icons.refresh_rounded),
-            label: const Text('Buscar ahora'),
-          ),
-        ],
+        ),
       ),
     );
   }

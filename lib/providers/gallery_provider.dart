@@ -6,6 +6,7 @@ import 'package:hive_ce/hive_ce.dart';
 import '../models/gallery_photo.dart';
 import '../services/hive_service.dart';
 import '../services/timeline_service.dart';
+import '../services/multi_garage_service.dart';
 
 class GalleryProvider extends ChangeNotifier {
   late Box<GalleryPhoto> _box;
@@ -27,7 +28,9 @@ class GalleryProvider extends ChangeNotifier {
   Future<void> refresh() => _loadPhotos();
 
   void _reload() {
-    _photos = _box.values.toList();
+    _photos = _box.values
+        .where((x) => MultiGarageService.belongsToActiveProject(x.projectId))
+        .toList();
     notifyListeners();
   }
 
@@ -40,14 +43,19 @@ class GalleryProvider extends ChangeNotifier {
     List<String> tags = const [],
     bool isFeatured = false,
   }) async {
-    await _box.add(photo);
+    final scoped = GalleryPhoto(
+      id: photo.id,
+      path: photo.path,
+      projectId: MultiGarageService.activeProjectId,
+    );
+    await _box.add(scoped);
 
     await TimelineService.record(
       type: timelineType,
       title: timelineTitle,
       description: timelineDescription,
-      imagePath: photo.path,
-      relatedId: photo.id,
+      imagePath: scoped.path,
+      relatedId: scoped.id,
       category: timelineCategory,
       tags: tags,
       isFeatured: isFeatured,

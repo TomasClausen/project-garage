@@ -27,6 +27,7 @@ class ProjectProfileBackupMapper {
         'onboardingCompleted': x.onboardingCompleted,
         'activeVehicleId': x.activeVehicleId,
         'appDataVersion': x.appDataVersion,
+        'identityColor': x.identityColor,
       });
   static ProjectProfile fromJson(Map<String, dynamic> j) {
     final f = _fields(j);
@@ -39,6 +40,7 @@ class ProjectProfileBackupMapper {
       onboardingCompleted: f['onboardingCompleted'] as bool? ?? true,
       activeVehicleId: f['activeVehicleId'] as String? ?? '',
       appDataVersion: (f['appDataVersion'] as num?)?.toInt() ?? 1,
+      identityColor: (f['identityColor'] as num?)?.toInt() ?? 0xFF9F2436,
     );
   }
 }
@@ -54,6 +56,7 @@ class RepairBackupMapper {
     'weight': x.weight,
     'actualCost': x.actualCost,
     'paid': x.paid,
+    'projectId': x.projectId,
   });
   static Repair fromJson(Map<String, dynamic> j) {
     final f = _fields(j);
@@ -68,27 +71,32 @@ class RepairBackupMapper {
       weight: (f['weight'] as num).toDouble(),
       actualCost: (f['actualCost'] as num).toInt(),
       paid: f['paid'] as bool,
+      projectId: f['projectId'] as String? ?? '',
     );
   }
 }
 
 class VehicleBackupMapper {
-  static Map<String, dynamic> toJson(Vehicle x, {String? imagePath}) =>
-      _entity('vehicle', 'lancer', {
-        'brand': x.brand,
-        'model': x.model,
-        'year': x.year,
-        'engine': x.engine,
-        'color': x.color,
-        'kilometers': x.kilometers,
-        'imagePath': imagePath ?? x.imagePath,
-        'version': x.version,
-        'licensePlate': x.licensePlate,
-        'vin': x.vin,
-        'transmission': x.transmission,
-        'fuelType': x.fuelType,
-        'driveType': x.driveType,
-      });
+  static Map<String, dynamic> toJson(
+    Vehicle x, {
+    String id = 'lancer',
+    String? imagePath,
+  }) => _entity('vehicle', id, {
+    'brand': x.brand,
+    'model': x.model,
+    'year': x.year,
+    'engine': x.engine,
+    'color': x.color,
+    'kilometers': x.kilometers,
+    'imagePath': imagePath ?? x.imagePath,
+    'version': x.version,
+    'licensePlate': x.licensePlate,
+    'vin': x.vin,
+    'transmission': x.transmission,
+    'fuelType': x.fuelType,
+    'driveType': x.driveType,
+    'projectId': x.projectId,
+  });
   static Vehicle fromJson(Map<String, dynamic> j, {String? imagePath}) {
     final f = _fields(j);
     return Vehicle(
@@ -105,6 +113,7 @@ class VehicleBackupMapper {
       transmission: f['transmission'] as String? ?? '',
       fuelType: f['fuelType'] as String? ?? '',
       driveType: f['driveType'] as String? ?? '',
+      projectId: f['projectId'] as String? ?? '',
     );
   }
 }
@@ -118,6 +127,7 @@ class MaintenanceBackupMapper {
         'intervalKm': x.intervalKm,
         'lastDate': x.lastDate,
         'notes': x.notes,
+        'projectId': x.projectId,
       });
   static Maintenance fromJson(Map<String, dynamic> j) {
     final f = _fields(j);
@@ -129,15 +139,23 @@ class MaintenanceBackupMapper {
       intervalKm: (f['intervalKm'] as num).toInt(),
       lastDate: f['lastDate'] as String,
       notes: f['notes'] as String,
+      projectId: f['projectId'] as String? ?? '',
     );
   }
 }
 
 class GalleryPhotoBackupMapper {
-  static Map<String, dynamic> toJson(GalleryPhoto x, {String? path}) =>
-      _entity('galleryPhoto', x.id, {'path': path ?? x.path});
+  static Map<String, dynamic> toJson(GalleryPhoto x, {String? path}) => _entity(
+    'galleryPhoto',
+    x.id,
+    {'path': path ?? x.path, 'projectId': x.projectId},
+  );
   static GalleryPhoto fromJson(Map<String, dynamic> j, String path) =>
-      GalleryPhoto(id: j['id'] as String, path: path);
+      GalleryPhoto(
+        id: j['id'] as String,
+        path: path,
+        projectId: _fields(j)['projectId'] as String? ?? '',
+      );
 }
 
 class RepairMediaBackupMapper {
@@ -148,6 +166,7 @@ class RepairMediaBackupMapper {
         'stage': x.stage,
         'note': x.note,
         'createdAt': x.createdAt,
+        'projectId': x.projectId,
       });
   static RepairMedia fromJson(
     Map<String, dynamic> j,
@@ -163,6 +182,7 @@ class RepairMediaBackupMapper {
       stage: f['stage'] as String,
       note: f['note'] as String,
       createdAt: f['createdAt'] as String,
+      projectId: f['projectId'] as String? ?? '',
     );
   }
 }
@@ -180,6 +200,7 @@ class TimelineEventBackupMapper {
         'tags': x.tags,
         'isFeatured': x.isFeatured,
         'repairId': x.repairId,
+        'projectId': x.projectId,
       });
   static TimelineEvent fromJson(
     Map<String, dynamic> j, {
@@ -201,6 +222,7 @@ class TimelineEventBackupMapper {
       tags: List<String>.from(f['tags'] as List? ?? const []),
       isFeatured: f['isFeatured'] as bool? ?? false,
       repairId: repairId ?? f['repairId'] as String? ?? '',
+      projectId: f['projectId'] as String? ?? '',
     );
   }
 }
@@ -227,6 +249,7 @@ class FinanceTransactionBackupMapper {
     'updatedAt': x.updatedAt,
     'paidAmount': x.paidAmount,
     'importedFromLegacy': x.importedFromLegacy,
+    'projectId': x.projectId,
   });
   static FinanceTransaction fromJson(
     Map<String, dynamic> j, {
@@ -255,6 +278,7 @@ class FinanceTransactionBackupMapper {
       updatedAt: f['updatedAt'] as String,
       paidAmount: (f['paidAmount'] as num?)?.toInt() ?? 0,
       importedFromLegacy: f['importedFromLegacy'] as bool? ?? false,
+      projectId: f['projectId'] as String? ?? '',
     );
   }
 }
@@ -269,6 +293,7 @@ class ProjectBudgetBackupMapper {
         'notes': x.notes,
         'createdAt': x.createdAt,
         'updatedAt': x.updatedAt,
+        'projectId': x.projectId,
       });
   static ProjectBudget fromJson(Map<String, dynamic> j) {
     final f = _fields(j);
@@ -281,6 +306,7 @@ class ProjectBudgetBackupMapper {
       notes: f['notes'] as String? ?? '',
       createdAt: f['createdAt'] as String,
       updatedAt: f['updatedAt'] as String,
+      projectId: f['projectId'] as String? ?? '',
     );
   }
 }

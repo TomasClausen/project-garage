@@ -43,6 +43,9 @@ class Vehicle {
   @HiveField(12)
   final String driveType;
 
+  @HiveField(13)
+  final String projectId;
+
   const Vehicle({
     required this.brand,
     required this.model,
@@ -57,6 +60,7 @@ class Vehicle {
     this.transmission = '',
     this.fuelType = '',
     this.driveType = '',
+    this.projectId = '',
   });
 
   Vehicle copyWith({
@@ -74,6 +78,7 @@ class Vehicle {
     String? transmission,
     String? fuelType,
     String? driveType,
+    String? projectId,
   }) {
     return Vehicle(
       brand: brand ?? this.brand,
@@ -89,6 +94,7 @@ class Vehicle {
       transmission: transmission ?? this.transmission,
       fuelType: fuelType ?? this.fuelType,
       driveType: driveType ?? this.driveType,
+      projectId: projectId ?? this.projectId,
     );
   }
 }

@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:hive_ce/hive_ce.dart';
 
+import '../../models/project_profile.dart';
+import '../../services/hive_service.dart';
+import '../../services/multi_garage_service.dart';
 import '../../theme/app_colors.dart';
-import '../../theme/app_radius.dart';
+import '../../theme/garage_ds3.dart';
 
 class AppDialog extends StatelessWidget {
   final IconData icon;
@@ -11,6 +15,7 @@ class AppDialog extends StatelessWidget {
   final String confirmLabel;
   final String cancelLabel;
   final bool destructive;
+  final Color accentColor;
 
   const AppDialog({
     super.key,
@@ -20,6 +25,7 @@ class AppDialog extends StatelessWidget {
     required this.confirmLabel,
     this.cancelLabel = 'Cancelar',
     this.destructive = false,
+    required this.accentColor,
   });
 
   static Future<bool> confirm(
@@ -31,6 +37,17 @@ class AppDialog extends StatelessWidget {
     IconData icon = Icons.help_outline_rounded,
     bool destructive = false,
   }) async {
+    var identity = GarageDs3.fallbackIdentity;
+    if (Hive.isBoxOpen(HiveService.projectProfileBox)) {
+      for (final item in Hive.box<ProjectProfile>(
+        HiveService.projectProfileBox,
+      ).values) {
+        if (item.id == MultiGarageService.activeProjectId) {
+          identity = GarageDs3.identity(item.identityColor);
+          break;
+        }
+      }
+    }
     final result = await showDialog<bool>(
       context: context,
       builder: (_) => AppDialog(
@@ -40,6 +57,7 @@ class AppDialog extends StatelessWidget {
         confirmLabel: confirmLabel,
         cancelLabel: cancelLabel,
         destructive: destructive,
+        accentColor: identity,
       ),
     );
     return result ?? false;
@@ -47,11 +65,12 @@ class AppDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accent = destructive ? AppColors.danger : AppColors.primary;
+    final accent = destructive ? AppColors.danger : accentColor;
     return AlertDialog(
-      backgroundColor: AppColors.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadius.large),
+      backgroundColor: GarageDs3.structureRaised,
+      shape: BeveledRectangleBorder(
+        borderRadius: const BorderRadius.all(Radius.circular(5)),
+        side: BorderSide(color: accent.withValues(alpha: .55)),
       ),
       icon: Icon(icon, color: accent, size: 32),
       title: Text(title, textAlign: TextAlign.center),
@@ -63,9 +82,7 @@ class AppDialog extends StatelessWidget {
           child: Text(cancelLabel),
         ),
         FilledButton(
-          style: destructive
-              ? FilledButton.styleFrom(backgroundColor: AppColors.danger)
-              : null,
+          style: FilledButton.styleFrom(backgroundColor: accent),
           onPressed: () {
             HapticFeedback.mediumImpact();
             Navigator.pop(context, true);

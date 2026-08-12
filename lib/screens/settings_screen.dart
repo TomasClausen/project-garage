@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:hive_ce/hive_ce.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../providers/app_preferences_provider.dart';
 import '../providers/app_update_provider.dart';
-import '../theme/app_spacing.dart';
+import '../models/project_profile.dart';
+import '../services/hive_service.dart';
+import '../services/multi_garage_service.dart';
+import '../theme/garage_ds3.dart';
 import '../widgets/common/app_snackbar.dart';
 import '../services/app_logger.dart';
 import 'backup_restore_screen.dart';
@@ -62,199 +66,264 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
-      title: const Text('Configuración'),
-      actions: [
-        IconButton(
-          tooltip: 'Guardar',
-          onPressed: _save,
-          icon: const Icon(Icons.save_outlined),
+  Widget build(BuildContext context) {
+    ProjectProfile? profile;
+    for (final item in Hive.box<ProjectProfile>(
+      HiveService.projectProfileBox,
+    ).values) {
+      if (item.id == MultiGarageService.activeProjectId) {
+        profile = item;
+        break;
+      }
+    }
+    final identity = GarageDs3.identity(profile?.identityColor ?? 0);
+    final baseTheme = Theme.of(context);
+    final pageTheme = baseTheme.copyWith(
+      colorScheme: baseTheme.colorScheme.copyWith(primary: identity),
+      inputDecorationTheme: baseTheme.inputDecorationTheme.copyWith(
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(4),
+          borderSide: BorderSide(color: identity, width: 1.5),
         ),
-      ],
-    ),
-    body: ListView(
-      padding: const EdgeInsets.all(AppSpacing.xl),
-      children: [
-        _title('Proyecto'),
-        TextField(
-          controller: project,
-          decoration: const InputDecoration(labelText: 'Nombre del proyecto'),
+      ),
+    );
+    return Scaffold(
+      backgroundColor: GarageDs3.foundation,
+      appBar: AppBar(
+        title: const Text(
+          'CONFIGURACIÓN',
+          style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: .8),
         ),
-        const SizedBox(height: 12),
-        TextField(
-          controller: vehicle,
-          decoration: const InputDecoration(
-            labelText: 'Nombre visible del vehículo',
+        actions: [
+          IconButton(
+            tooltip: 'Guardar',
+            onPressed: _save,
+            icon: Icon(Icons.save_outlined, color: identity),
           ),
-        ),
-        const SizedBox(height: 24),
-        _title('Formato'),
-        DropdownButtonFormField(
-          initialValue: currency,
-          decoration: const InputDecoration(labelText: 'Moneda'),
-          items: const [
-            DropdownMenuItem(value: 'ARS', child: Text('ARS')),
-            DropdownMenuItem(value: 'USD', child: Text('USD')),
-            DropdownMenuItem(value: 'EUR', child: Text('EUR')),
-          ],
-          onChanged: (v) => setState(() => currency = v!),
-        ),
-        const SizedBox(height: 12),
-        TextField(
-          controller: symbol,
-          decoration: const InputDecoration(labelText: 'Símbolo monetario'),
-        ),
-        const SizedBox(height: 12),
-        DropdownButtonFormField(
-          initialValue: separator,
-          decoration: const InputDecoration(labelText: 'Separador de miles'),
-          items: const [
-            DropdownMenuItem(value: '.', child: Text('Punto')),
-            DropdownMenuItem(value: ',', child: Text('Coma')),
-            DropdownMenuItem(value: ' ', child: Text('Espacio')),
-          ],
-          onChanged: (v) => setState(() => separator = v!),
-        ),
-        const SizedBox(height: 12),
-        DropdownButtonFormField(
-          initialValue: dateFormat,
-          decoration: const InputDecoration(labelText: 'Formato de fecha'),
-          items: const [
-            DropdownMenuItem(value: 'dd/MM/yyyy', child: Text('dd/MM/yyyy')),
-            DropdownMenuItem(value: 'yyyy-MM-dd', child: Text('yyyy-MM-dd')),
-          ],
-          onChanged: (v) => setState(() => dateFormat = v!),
-        ),
-        const SizedBox(height: 12),
-        SegmentedButton<String>(
-          segments: const [
-            ButtonSegment(value: 'km', label: Text('km')),
-            ButtonSegment(value: 'mi', label: Text('mi')),
-          ],
-          selected: {unit},
-          onSelectionChanged: (v) => setState(() => unit = v.first),
-        ),
-        const SizedBox(height: 24),
-        _title('Datos'),
-        _link(
-          context,
-          'Backup y restauración',
-          Icons.backup_outlined,
-          const BackupRestoreScreen(),
-        ),
-        _link(
-          context,
-          'Exportar informe PDF',
-          Icons.picture_as_pdf_outlined,
-          const ProjectReportOptionsScreen(),
-        ),
-        _link(
-          context,
-          'Diagnóstico de almacenamiento',
-          Icons.storage_rounded,
-          const StorageDiagnosticsScreen(),
-        ),
-        const SizedBox(height: 24),
-        _title('Actualizaciones'),
-        FutureBuilder<PackageInfo>(
-          future: PackageInfo.fromPlatform(),
-          builder: (context, snapshot) => ListTile(
-            contentPadding: EdgeInsets.zero,
-            leading: const Icon(Icons.system_update_alt_rounded),
-            title: const Text('Garage Update Center'),
-            subtitle: Text(
-              snapshot.hasData
-                  ? 'Versión actual ${snapshot.data!.version} · Buscar actualizaciones'
-                  : 'Buscar actualizaciones',
-            ),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (context.watch<AppUpdateProvider>().status ==
-                    AppUpdateStatus.updateAvailable)
-                  const Chip(label: Text('Nueva')),
-                const Icon(Icons.chevron_right_rounded),
-              ],
-            ),
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const UpdateCenterScreen()),
-            ),
-          ),
-        ),
-        const SizedBox(height: 24),
-        _title('Aplicación'),
-        _link(
-          context,
-          'Acerca de Project Garage',
-          Icons.info_outline_rounded,
-          const AboutScreen(),
-        ),
-        ListTile(
-          contentPadding: EdgeInsets.zero,
-          leading: const Icon(Icons.privacy_tip_outlined),
-          title: const Text('Privacidad'),
-          subtitle: const Text(
-            'Tus datos permanecen localmente salvo cuando decidís compartir una exportación.',
-          ),
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const PrivacyPolicyScreen()),
-          ),
-        ),
-        ListTile(
-          contentPadding: EdgeInsets.zero,
-          leading: const Icon(Icons.support_agent_outlined),
-          title: const Text('Exportar diagnóstico para soporte'),
-          subtitle: const Text(
-            'Incluye versión, conteos y errores sanitizados; no incluye fotos, rutas ni importes.',
-          ),
-          onTap: () async {
-            final file = await SupportDiagnosticsService().export();
-            await SharePlus.instance.share(
-              ShareParams(
-                files: [XFile(file.path)],
-                title: 'Soporte Project Garage',
+        ],
+      ),
+      body: Theme(
+        data: pageTheme,
+        child: GarageBackdrop(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
+            children: [
+              _title('Proyecto'),
+              TextField(
+                controller: project,
+                decoration: const InputDecoration(
+                  labelText: 'Nombre del proyecto',
+                ),
               ),
-            );
-          },
-        ),
-        ListTile(
-          contentPadding: EdgeInsets.zero,
-          leading: const Icon(Icons.bug_report_outlined),
-          title: const Text('Exportar logs técnicos'),
-          subtitle: const Text(
-            'No incluyen rutas completas ni datos sensibles.',
-          ),
-          onTap: () async {
-            final file = await AppLogger.export();
-            await SharePlus.instance.share(
-              ShareParams(
-                files: [XFile(file.path)],
-                title: 'Diagnóstico Project Garage',
+              const SizedBox(height: 12),
+              TextField(
+                controller: vehicle,
+                decoration: const InputDecoration(
+                  labelText: 'Nombre visible del vehículo',
+                ),
               ),
-            );
-          },
-        ),
-        ListTile(
-          contentPadding: EdgeInsets.zero,
-          leading: const Icon(Icons.description_outlined),
-          title: const Text('Licencias'),
-          onTap: () => showLicensePage(
-            context: context,
-            applicationName: 'Project Garage',
-            applicationVersion: '1.0.0+17',
+              const SizedBox(height: 24),
+              _title('Formato'),
+              DropdownButtonFormField(
+                initialValue: currency,
+                decoration: const InputDecoration(labelText: 'Moneda'),
+                items: const [
+                  DropdownMenuItem(value: 'ARS', child: Text('ARS')),
+                  DropdownMenuItem(value: 'USD', child: Text('USD')),
+                  DropdownMenuItem(value: 'EUR', child: Text('EUR')),
+                ],
+                onChanged: (v) => setState(() => currency = v!),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: symbol,
+                decoration: const InputDecoration(
+                  labelText: 'Símbolo monetario',
+                ),
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField(
+                initialValue: separator,
+                decoration: const InputDecoration(
+                  labelText: 'Separador de miles',
+                ),
+                items: const [
+                  DropdownMenuItem(value: '.', child: Text('Punto')),
+                  DropdownMenuItem(value: ',', child: Text('Coma')),
+                  DropdownMenuItem(value: ' ', child: Text('Espacio')),
+                ],
+                onChanged: (v) => setState(() => separator = v!),
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField(
+                initialValue: dateFormat,
+                decoration: const InputDecoration(
+                  labelText: 'Formato de fecha',
+                ),
+                items: const [
+                  DropdownMenuItem(
+                    value: 'dd/MM/yyyy',
+                    child: Text('dd/MM/yyyy'),
+                  ),
+                  DropdownMenuItem(
+                    value: 'yyyy-MM-dd',
+                    child: Text('yyyy-MM-dd'),
+                  ),
+                ],
+                onChanged: (v) => setState(() => dateFormat = v!),
+              ),
+              const SizedBox(height: 12),
+              SegmentedButton<String>(
+                segments: const [
+                  ButtonSegment(value: 'km', label: Text('km')),
+                  ButtonSegment(value: 'mi', label: Text('mi')),
+                ],
+                selected: {unit},
+                onSelectionChanged: (v) => setState(() => unit = v.first),
+              ),
+              const SizedBox(height: 24),
+              _title('Datos'),
+              _link(
+                context,
+                'Backup y restauración',
+                Icons.backup_outlined,
+                const BackupRestoreScreen(),
+              ),
+              _link(
+                context,
+                'Exportar informe PDF',
+                Icons.picture_as_pdf_outlined,
+                const ProjectReportOptionsScreen(),
+              ),
+              _link(
+                context,
+                'Diagnóstico de almacenamiento',
+                Icons.storage_rounded,
+                const StorageDiagnosticsScreen(),
+              ),
+              const SizedBox(height: 24),
+              _title('Actualizaciones'),
+              FutureBuilder<PackageInfo>(
+                future: PackageInfo.fromPlatform(),
+                builder: (context, snapshot) => _tile(
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.system_update_alt_rounded),
+                    title: const Text('Garage Update Center'),
+                    subtitle: Text(
+                      snapshot.hasData
+                          ? 'Versión actual ${snapshot.data!.version} · Buscar actualizaciones'
+                          : 'Buscar actualizaciones',
+                    ),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (context.watch<AppUpdateProvider>().status ==
+                            AppUpdateStatus.updateAvailable)
+                          const Chip(label: Text('Nueva')),
+                        const Icon(Icons.chevron_right_rounded),
+                      ],
+                    ),
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const UpdateCenterScreen(),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              _title('Aplicación'),
+              _link(
+                context,
+                'Acerca de Project Garage',
+                Icons.info_outline_rounded,
+                const AboutScreen(),
+              ),
+              _tile(
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.privacy_tip_outlined),
+                  title: const Text('Privacidad'),
+                  subtitle: const Text(
+                    'Tus datos permanecen localmente salvo cuando decidís compartir una exportación.',
+                  ),
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const PrivacyPolicyScreen(),
+                    ),
+                  ),
+                ),
+              ),
+              _tile(
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.support_agent_outlined),
+                  title: const Text('Exportar diagnóstico para soporte'),
+                  subtitle: const Text(
+                    'Incluye versión, conteos y errores sanitizados; no incluye fotos, rutas ni importes.',
+                  ),
+                  onTap: () async {
+                    final file = await SupportDiagnosticsService().export();
+                    await SharePlus.instance.share(
+                      ShareParams(
+                        files: [XFile(file.path)],
+                        title: 'Soporte Project Garage',
+                      ),
+                    );
+                  },
+                ),
+              ),
+              _tile(
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.bug_report_outlined),
+                  title: const Text('Exportar logs técnicos'),
+                  subtitle: const Text(
+                    'No incluyen rutas completas ni datos sensibles.',
+                  ),
+                  onTap: () async {
+                    final file = await AppLogger.export();
+                    await SharePlus.instance.share(
+                      ShareParams(
+                        files: [XFile(file.path)],
+                        title: 'Diagnóstico Project Garage',
+                      ),
+                    );
+                  },
+                ),
+              ),
+              _tile(
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.description_outlined),
+                  title: const Text('Licencias'),
+                  onTap: () => showLicensePage(
+                    context: context,
+                    applicationName: 'Project Garage',
+                    applicationVersion: '1.0.0+17',
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
-      ],
-    ),
-  );
+      ),
+    );
+  }
+
   Widget _title(String text) => Padding(
     padding: const EdgeInsets.only(bottom: 12),
     child: Text(
       text,
-      style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
+      style: const TextStyle(
+        color: Colors.white60,
+        fontSize: 10,
+        fontWeight: FontWeight.w900,
+        letterSpacing: .9,
+      ),
     ),
   );
   Widget _link(
@@ -262,12 +331,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
     String title,
     IconData icon,
     Widget page,
-  ) => ListTile(
-    contentPadding: EdgeInsets.zero,
-    leading: Icon(icon),
-    title: Text(title),
-    trailing: const Icon(Icons.chevron_right_rounded),
-    onTap: () =>
-        Navigator.push(context, MaterialPageRoute(builder: (_) => page)),
+  ) => _tile(
+    ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: Icon(icon),
+      title: Text(title),
+      trailing: const Icon(Icons.chevron_right_rounded),
+      onTap: () =>
+          Navigator.push(context, MaterialPageRoute(builder: (_) => page)),
+    ),
+  );
+
+  Widget _tile(Widget child) => Padding(
+    padding: const EdgeInsets.only(bottom: 7),
+    child: GaragePanel(padding: EdgeInsets.zero, child: child),
   );
 }

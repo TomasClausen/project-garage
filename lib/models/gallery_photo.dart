@@ -10,5 +10,8 @@ class GalleryPhoto {
   @HiveField(1)
   final String path;
 
-  GalleryPhoto({required this.id, required this.path});
+  @HiveField(2)
+  final String projectId;
+
+  GalleryPhoto({required this.id, required this.path, this.projectId = ''});
 }

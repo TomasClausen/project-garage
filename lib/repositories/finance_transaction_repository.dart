@@ -5,6 +5,7 @@ import 'package:hive_ce/hive_ce.dart';
 import '../models/finance_transaction.dart';
 import '../services/hive_service.dart';
 import '../services/timeline_service.dart';
+import '../services/multi_garage_service.dart';
 
 class FinanceTransactionRepository {
   FinanceTransactionRepository({Box<FinanceTransaction>? box})
@@ -14,15 +15,26 @@ class FinanceTransactionRepository {
 
   final Box<FinanceTransaction> _box;
 
-  List<FinanceTransaction> getAll() => _box.values.toList();
-  FinanceTransaction? getById(String id) => _box.get(id);
-  List<FinanceTransaction> byRepairId(String id) =>
-      _box.values.where((item) => item.repairId == id).toList();
-  List<FinanceTransaction> byMaintenanceId(String id) =>
-      _box.values.where((item) => item.maintenanceId == id).toList();
+  List<FinanceTransaction> getAll() => _box.values
+      .where((x) => MultiGarageService.belongsToActiveProject(x.projectId))
+      .toList();
+  FinanceTransaction? getById(String id) {
+    final value = _box.get(id);
+    return value != null &&
+            MultiGarageService.belongsToActiveProject(value.projectId)
+        ? value
+        : null;
+  }
 
-  Future<void> save(FinanceTransaction transaction) =>
-      _box.put(transaction.id, transaction);
+  List<FinanceTransaction> byRepairId(String id) =>
+      getAll().where((item) => item.repairId == id).toList();
+  List<FinanceTransaction> byMaintenanceId(String id) =>
+      getAll().where((item) => item.maintenanceId == id).toList();
+
+  Future<void> save(FinanceTransaction transaction) => _box.put(
+    transaction.id,
+    transaction.copyWith(projectId: MultiGarageService.activeProjectId),
+  );
 
   Future<void> delete(String id) async {
     final transaction = _box.get(id);

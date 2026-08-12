@@ -1,16 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:hive_ce/hive_ce.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../models/finance_transaction.dart';
+import '../models/project_profile.dart';
 import '../core/errors/app_error.dart';
 import '../providers/finance_provider.dart';
 import '../providers/maintenance_provider.dart';
 import '../providers/repair_provider.dart';
 import '../services/image_service.dart';
+import '../services/hive_service.dart';
+import '../services/multi_garage_service.dart';
 import '../theme/app_spacing.dart';
 import '../theme/finance_mappers.dart';
+import '../theme/garage_ds3.dart';
 import '../widgets/common/app_button.dart';
 import '../widgets/common/app_image.dart';
 import '../widgets/common/app_snackbar.dart';
@@ -176,204 +181,230 @@ class _FinanceTransactionFormScreenState
   Widget build(BuildContext context) {
     final repairs = context.watch<RepairProvider>().repairs;
     final maintenance = context.watch<MaintenanceProvider>().maintenances;
+    ProjectProfile? profile;
+    for (final item in Hive.box<ProjectProfile>(
+      HiveService.projectProfileBox,
+    ).values) {
+      if (item.id == MultiGarageService.activeProjectId) {
+        profile = item;
+        break;
+      }
+    }
+    final identity = GarageDs3.identity(profile?.identityColor ?? 0);
+    final baseTheme = Theme.of(context);
     return AppUnsavedChangesGuard(
       hasChanges: _hasChanges,
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(_editing ? 'Editar movimiento' : 'Agregar movimiento'),
+      child: Theme(
+        data: baseTheme.copyWith(
+          colorScheme: baseTheme.colorScheme.copyWith(primary: identity),
+          inputDecorationTheme: baseTheme.inputDecorationTheme.copyWith(
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(4),
+              borderSide: BorderSide(color: identity, width: 1.5),
+            ),
+          ),
         ),
-        body: Form(
-          key: _formKey,
-          autovalidateMode: AutovalidateMode.onUserInteraction,
-          child: ListView(
-            padding: const EdgeInsets.all(AppSpacing.xl),
-            children: [
-              TextFormField(
-                controller: _title,
-                textInputAction: TextInputAction.next,
-                decoration: const InputDecoration(labelText: 'Título'),
-                validator: (value) => value == null || value.trim().isEmpty
-                    ? 'Ingresá un título'
-                    : null,
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              TextFormField(
-                controller: _amount,
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                decoration: const InputDecoration(
-                  labelText: 'Monto',
-                  prefixText: r'$ ',
+        child: Scaffold(
+          backgroundColor: GarageDs3.foundation,
+          appBar: AppBar(
+            title: Text(_editing ? 'Editar movimiento' : 'Agregar movimiento'),
+          ),
+          body: Form(
+            key: _formKey,
+            autovalidateMode: AutovalidateMode.onUserInteraction,
+            child: ListView(
+              padding: const EdgeInsets.all(AppSpacing.xl),
+              children: [
+                TextFormField(
+                  controller: _title,
+                  textInputAction: TextInputAction.next,
+                  decoration: const InputDecoration(labelText: 'Título'),
+                  validator: (value) => value == null || value.trim().isEmpty
+                      ? 'Ingresá un título'
+                      : null,
                 ),
-                validator: (value) => (int.tryParse(value ?? '') ?? 0) <= 0
-                    ? 'Ingresá un monto mayor que cero'
-                    : null,
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              Row(
-                children: [
-                  Expanded(
-                    child: DropdownButtonFormField<String>(
-                      initialValue: _type,
-                      decoration: const InputDecoration(labelText: 'Tipo'),
-                      items: FinanceTransactionType.values
-                          .map(
-                            (v) => DropdownMenuItem(
-                              value: v,
-                              child: Text(FinancePresentation.typeLabel(v)),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (v) => setState(() => _type = v!),
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.md),
-                  Expanded(
-                    child: DropdownButtonFormField<String>(
-                      initialValue: _status,
-                      decoration: const InputDecoration(labelText: 'Estado'),
-                      items: FinancePaymentStatus.values
-                          .map(
-                            (v) => DropdownMenuItem(
-                              value: v,
-                              child: Text(FinancePresentation.paymentLabel(v)),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (v) => setState(() => _status = v!),
-                    ),
-                  ),
-                ],
-              ),
-              if (_status == FinancePaymentStatus.partial) ...[
                 const SizedBox(height: AppSpacing.lg),
                 TextFormField(
-                  controller: _paidAmount,
+                  controller: _amount,
                   keyboardType: TextInputType.number,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   decoration: const InputDecoration(
-                    labelText: 'Monto pagado',
+                    labelText: 'Monto',
                     prefixText: r'$ ',
                   ),
-                  validator: (value) {
-                    final paid = int.tryParse(value ?? '') ?? 0;
-                    final total = int.tryParse(_amount.text) ?? 0;
-                    return paid <= 0 || paid >= total
-                        ? 'Debe ser mayor a 0 y menor al monto'
-                        : null;
-                  },
+                  validator: (value) => (int.tryParse(value ?? '') ?? 0) <= 0
+                      ? 'Ingresá un monto mayor que cero'
+                      : null,
                 ),
-              ],
-              const SizedBox(height: AppSpacing.lg),
-              DropdownButtonFormField<String>(
-                initialValue: _category,
-                decoration: const InputDecoration(labelText: 'Categoría'),
-                items: FinanceCategory.values
-                    .map(
-                      (v) => DropdownMenuItem(
-                        value: v,
-                        child: Text(FinancePresentation.categoryLabel(v)),
-                      ),
-                    )
-                    .toList(),
-                onChanged: (v) => setState(() => _category = v!),
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.calendar_today_rounded),
-                title: const Text('Fecha'),
-                subtitle: Text('${_date.day}/${_date.month}/${_date.year}'),
-                trailing: const Icon(Icons.edit_calendar_rounded),
-                onTap: _selectDate,
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              DropdownButtonFormField<String>(
-                initialValue: _repairId,
-                decoration: const InputDecoration(
-                  labelText: 'Reparación asociada',
-                ),
-                items: [
-                  const DropdownMenuItem(value: '', child: Text('Ninguna')),
-                  ...repairs.map(
-                    (r) => DropdownMenuItem(value: r.id, child: Text(r.name)),
-                  ),
-                ],
-                onChanged: (v) => setState(() => _repairId = v!),
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              DropdownButtonFormField<String>(
-                initialValue: _maintenanceId,
-                decoration: const InputDecoration(
-                  labelText: 'Mantenimiento asociado',
-                ),
-                items: [
-                  const DropdownMenuItem(value: '', child: Text('Ninguno')),
-                  ...maintenance.map(
-                    (m) => DropdownMenuItem(value: m.id, child: Text(m.name)),
-                  ),
-                ],
-                onChanged: (v) => setState(() => _maintenanceId = v!),
-              ),
-              for (final field in [
-                (_vendor, 'Proveedor', 1),
-                (_method, 'Método de pago', 1),
-                (_description, 'Descripción', 2),
-                (_notes, 'Notas', 3),
-              ]) ...[
                 const SizedBox(height: AppSpacing.lg),
-                TextField(
-                  controller: field.$1,
-                  maxLines: field.$3,
-                  decoration: InputDecoration(labelText: field.$2),
-                ),
-              ],
-              const SizedBox(height: AppSpacing.xl),
-              if (_receipt.isNotEmpty) ...[
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
-                  child: SizedBox(
-                    height: 180,
-                    child: AppImage(
-                      path: _receipt,
-                      fit: BoxFit.cover,
-                      cacheWidth: 1200,
+                Row(
+                  children: [
+                    Expanded(
+                      child: DropdownButtonFormField<String>(
+                        initialValue: _type,
+                        decoration: const InputDecoration(labelText: 'Tipo'),
+                        items: FinanceTransactionType.values
+                            .map(
+                              (v) => DropdownMenuItem(
+                                value: v,
+                                child: Text(FinancePresentation.typeLabel(v)),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (v) => setState(() => _type = v!),
+                      ),
                     ),
-                  ),
-                ),
-                TextButton.icon(
-                  onPressed: () => setState(() => _receipt = ''),
-                  icon: const Icon(Icons.delete_outline_rounded),
-                  label: const Text('Quitar comprobante'),
-                ),
-              ],
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => _pickReceipt(ImageSource.camera),
-                      icon: const Icon(Icons.camera_alt_outlined),
-                      label: const Text('Cámara'),
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(
+                      child: DropdownButtonFormField<String>(
+                        initialValue: _status,
+                        decoration: const InputDecoration(labelText: 'Estado'),
+                        items: FinancePaymentStatus.values
+                            .map(
+                              (v) => DropdownMenuItem(
+                                value: v,
+                                child: Text(
+                                  FinancePresentation.paymentLabel(v),
+                                ),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (v) => setState(() => _status = v!),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: AppSpacing.md),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => _pickReceipt(ImageSource.gallery),
-                      icon: const Icon(Icons.photo_library_outlined),
-                      label: const Text('Galería'),
+                  ],
+                ),
+                if (_status == FinancePaymentStatus.partial) ...[
+                  const SizedBox(height: AppSpacing.lg),
+                  TextFormField(
+                    controller: _paidAmount,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    decoration: const InputDecoration(
+                      labelText: 'Monto pagado',
+                      prefixText: r'$ ',
                     ),
+                    validator: (value) {
+                      final paid = int.tryParse(value ?? '') ?? 0;
+                      final total = int.tryParse(_amount.text) ?? 0;
+                      return paid <= 0 || paid >= total
+                          ? 'Debe ser mayor a 0 y menor al monto'
+                          : null;
+                    },
                   ),
                 ],
-              ),
-              const SizedBox(height: AppSpacing.xxl),
-              AppButton(
-                label: _editing ? 'Guardar cambios' : 'Registrar movimiento',
-                onPressed: _save,
-                isLoading: _saving,
-                icon: Icons.save_outlined,
-              ),
-            ],
+                const SizedBox(height: AppSpacing.lg),
+                DropdownButtonFormField<String>(
+                  initialValue: _category,
+                  decoration: const InputDecoration(labelText: 'Categoría'),
+                  items: FinanceCategory.values
+                      .map(
+                        (v) => DropdownMenuItem(
+                          value: v,
+                          child: Text(FinancePresentation.categoryLabel(v)),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (v) => setState(() => _category = v!),
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.calendar_today_rounded),
+                  title: const Text('Fecha'),
+                  subtitle: Text('${_date.day}/${_date.month}/${_date.year}'),
+                  trailing: const Icon(Icons.edit_calendar_rounded),
+                  onTap: _selectDate,
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                DropdownButtonFormField<String>(
+                  initialValue: _repairId,
+                  decoration: const InputDecoration(
+                    labelText: 'Reparación asociada',
+                  ),
+                  items: [
+                    const DropdownMenuItem(value: '', child: Text('Ninguna')),
+                    ...repairs.map(
+                      (r) => DropdownMenuItem(value: r.id, child: Text(r.name)),
+                    ),
+                  ],
+                  onChanged: (v) => setState(() => _repairId = v!),
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                DropdownButtonFormField<String>(
+                  initialValue: _maintenanceId,
+                  decoration: const InputDecoration(
+                    labelText: 'Mantenimiento asociado',
+                  ),
+                  items: [
+                    const DropdownMenuItem(value: '', child: Text('Ninguno')),
+                    ...maintenance.map(
+                      (m) => DropdownMenuItem(value: m.id, child: Text(m.name)),
+                    ),
+                  ],
+                  onChanged: (v) => setState(() => _maintenanceId = v!),
+                ),
+                for (final field in [
+                  (_vendor, 'Proveedor', 1),
+                  (_method, 'Método de pago', 1),
+                  (_description, 'Descripción', 2),
+                  (_notes, 'Notas', 3),
+                ]) ...[
+                  const SizedBox(height: AppSpacing.lg),
+                  TextField(
+                    controller: field.$1,
+                    maxLines: field.$3,
+                    decoration: InputDecoration(labelText: field.$2),
+                  ),
+                ],
+                const SizedBox(height: AppSpacing.xl),
+                if (_receipt.isNotEmpty) ...[
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: SizedBox(
+                      height: 180,
+                      child: AppImage(
+                        path: _receipt,
+                        fit: BoxFit.cover,
+                        cacheWidth: 1200,
+                      ),
+                    ),
+                  ),
+                  TextButton.icon(
+                    onPressed: () => setState(() => _receipt = ''),
+                    icon: const Icon(Icons.delete_outline_rounded),
+                    label: const Text('Quitar comprobante'),
+                  ),
+                ],
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => _pickReceipt(ImageSource.camera),
+                        icon: const Icon(Icons.camera_alt_outlined),
+                        label: const Text('Cámara'),
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => _pickReceipt(ImageSource.gallery),
+                        icon: const Icon(Icons.photo_library_outlined),
+                        label: const Text('Galería'),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.xxl),
+                AppButton(
+                  label: _editing ? 'Guardar cambios' : 'Registrar movimiento',
+                  onPressed: _save,
+                  isLoading: _saving,
+                  icon: Icons.save_outlined,
+                  backgroundColor: identity,
+                ),
+              ],
+            ),
           ),
         ),
       ),

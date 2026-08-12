@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:hive_ce/hive_ce.dart';
 import 'package:provider/provider.dart';
 
 import '../models/gallery_photo.dart';
+import '../models/project_profile.dart';
 import '../providers/gallery_provider.dart';
 import '../screens/photo_viewer_screen.dart';
 import '../services/image_service.dart';
+import '../services/hive_service.dart';
+import '../services/multi_garage_service.dart';
 import '../widgets/common/app_dialog.dart';
 import '../widgets/common/app_image.dart';
 import '../theme/app_text_styles.dart';
+import '../theme/garage_ds3.dart';
 
 class GalleryScreen extends StatelessWidget {
   const GalleryScreen({super.key});
@@ -65,46 +70,105 @@ class GalleryScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final provider = context.watch<GalleryProvider>();
     final photos = provider.photos;
+    ProjectProfile? profile;
+    for (final item in Hive.box<ProjectProfile>(
+      HiveService.projectProfileBox,
+    ).values) {
+      if (item.id == MultiGarageService.activeProjectId) {
+        profile = item;
+        break;
+      }
+    }
+    final identity = GarageDs3.identity(profile?.identityColor ?? 0);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Galería')),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          await addPhoto(context);
-        },
-        child: const Icon(Icons.add_a_photo),
-      ),
-      body: photos.isEmpty
-          ? const Center(
-              child: Text(
-                'No hay fotos todavía',
-                style: AppTextStyles.cardTitle,
+      backgroundColor: GarageDs3.foundation,
+      appBar: AppBar(
+        title: const Text(
+          'GALERÍA',
+          style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: .9),
+        ),
+        actions: [
+          IconButton(
+            tooltip: 'Agregar foto',
+            onPressed: () => addPhoto(context),
+            style: IconButton.styleFrom(
+              side: BorderSide(color: identity.withValues(alpha: .55)),
+              shape: const BeveledRectangleBorder(
+                borderRadius: BorderRadius.all(Radius.circular(3)),
               ),
-            )
-          : GridView.builder(
-              padding: const EdgeInsets.all(15),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 10,
-              ),
-              itemCount: photos.length,
-              itemBuilder: (context, index) {
-                final photo = photos[index];
-                return GestureDetector(
-                  onTap: () {
-                    openPhoto(context, photo);
-                  },
-                  onLongPress: () async {
-                    await confirmDelete(context, provider, photo);
-                  },
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: AppThumbnail(path: photo.path, size: 180),
-                  ),
-                );
-              },
             ),
+            icon: Icon(Icons.add_a_photo_outlined, color: identity),
+          ),
+          const SizedBox(width: 12),
+        ],
+      ),
+      body: GarageBackdrop(
+        child: photos.isEmpty
+            ? Center(
+                child: GaragePanel(
+                  padding: const EdgeInsets.all(22),
+                  identity: identity,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.photo_library_outlined,
+                        color: identity,
+                        size: 34,
+                      ),
+                      const SizedBox(height: 10),
+                      const Text(
+                        'SIN EVIDENCIAS FOTOGRÁFICAS',
+                        style: AppTextStyles.cardTitle,
+                      ),
+                      const SizedBox(height: 10),
+                      OutlinedButton.icon(
+                        onPressed: () => addPhoto(context),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: identity,
+                          side: BorderSide(
+                            color: identity.withValues(alpha: .65),
+                          ),
+                        ),
+                        icon: const Icon(Icons.add_a_photo_outlined),
+                        label: const Text('AGREGAR FOTO'),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            : GridView.builder(
+                padding: const EdgeInsets.all(12),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3,
+                  crossAxisSpacing: 6,
+                  mainAxisSpacing: 6,
+                ),
+                itemCount: photos.length,
+                itemBuilder: (context, index) {
+                  final photo = photos[index];
+                  return GestureDetector(
+                    onTap: () {
+                      openPhoto(context, photo);
+                    },
+                    onLongPress: () async {
+                      await confirmDelete(context, provider, photo);
+                    },
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        border: Border.all(color: GarageDs3.technicalLine),
+                        borderRadius: BorderRadius.circular(3),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(2),
+                        child: AppThumbnail(path: photo.path, size: 180),
+                      ),
+                    ),
+                  );
+                },
+              ),
+      ),
     );
   }
 }

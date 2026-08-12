@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../theme/app_colors.dart';
-import '../../theme/app_radius.dart';
 import '../../theme/app_spacing.dart';
 import '../../theme/app_motion.dart';
 
@@ -12,6 +11,7 @@ class AppButton extends StatelessWidget {
   final bool isLoading;
   final bool isExpanded;
   final bool isDestructive;
+  final Color? backgroundColor;
 
   const AppButton({
     super.key,
@@ -21,27 +21,30 @@ class AppButton extends StatelessWidget {
     this.isLoading = false,
     this.isExpanded = true,
     this.isDestructive = false,
+    this.backgroundColor,
   });
 
   @override
   Widget build(BuildContext context) {
-    final backgroundColor = isDestructive
+    final resolvedBackgroundColor = isDestructive
         ? AppColors.danger
-        : AppColors.primary;
+        : backgroundColor ?? AppColors.primary;
 
     final button = FilledButton(
       onPressed: isLoading ? null : onPressed,
       style: FilledButton.styleFrom(
-        minimumSize: const Size(0, 52),
+        minimumSize: const Size(0, 46),
         padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.xl,
           vertical: AppSpacing.md,
         ),
-        backgroundColor: backgroundColor,
-        disabledBackgroundColor: backgroundColor.withValues(alpha: 0.45),
+        backgroundColor: resolvedBackgroundColor,
+        disabledBackgroundColor: resolvedBackgroundColor.withValues(
+          alpha: 0.45,
+        ),
         foregroundColor: AppColors.text,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.medium),
+        shape: const BeveledRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(3)),
         ),
       ),
       child: AnimatedSwitcher(

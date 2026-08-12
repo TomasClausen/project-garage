@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:hive_ce/hive_ce.dart';
 
 import '../core/formatters/km_formatter.dart';
 import '../core/formatters/money_formatter.dart';
@@ -7,6 +8,7 @@ import '../models/gallery_photo.dart';
 import '../models/maintenance.dart';
 import '../models/repair.dart';
 import '../models/repair_media.dart';
+import '../models/project_profile.dart';
 import '../providers/gallery_provider.dart';
 import '../providers/maintenance_provider.dart';
 import '../providers/repair_media_provider.dart';
@@ -17,20 +19,25 @@ import '../providers/finance_provider.dart';
 import '../services/dashboard_service.dart';
 import '../services/priority_service.dart';
 import '../services/restoration_service.dart';
+import '../services/hive_service.dart';
+import '../services/multi_garage_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_text_styles.dart';
+import '../theme/garage_ds3.dart';
 import '../widgets/common/app_card.dart';
 import '../widgets/common/app_image.dart';
+import 'finance_screen.dart';
 import '../widgets/common/app_progress_bar.dart';
-import '../widgets/common/project_progress_module.dart';
 import '../widgets/common/project_garage_logo.dart';
 import '../widgets/common/app_skeleton.dart';
 import '../widgets/next_goal_card.dart';
-import 'maintenance_screen.dart';
 import 'repair_detail_screen.dart';
 import 'settings_screen.dart';
+import 'my_garage_screen.dart';
+import 'project_form_screen.dart';
+import 'vehicle_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -49,12 +56,70 @@ class HomeScreen extends StatelessWidget {
     final maintenances = maintenanceProvider.maintenances;
     final repairMedia = repairMediaProvider.items;
     final galleryPhotos = galleryProvider.photos;
+    final profiles = Hive.box<ProjectProfile>(HiveService.projectProfileBox);
+    final activeProject = profiles.values
+        .where((x) => x.id == MultiGarageService.activeProjectId)
+        .firstOrNull;
+
+    Future<void> refreshScope() => Future.wait([
+      vehicleProvider.refresh(),
+      repairProvider.refresh(),
+      maintenanceProvider.refresh(),
+      repairMediaProvider.refresh(),
+      galleryProvider.refresh(),
+      timelineProvider.refresh(),
+      financeProvider.refresh(),
+    ]);
+
+    if (activeProject == null) {
+      return Scaffold(
+        body: SafeArea(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpacing.xl),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.garage_outlined, size: 64),
+                  const SizedBox(height: AppSpacing.lg),
+                  const Text(
+                    'Tu Garage está vacío',
+                    style: AppTextStyles.screenTitle,
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  const Text('Creá un proyecto para empezar.'),
+                  const SizedBox(height: AppSpacing.xl),
+                  FilledButton.icon(
+                    onPressed: () async {
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const ProjectFormScreen(),
+                        ),
+                      );
+                      await refreshScope();
+                    },
+                    icon: const Icon(Icons.add),
+                    label: const Text('Crear primer proyecto'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
 
     final progress = RestorationService.calculateProgress(repairs);
+    final identity = GarageDs3.identity(activeProject.identityColor);
+    final completed = repairs.where((item) => item.progress >= 1).length;
+    final critical = repairs
+        .where(
+          (item) => item.priority.toLowerCase() == 'alta' && item.progress < 1,
+        )
+        .length;
     final nextRepair = PriorityService.getNextRepair(repairs);
     final dashboard = DashboardService.generate(repairs);
-    final maintenanceAlert = _nextMaintenance(maintenances, vehicle.kilometers);
-
     final featuredImage = timelineProvider.featuredImage;
 
     final latestImage = featuredImage == null
@@ -66,7 +131,7 @@ class HomeScreen extends StatelessWidget {
           );
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: GarageDs3.foundation,
       body: AppLoadingGate(
         future: Future.wait([
           vehicleProvider.ready,
@@ -84,117 +149,118 @@ class HomeScreen extends StatelessWidget {
           galleryProvider.refresh(),
           timelineProvider.refresh(),
         ]),
-        child: SafeArea(
-          child: CustomScrollView(
-            physics: const BouncingScrollPhysics(),
-            slivers: [
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.xl,
-                  AppSpacing.lg,
-                  AppSpacing.xl,
-                  110,
-                ),
-                sliver: SliverList(
-                  delegate: SliverChildListDelegate([
-                    _Header(vehicleName: '${vehicle.brand} ${vehicle.model}'),
-                    const SizedBox(height: AppSpacing.xxl),
-                    _ProjectHero(
-                      vehicleName: '${vehicle.brand} ${vehicle.model}',
-                      year: vehicle.year,
-                      kilometers: vehicle.kilometers,
-                      progress: progress,
-                      imagePath: vehicle.imagePath,
-                    ),
-                    const SizedBox(height: AppSpacing.xxl),
-                    const _SectionHeader(
-                      title: 'Resumen general',
-                      subtitle: 'Información clave del proyecto',
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    _OverviewGrid(
-                      repairs: repairs.length,
-                      completedRepairs: dashboard.completedRepairs,
-                      maintenanceCount: maintenances.length,
-                      evidenceCount: repairMedia.length + galleryPhotos.length,
-                      totalSpent: dashboard.actualTotal,
-                    ),
-                    const SizedBox(height: AppSpacing.xxl),
-                    NextGoalCard(
-                      repair: nextRepair,
-                      onTap: nextRepair == null
-                          ? null
-                          : () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) =>
-                                      RepairDetailScreen(repair: nextRepair),
-                                ),
-                              );
-                            },
-                    ),
-                    const SizedBox(height: AppSpacing.xxl),
-                    const _SectionHeader(
-                      title: 'Mantenimiento',
-                      subtitle: 'Próximo servicio recomendado',
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    _MaintenanceCard(
-                      alert: maintenanceAlert,
-                      onTap: () {
-                        Navigator.push(
+        child: GarageBackdrop(
+          child: SafeArea(
+            child: CustomScrollView(
+              physics: const BouncingScrollPhysics(),
+              slivers: [
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(
+                    16,
+                    AppSpacing.lg,
+                    16,
+                    110,
+                  ),
+                  sliver: SliverList(
+                    delegate: SliverChildListDelegate([
+                      _Header(
+                        project: activeProject,
+                        vehicleName: '${vehicle.brand} ${vehicle.model}',
+                        onChanged: refreshScope,
+                      ),
+                      const SizedBox(height: 12),
+                      _ProjectHero(
+                        projectName: activeProject.name,
+                        vehicleName: '${vehicle.brand} ${vehicle.model}',
+                        year: vehicle.year,
+                        kilometers: vehicle.kilometers,
+                        progress: progress,
+                        imagePath: vehicle.imagePath,
+                        identity: identity,
+                        completed: completed,
+                        pending: repairs.length - completed,
+                        critical: critical,
+                        onTap: () async {
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const VehicleScreen(),
+                            ),
+                          );
+                          await refreshScope();
+                        },
+                      ),
+                      const SizedBox(height: 14),
+                      const _HudTitle(index: '01', title: 'PRÓXIMO OBJETIVO'),
+                      const SizedBox(height: 7),
+                      NextGoalCard(
+                        repair: nextRepair,
+                        identity: identity,
+                        onTap: nextRepair == null
+                            ? null
+                            : () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        RepairDetailScreen(repair: nextRepair),
+                                  ),
+                                );
+                              },
+                      ),
+                      const SizedBox(height: 14),
+                      const _HudTitle(index: '02', title: 'ESTADO / SISTEMAS'),
+                      const SizedBox(height: 7),
+                      _CompactStatusModule(
+                        repairs: repairs.length,
+                        completed: completed,
+                        maintenance: maintenances.length,
+                        evidence: repairMedia.length + galleryPhotos.length,
+                        identity: identity,
+                      ),
+                      const SizedBox(height: 14),
+                      const _HudTitle(index: '03', title: 'ACTIVIDAD RECIENTE'),
+                      const SizedBox(height: 7),
+                      _CompactActivity(
+                        imagePath: latestImage?.path,
+                        label: latestImage?.label,
+                        note: latestImage?.note,
+                        identity: identity,
+                      ),
+                      const SizedBox(height: 14),
+                      const _HudTitle(index: '04', title: 'FINANZAS RÁPIDAS'),
+                      const SizedBox(height: 7),
+                      _CompactFinance(
+                        onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => const MaintenanceScreen(),
+                            builder: (_) => const FinanceScreen(),
                           ),
-                        );
-                      },
-                    ),
-                    const SizedBox(height: AppSpacing.xxl),
-                    const _SectionHeader(
-                      title: 'Finanzas',
-                      subtitle: 'Estado económico de la restauración',
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    _FinanceCard(
-                      estimated: financeProvider.transactions.isEmpty
-                          ? dashboard.estimatedTotal
-                          : financeProvider.budget.expandedBudget,
-                      spent: financeProvider.transactions.isEmpty
-                          ? dashboard.actualTotal
-                          : financeProvider.netInvestment,
-                      remaining: financeProvider.transactions.isEmpty
-                          ? dashboard.remainingEstimated
-                          : financeProvider.remainingBudget.clamp(0, 1 << 62),
-                    ),
-                    const SizedBox(height: AppSpacing.xxl),
-                    const _SectionHeader(
-                      title: 'Última evidencia',
-                      subtitle: 'Registro visual más reciente',
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    _LatestImageCard(
-                      imagePath: latestImage?.path,
-                      label: latestImage?.label,
-                      note: latestImage?.note,
-                    ),
-                    const SizedBox(height: AppSpacing.xxl),
-                    _ProjectHealthCard(
-                      repairs: repairs,
-                      maintenances: maintenances,
-                      currentKm: vehicle.kilometers,
-                    ),
-                  ]),
+                        ),
+                        estimated: financeProvider.transactions.isEmpty
+                            ? dashboard.estimatedTotal
+                            : financeProvider.budget.expandedBudget,
+                        spent: financeProvider.transactions.isEmpty
+                            ? dashboard.actualTotal
+                            : financeProvider.netInvestment,
+                        remaining: financeProvider.transactions.isEmpty
+                            ? dashboard.remainingEstimated
+                            : financeProvider.remainingBudget.clamp(0, 1 << 62),
+                        identity: identity,
+                      ),
+                    ]),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
+  // Legacy module retained temporarily while the cockpit composition settles.
+  // ignore: unused_element
   static _MaintenanceAlert? _nextMaintenance(
     List<Maintenance> maintenances,
     int currentKm,
@@ -249,8 +315,14 @@ class HomeScreen extends StatelessWidget {
 
 class _Header extends StatelessWidget {
   final String vehicleName;
+  final ProjectProfile project;
+  final Future<void> Function() onChanged;
 
-  const _Header({required this.vehicleName});
+  const _Header({
+    required this.vehicleName,
+    required this.project,
+    required this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -262,7 +334,22 @@ class _Header extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Project Garage', style: AppTextStyles.screenTitle),
+              InkWell(
+                onTap: () => _selector(context),
+                child: Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        project.name.toUpperCase(),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.screenTitle,
+                      ),
+                    ),
+                    const Icon(Icons.arrow_drop_down_rounded),
+                  ],
+                ),
+              ),
               const SizedBox(height: AppSpacing.xs),
               Text(
                 vehicleName,
@@ -309,21 +396,94 @@ class _Header extends StatelessWidget {
       ],
     );
   }
+
+  Future<void> _selector(BuildContext context) async {
+    final projects = Hive.box<ProjectProfile>(
+      HiveService.projectProfileBox,
+    ).values.toList();
+    await showModalBottomSheet<void>(
+      context: context,
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const ListTile(title: Text('Proyecto activo')),
+            ...projects.map(
+              (item) => ListTile(
+                leading: CircleAvatar(
+                  radius: 8,
+                  backgroundColor: Color(item.identityColor),
+                ),
+                title: Text(item.name),
+                trailing: item.id == MultiGarageService.activeProjectId
+                    ? const Icon(Icons.check)
+                    : null,
+                onTap: () async {
+                  await MultiGarageService().setActiveProject(item.id);
+                  if (sheetContext.mounted) Navigator.pop(sheetContext);
+                  await onChanged();
+                },
+              ),
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.garage_outlined),
+              title: const Text('Mi Garage'),
+              onTap: () async {
+                Navigator.pop(sheetContext);
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => MyGarageScreen(onProjectChanged: onChanged),
+                  ),
+                );
+                await onChanged();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.add),
+              title: const Text('Nuevo proyecto'),
+              onTap: () async {
+                Navigator.pop(sheetContext);
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ProjectFormScreen()),
+                );
+                await onChanged();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _ProjectHero extends StatelessWidget {
+  final String projectName;
   final String vehicleName;
   final int year;
   final int kilometers;
   final double progress;
   final String? imagePath;
+  final Color identity;
+  final int completed;
+  final int pending;
+  final int critical;
+  final VoidCallback onTap;
 
   const _ProjectHero({
+    required this.projectName,
     required this.vehicleName,
     required this.year,
     required this.kilometers,
     required this.progress,
     required this.imagePath,
+    required this.identity,
+    required this.completed,
+    required this.pending,
+    required this.critical,
+    required this.onTap,
   });
 
   @override
@@ -332,97 +492,146 @@ class _ProjectHero extends StatelessWidget {
 
     final percentage = (progress * 100).round();
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(AppRadius.large),
-      child: SizedBox(
-        height: 300,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            if (hasImage)
-              AppImage(path: imagePath, fit: BoxFit.cover, cacheWidth: 1400)
-            else
-              const _HeroPlaceholder(),
-            const DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.transparent,
-                    Color(0x22000000),
-                    Color(0xEF08090C),
-                  ],
-                  stops: [0.2, 0.5, 1],
-                ),
-              ),
-            ),
-            Positioned(
-              left: AppSpacing.xl,
-              right: AppSpacing.xl,
-              bottom: AppSpacing.xl,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    vehicleName,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 27,
-                      height: 1.08,
-                      fontWeight: FontWeight.w900,
+    return Semantics(
+      button: true,
+      label: 'Abrir ficha del vehículo',
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(5),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(5),
+          child: SizedBox(
+            height: hasImage ? 286 : 248,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                if (hasImage)
+                  AppImage(path: imagePath, fit: BoxFit.cover, cacheWidth: 1400)
+                else
+                  const _HeroPlaceholder(),
+                const DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.transparent,
+                        Color(0x22000000),
+                        Color(0xEF08090C),
+                      ],
+                      stops: [0.2, 0.5, 1],
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.sm),
-                  Wrap(
-                    spacing: AppSpacing.sm,
-                    runSpacing: AppSpacing.sm,
-                    children: [
-                      _HeroTag(
-                        icon: Icons.calendar_today_outlined,
-                        text: '$year',
-                      ),
-                      _HeroTag(
-                        icon: Icons.speed_rounded,
-                        text: KmFormatter.format(kilometers),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  Row(
+                ),
+                Positioned(
+                  left: 16,
+                  right: 16,
+                  bottom: 14,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        'Restauración general',
+                        'PROYECTO ACTIVO',
                         style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
+                          color: Colors.white60,
+                          fontSize: 10,
+                          letterSpacing: 1.1,
                         ),
                       ),
-                      const Spacer(),
+                      const SizedBox(height: 5),
                       Text(
-                        '$percentage%',
+                        projectName.toUpperCase(),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 15,
+                          fontSize: 27,
+                          height: 1.08,
                           fontWeight: FontWeight.w900,
                         ),
                       ),
+                      if (vehicleName.trim().isNotEmpty)
+                        Text(
+                          vehicleName.trim(),
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 14,
+                          ),
+                        ),
+                      const SizedBox(height: AppSpacing.sm),
+                      Wrap(
+                        spacing: AppSpacing.sm,
+                        runSpacing: AppSpacing.sm,
+                        children: [
+                          _HeroTag(
+                            icon: Icons.calendar_today_outlined,
+                            text: '$year',
+                          ),
+                          _HeroTag(
+                            icon: Icons.speed_rounded,
+                            text: KmFormatter.format(kilometers),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            '$percentage',
+                            style: TextStyle(
+                              color: identity,
+                              fontSize: 48,
+                              height: .82,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: -2,
+                            ),
+                          ),
+                          const Padding(
+                            padding: EdgeInsets.only(bottom: 2),
+                            child: Text(
+                              '%  RESTAURACIÓN',
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 1.1,
+                              ),
+                            ),
+                          ),
+                          const Spacer(),
+                          _HeroMetric(
+                            value: completed,
+                            label: 'OK',
+                            color: identity,
+                          ),
+                          const SizedBox(width: 14),
+                          _HeroMetric(
+                            value: pending,
+                            label: 'PEND.',
+                            color: Colors.white,
+                          ),
+                          const SizedBox(width: 14),
+                          _HeroMetric(
+                            value: critical,
+                            label: 'CRÍT.',
+                            color: AppColors.danger,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 9),
+                      SegmentedGarageProgress(
+                        value: progress,
+                        color: identity,
+                        segments: 14,
+                        height: 14,
+                      ),
                     ],
                   ),
-                  const SizedBox(height: AppSpacing.sm),
-                  ProjectProgressModule(
-                    title: 'Avance técnico',
-                    value: progress,
-                    segments: 10,
-                    variant: ProjectProgressVariant.compact,
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -434,17 +643,88 @@ class _HeroPlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: AppColors.surfaceLight,
-      child: const Center(
-        child: Icon(
-          Icons.directions_car_filled_rounded,
-          size: 76,
-          color: AppColors.secondaryText,
-        ),
-      ),
+    return CustomPaint(painter: _HeroTechnicalPainter());
+  }
+}
+
+class _HeroTechnicalPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.drawRect(
+      Offset.zero & size,
+      Paint()..color = const Color(0xFF11161B),
+    );
+    final grid = Paint()
+      ..color = GarageDs3.technicalLine.withValues(alpha: .28)
+      ..strokeWidth = .7;
+    for (double x = 0; x < size.width; x += 28) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), grid);
+    }
+    for (double y = 0; y < size.height; y += 28) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), grid);
+    }
+    final line = Paint()
+      ..color = const Color(0xFF56616C).withValues(alpha: .55)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2;
+    final path = Path()
+      ..moveTo(size.width * .08, size.height * .55)
+      ..lineTo(size.width * .20, size.height * .39)
+      ..lineTo(size.width * .62, size.height * .34)
+      ..lineTo(size.width * .78, size.height * .48)
+      ..lineTo(size.width * .92, size.height * .53)
+      ..lineTo(size.width * .86, size.height * .63)
+      ..lineTo(size.width * .16, size.height * .64)
+      ..close();
+    canvas.drawPath(path, line);
+    canvas.drawCircle(Offset(size.width * .27, size.height * .64), 25, line);
+    canvas.drawCircle(Offset(size.width * .73, size.height * .64), 25, line);
+    canvas.drawLine(
+      Offset(size.width * .04, 12),
+      Offset(size.width * .30, 12),
+      line,
+    );
+    canvas.drawLine(
+      Offset(size.width * .70, 12),
+      Offset(size.width * .96, 12),
+      line,
     );
   }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _HeroMetric extends StatelessWidget {
+  const _HeroMetric({
+    required this.value,
+    required this.label,
+    required this.color,
+  });
+  final int value;
+  final String label;
+  final Color color;
+  @override
+  Widget build(BuildContext context) => Column(
+    children: [
+      Text(
+        '$value',
+        style: TextStyle(
+          color: color,
+          fontSize: 15,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+      Text(
+        label,
+        style: const TextStyle(
+          color: Colors.white60,
+          fontSize: 8,
+          letterSpacing: .8,
+        ),
+      ),
+    ],
+  );
 }
 
 class _HeroTag extends StatelessWidget {
@@ -459,7 +739,8 @@ class _HeroTag extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
         color: Colors.black.withValues(alpha: 0.42),
-        borderRadius: BorderRadius.circular(100),
+        borderRadius: BorderRadius.circular(3),
+        border: Border.all(color: Colors.white24),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -480,6 +761,334 @@ class _HeroTag extends StatelessWidget {
   }
 }
 
+class _HudTitle extends StatelessWidget {
+  const _HudTitle({required this.index, required this.title});
+  final String index;
+  final String title;
+  @override
+  Widget build(BuildContext context) => Row(
+    children: [
+      Text(
+        index,
+        style: const TextStyle(
+          color: Colors.white30,
+          fontSize: 9,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 1,
+        ),
+      ),
+      const SizedBox(width: 8),
+      const Expanded(child: Divider(height: 1, color: GarageDs3.technicalLine)),
+      const SizedBox(width: 8),
+      Text(
+        title,
+        style: const TextStyle(
+          color: Colors.white70,
+          fontSize: 10,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 1.35,
+        ),
+      ),
+    ],
+  );
+}
+
+class _CompactStatusModule extends StatelessWidget {
+  const _CompactStatusModule({
+    required this.repairs,
+    required this.completed,
+    required this.maintenance,
+    required this.evidence,
+    required this.identity,
+  });
+  final int repairs, completed, maintenance, evidence;
+  final Color identity;
+  @override
+  Widget build(BuildContext context) => GaragePanel(
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+    child: Row(
+      children: [
+        _StatusCell(
+          icon: Icons.build_outlined,
+          value: '$completed/$repairs',
+          label: 'TRABAJOS',
+          color: identity,
+        ),
+        const _HudDivider(),
+        _StatusCell(
+          icon: Icons.tune_rounded,
+          value: '$maintenance',
+          label: 'SERVICIOS',
+          color: Colors.white70,
+        ),
+        const _HudDivider(),
+        _StatusCell(
+          icon: Icons.camera_alt_outlined,
+          value: '$evidence',
+          label: 'REGISTROS',
+          color: Colors.white70,
+        ),
+      ],
+    ),
+  );
+}
+
+class _StatusCell extends StatelessWidget {
+  const _StatusCell({
+    required this.icon,
+    required this.value,
+    required this.label,
+    required this.color,
+  });
+  final IconData icon;
+  final String value, label;
+  final Color color;
+  @override
+  Widget build(BuildContext context) => Expanded(
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(icon, size: 17, color: color),
+        const SizedBox(width: 7),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              value,
+              style: const TextStyle(
+                fontSize: 17,
+                height: 1,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 3),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white38,
+                fontSize: 7.5,
+                fontWeight: FontWeight.w800,
+                letterSpacing: .7,
+              ),
+            ),
+          ],
+        ),
+      ],
+    ),
+  );
+}
+
+class _HudDivider extends StatelessWidget {
+  const _HudDivider();
+  @override
+  Widget build(BuildContext context) => const SizedBox(
+    height: 34,
+    child: VerticalDivider(width: 12, color: GarageDs3.technicalLine),
+  );
+}
+
+class _CompactActivity extends StatelessWidget {
+  const _CompactActivity({
+    this.imagePath,
+    this.label,
+    this.note,
+    required this.identity,
+  });
+  final String? imagePath, label, note;
+  final Color identity;
+  @override
+  Widget build(BuildContext context) => GaragePanel(
+    padding: EdgeInsets.zero,
+    child: SizedBox(
+      height: 72,
+      child: Row(
+        children: [
+          SizedBox(
+            width: 84,
+            height: 72,
+            child: imagePath?.trim().isNotEmpty == true
+                ? AppImage(path: imagePath, fit: BoxFit.cover)
+                : CustomPaint(painter: _MiniGridPainter(identity)),
+          ),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    (label?.trim().isNotEmpty == true
+                            ? label!
+                            : 'SIN ACTIVIDAD')
+                        .toUpperCase(),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: .8,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    note?.trim().isNotEmpty == true
+                        ? note!
+                        : 'Los registros del proyecto aparecerán acá.',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white54,
+                      fontSize: 10,
+                      height: 1.2,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Icon(Icons.chevron_right_rounded, color: identity, size: 20),
+          const SizedBox(width: 8),
+        ],
+      ),
+    ),
+  );
+}
+
+class _MiniGridPainter extends CustomPainter {
+  const _MiniGridPainter(this.color);
+  final Color color;
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.drawRect(
+      Offset.zero & size,
+      Paint()..color = GarageDs3.foundationRaised,
+    );
+    final p = Paint()
+      ..color = GarageDs3.technicalLine.withValues(alpha: .5)
+      ..strokeWidth = .6;
+    for (double x = 0; x < size.width; x += 14) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), p);
+    }
+    for (double y = 0; y < size.height; y += 14) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), p);
+    }
+    canvas.drawLine(
+      Offset(12, size.height - 14),
+      Offset(size.width - 10, 15),
+      Paint()
+        ..color = color.withValues(alpha: .7)
+        ..strokeWidth = 2,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _MiniGridPainter oldDelegate) =>
+      oldDelegate.color != color;
+}
+
+class _CompactFinance extends StatelessWidget {
+  const _CompactFinance({
+    required this.estimated,
+    required this.spent,
+    required this.remaining,
+    required this.identity,
+    required this.onTap,
+  });
+  final int estimated, spent, remaining;
+  final Color identity;
+  final VoidCallback onTap;
+  @override
+  Widget build(BuildContext context) => Semantics(
+    button: true,
+    label: 'Abrir finanzas del proyecto',
+    child: InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(5),
+      child: GaragePanel(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: _FinanceReadout(
+                    label: 'INVERTIDO',
+                    value: MoneyFormatter.format(spent),
+                    color: identity,
+                  ),
+                ),
+                const _HudDivider(),
+                Expanded(
+                  child: _FinanceReadout(
+                    label: 'PRESUPUESTO',
+                    value: MoneyFormatter.format(estimated),
+                    color: Colors.white,
+                  ),
+                ),
+                const _HudDivider(),
+                Expanded(
+                  child: _FinanceReadout(
+                    label: 'DISPONIBLE',
+                    value: MoneyFormatter.format(remaining),
+                    color: Colors.white70,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            SegmentedGarageProgress(
+              value: estimated <= 0 ? 0 : spent / estimated,
+              color: identity,
+              segments: 18,
+              height: 5,
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+class _FinanceReadout extends StatelessWidget {
+  const _FinanceReadout({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+  final String label, value;
+  final Color color;
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        label,
+        style: const TextStyle(
+          color: Colors.white38,
+          fontSize: 7.5,
+          fontWeight: FontWeight.w800,
+          letterSpacing: .7,
+        ),
+      ),
+      const SizedBox(height: 4),
+      FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.centerLeft,
+        child: Text(
+          value,
+          style: TextStyle(
+            color: color,
+            fontSize: 14,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      ),
+    ],
+  );
+}
+
+// ignore: unused_element
 class _SectionHeader extends StatelessWidget {
   final String title;
   final String subtitle;
@@ -499,6 +1108,7 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
+// ignore: unused_element
 class _OverviewGrid extends StatelessWidget {
   final int repairs;
   final int completedRepairs;
@@ -649,6 +1259,7 @@ class _MaintenanceAlert {
   });
 }
 
+// ignore: unused_element
 class _MaintenanceCard extends StatelessWidget {
   final _MaintenanceAlert? alert;
   final VoidCallback onTap;
@@ -760,6 +1371,7 @@ class _MaintenanceIcon extends StatelessWidget {
   }
 }
 
+// ignore: unused_element
 class _FinanceCard extends StatelessWidget {
   final int estimated;
   final int spent;
@@ -866,6 +1478,7 @@ class _LatestImage {
   });
 }
 
+// ignore: unused_element
 class _LatestImageCard extends StatelessWidget {
   final String? imagePath;
   final String? label;
@@ -961,6 +1574,7 @@ class _ImagePlaceholder extends StatelessWidget {
   }
 }
 
+// ignore: unused_element
 class _ProjectHealthCard extends StatelessWidget {
   final List<Repair> repairs;
   final List<Maintenance> maintenances;

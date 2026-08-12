@@ -5,6 +5,8 @@ import 'package:hive_ce/hive_ce.dart';
 import '../models/vehicle.dart';
 
 import '../services/hive_service.dart';
+import '../services/multi_garage_service.dart';
+import '../models/project_profile.dart';
 
 class VehicleProvider extends ChangeNotifier {
   late Box<Vehicle> _box;
@@ -24,12 +26,19 @@ class VehicleProvider extends ChangeNotifier {
   }
 
   Vehicle get vehicle => _vehicle;
-  bool get hasVehicle => _box.isNotEmpty;
+  bool get hasVehicle => _vehicle.projectId.isNotEmpty;
 
   Future<void> _loadVehicle() async {
     _box = Hive.box<Vehicle>(HiveService.vehicleBox);
 
-    if (_box.isEmpty) {
+    final profiles = Hive.box<ProjectProfile>(HiveService.projectProfileBox);
+    final project = profiles.values
+        .where((x) => x.id == MultiGarageService.activeProjectId)
+        .firstOrNull;
+    final vehicleId = project?.activeVehicleId ?? '';
+    final selected = vehicleId.isEmpty ? null : _box.get(vehicleId);
+    if (selected == null ||
+        !MultiGarageService.belongsToActiveProject(selected.projectId)) {
       _vehicle = const Vehicle(
         brand: '',
         model: '',
@@ -39,7 +48,7 @@ class VehicleProvider extends ChangeNotifier {
         kilometers: 0,
       );
     } else {
-      _vehicle = _box.get("lancer") ?? _box.values.first;
+      _vehicle = selected;
     }
 
     notifyListeners();
@@ -48,9 +57,16 @@ class VehicleProvider extends ChangeNotifier {
   Future<void> refresh() => _loadVehicle();
 
   Future<void> updateVehicle(Vehicle vehicle) async {
-    _vehicle = vehicle;
-
-    await _box.put("lancer", vehicle);
+    final profiles = Hive.box<ProjectProfile>(HiveService.projectProfileBox);
+    final project = profiles.values.firstWhere(
+      (x) => x.id == MultiGarageService.activeProjectId,
+    );
+    final vehicleId = project.activeVehicleId;
+    if (vehicleId.isEmpty) {
+      throw StateError('El proyecto activo no tiene vehículo');
+    }
+    _vehicle = vehicle.copyWith(projectId: MultiGarageService.activeProjectId);
+    await _box.put(vehicleId, _vehicle);
 
     notifyListeners();
   }

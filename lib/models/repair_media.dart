@@ -22,6 +22,9 @@ class RepairMedia {
   @HiveField(5)
   final String createdAt;
 
+  @HiveField(6)
+  final String projectId;
+
   RepairMedia({
     required this.id,
     required this.repairId,
@@ -29,5 +32,6 @@ class RepairMedia {
     required this.stage,
     required this.note,
     required this.createdAt,
+    this.projectId = '',
   });
 }

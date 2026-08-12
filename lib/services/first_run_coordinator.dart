@@ -8,6 +8,7 @@ import '../models/repair.dart';
 import '../models/timeline_event.dart';
 import '../models/vehicle.dart';
 import 'hive_service.dart';
+import 'multi_garage_service.dart';
 
 enum FirstRunState { newInstallation, update, configured, restored }
 
@@ -19,6 +20,17 @@ class FirstRunDecision {
 
 class FirstRunCoordinator {
   Future<FirstRunDecision> resolve() async {
+    final wasLegacyInstallation =
+        Hive.box<ProjectProfile>(HiveService.projectProfileBox).isEmpty &&
+        (Hive.box<Vehicle>(HiveService.vehicleBox).isNotEmpty ||
+            Hive.box<Repair>(HiveService.repairBox).isNotEmpty ||
+            Hive.box<Maintenance>(HiveService.maintenanceBox).isNotEmpty ||
+            Hive.box<FinanceTransaction>(
+              HiveService.financeTransactionBox,
+            ).isNotEmpty ||
+            Hive.box<TimelineEvent>(HiveService.timelineBox).isNotEmpty ||
+            Hive.box<AppPreferences>(HiveService.preferencesBox).isNotEmpty);
+    await MultiGarageService().initialize();
     final profiles = Hive.box<ProjectProfile>(HiveService.projectProfileBox);
     final vehicles = Hive.box<Vehicle>(HiveService.vehicleBox);
     final repairs = Hive.box<Repair>(HiveService.repairBox);
@@ -32,7 +44,9 @@ class FirstRunCoordinator {
     final profile = profiles.get(ProjectProfile.defaultId);
     if (profile != null) {
       return FirstRunDecision(
-        profile.activeVehicleId.isNotEmpty
+        wasLegacyInstallation
+            ? FirstRunState.update
+            : profile.activeVehicleId.isNotEmpty
             ? FirstRunState.restored
             : FirstRunState.configured,
         !profile.onboardingCompleted,

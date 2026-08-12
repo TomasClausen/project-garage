@@ -20,6 +20,8 @@ class ProjectBudget {
   final String createdAt;
   @HiveField(7)
   final String updatedAt;
+  @HiveField(8)
+  final String projectId;
 
   const ProjectBudget({
     this.id = defaultId,
@@ -30,6 +32,7 @@ class ProjectBudget {
     this.notes = '',
     required this.createdAt,
     required this.updatedAt,
+    this.projectId = '',
   });
 
   static const defaultId = 'main_project_budget';
@@ -46,6 +49,7 @@ class ProjectBudget {
     String? notes,
     String? createdAt,
     String? updatedAt,
+    String? projectId,
   }) => ProjectBudget(
     id: id ?? this.id,
     name: name ?? this.name,
@@ -55,5 +59,6 @@ class ProjectBudget {
     notes: notes ?? this.notes,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
+    projectId: projectId ?? this.projectId,
   );
 }

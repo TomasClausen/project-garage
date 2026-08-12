@@ -24,13 +24,14 @@ class MaintenanceAdapter extends TypeAdapter<Maintenance> {
       intervalKm: (fields[4] as num).toInt(),
       lastDate: fields[5] as String,
       notes: fields[6] as String,
+      projectId: fields[7] as String? ?? '',
     );
   }
 
   @override
   void write(BinaryWriter writer, Maintenance obj) {
     writer
-      ..writeByte(7)
+      ..writeByte(8)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -44,7 +45,9 @@ class MaintenanceAdapter extends TypeAdapter<Maintenance> {
       ..writeByte(5)
       ..write(obj.lastDate)
       ..writeByte(6)
-      ..write(obj.notes);
+      ..write(obj.notes)
+      ..writeByte(7)
+      ..write(obj.projectId);
   }
 
   @override
