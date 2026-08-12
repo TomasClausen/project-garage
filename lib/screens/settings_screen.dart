@@ -3,6 +3,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../providers/app_preferences_provider.dart';
+import '../providers/app_update_provider.dart';
 import '../theme/app_spacing.dart';
 import '../widgets/common/app_snackbar.dart';
 import '../services/app_logger.dart';
@@ -167,7 +168,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ? 'Versión actual ${snapshot.data!.version} · Buscar actualizaciones'
                   : 'Buscar actualizaciones',
             ),
-            trailing: const Icon(Icons.chevron_right_rounded),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (context.watch<AppUpdateProvider>().status ==
+                    AppUpdateStatus.updateAvailable)
+                  const Chip(label: Text('Nueva')),
+                const Icon(Icons.chevron_right_rounded),
+              ],
+            ),
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const UpdateCenterScreen()),

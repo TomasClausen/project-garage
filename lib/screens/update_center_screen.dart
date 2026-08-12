@@ -10,6 +10,7 @@ import '../widgets/common/app_dialog.dart';
 import '../widgets/common/app_snackbar.dart';
 import '../widgets/update/update_available_card.dart';
 import '../widgets/update/update_download_progress.dart';
+import '../widgets/update/changelog_view.dart';
 
 class UpdateCenterScreen extends StatefulWidget {
   const UpdateCenterScreen({super.key, this.provider});
@@ -135,6 +136,40 @@ class _UpdateCenterView extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.xl),
           _status(context, provider),
+          if (provider.history.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.xl),
+            const Text('Historial', style: AppTextStyles.sectionTitle),
+            const SizedBox(height: AppSpacing.md),
+            ...provider.history.map(
+              (item) => AppCard(
+                child: Material(
+                  color: Colors.transparent,
+                  child: ExpansionTile(
+                    tilePadding: EdgeInsets.zero,
+                    title: Text('v${item.version} · ${item.name}'),
+                    subtitle: Text(_releaseState(provider, item.version)),
+                    children: [
+                      if (item.publishedAt != null)
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            _releaseDate(item.publishedAt!),
+                            style: AppTextStyles.caption,
+                          ),
+                        ),
+                      if (item.changelog.trim().isNotEmpty) ...[
+                        const SizedBox(height: AppSpacing.sm),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: ChangelogView(item.changelog),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
           const SizedBox(height: AppSpacing.xl),
           OutlinedButton.icon(
             onPressed:
@@ -256,6 +291,14 @@ class _UpdateCenterView extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.sm),
               Text(provider.errorMessage ?? 'Intentá nuevamente.'),
+              if (provider.canRetryDownload) ...[
+                const SizedBox(height: AppSpacing.md),
+                FilledButton.icon(
+                  onPressed: provider.download,
+                  icon: const Icon(Icons.refresh_rounded),
+                  label: const Text('Reintentar descarga'),
+                ),
+              ],
             ],
           ),
         );
@@ -269,5 +312,14 @@ class _UpdateCenterView extends StatelessWidget {
         '${local.month.toString().padLeft(2, '0')}/${local.year} '
         '${local.hour.toString().padLeft(2, '0')}:'
         '${local.minute.toString().padLeft(2, '0')}';
+  }
+
+  static String _releaseDate(DateTime value) =>
+      '${value.day.toString().padLeft(2, '0')}/${value.month.toString().padLeft(2, '0')}/${value.year}';
+
+  static String _releaseState(AppUpdateProvider provider, String version) {
+    if (provider.installed?.version == version) return 'Instalada';
+    if (provider.release?.version == version) return 'Disponible';
+    return 'Anterior';
   }
 }

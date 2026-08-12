@@ -4,6 +4,7 @@ import '../../models/app_release.dart';
 import '../../theme/app_spacing.dart';
 import '../../theme/app_text_styles.dart';
 import '../common/app_card.dart';
+import 'changelog_view.dart';
 
 class UpdateAvailableCard extends StatelessWidget {
   const UpdateAvailableCard({
@@ -43,7 +44,7 @@ class UpdateAvailableCard extends StatelessWidget {
         ],
         if (release.changelog.trim().isNotEmpty) ...[
           const SizedBox(height: AppSpacing.md),
-          Text(release.changelog.trim(), style: AppTextStyles.body),
+          ChangelogView(release.changelog, compact: true),
         ],
         const SizedBox(height: AppSpacing.md),
         Text(_size(release.apkSize), style: AppTextStyles.subtitle),

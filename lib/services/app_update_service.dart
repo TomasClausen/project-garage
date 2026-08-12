@@ -27,10 +27,15 @@ class InstalledAppVersion {
 }
 
 class UpdateCheckResult {
-  const UpdateCheckResult({required this.installed, this.release});
+  const UpdateCheckResult({
+    required this.installed,
+    this.release,
+    this.history = const [],
+  });
 
   final InstalledAppVersion installed;
   final AppRelease? release;
+  final List<AppRelease> history;
 
   bool get updateAvailable => release != null;
 }
@@ -210,7 +215,9 @@ class PrivateApkDownloader implements ApkDownloader {
         .trim();
     final actual = (await sha256.bind(file.openRead()).first).toString();
     if (actual != normalized) {
-      throw const AppUpdateException('La verificación SHA-256 del APK falló.');
+      throw const AppUpdateException(
+        'No pudimos verificar la integridad de la actualización.',
+      );
     }
   }
 }
@@ -227,21 +234,33 @@ class AppUpdateService {
   final ReleaseMetadataSource releaseSource;
   final AppVersionSource versionSource;
   final ApkDownloader downloader;
+  List<Map<String, dynamic>>? _cachedReleases;
+  DateTime? _cachedAt;
 
   Future<UpdateCheckResult> check({
     UpdateChannel channel = UpdateChannel.stable,
   }) async {
     final installed = await versionSource.read();
-    final releases = await releaseSource.fetchReleases();
+    final now = DateTime.now();
+    final releases =
+        _cachedReleases != null &&
+            _cachedAt != null &&
+            now.difference(_cachedAt!) < const Duration(minutes: 15)
+        ? _cachedReleases!
+        : await releaseSource.fetchReleases();
+    _cachedReleases = releases;
+    _cachedAt = now;
     final candidate = selectLatestRelease(releases, channel: channel);
+    final history = selectReleaseHistory(releases, channel: channel);
     if (candidate == null) {
-      return UpdateCheckResult(installed: installed);
+      return UpdateCheckResult(installed: installed, history: history);
     }
     return UpdateCheckResult(
       installed: installed,
       release: compareVersions(candidate.version, installed.version) > 0
           ? candidate
           : null,
+      history: history,
     );
   }
 
@@ -251,6 +270,23 @@ class AppUpdateService {
   }) => downloader.download(release, onProgress: onProgress);
 
   void cancelDownload() => downloader.cancel();
+
+  Future<InstalledAppVersion> readInstalledVersion() => versionSource.read();
+
+  static Future<bool> validateDownloadedFile(
+    File file, {
+    required int expectedSize,
+    required String? expectedDigest,
+  }) async {
+    if (!await file.exists()) return false;
+    if (expectedSize > 0 && await file.length() != expectedSize) return false;
+    try {
+      await PrivateApkDownloader.validateDigest(file, expectedDigest);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
 
   static List<int>? parseVersion(String value) {
     final parsed = parseSemanticVersion(value);
@@ -347,6 +383,19 @@ class AppUpdateService {
       }
     }
     return latest;
+  }
+
+  static List<AppRelease> selectReleaseHistory(
+    List<Map<String, dynamic>> releases, {
+    required UpdateChannel channel,
+  }) {
+    final result = <AppRelease>[];
+    for (final item in releases) {
+      final selected = selectLatestRelease([item], channel: channel);
+      if (selected != null) result.add(selected);
+    }
+    result.sort((a, b) => compareVersions(b.version, a.version));
+    return result.take(8).toList(growable: false);
   }
 
   static Map<String, dynamic>? _selectApkAsset(

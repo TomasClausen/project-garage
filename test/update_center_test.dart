@@ -531,4 +531,75 @@ void main() {
       expect(find.text('Instalar actualización'), findsOneWidget);
     });
   });
+
+  group('pass 3 resilience', () {
+    test('history is sorted newest first', () {
+      final history = AppUpdateService.selectReleaseHistory([
+        _releaseJson(tag: 'v1.1.0'),
+        _releaseJson(tag: 'v1.3.0'),
+        _releaseJson(tag: 'v1.2.0'),
+      ], channel: UpdateChannel.stable);
+      expect(history.map((item) => item.version), ['1.3.0', '1.2.0', '1.1.0']);
+    });
+
+    test('valid persisted APK is reconstructed without downloading', () async {
+      final root = await Directory.systemTemp.createTemp('pass3_');
+      final updates = await Directory('${root.path}/updates').create();
+      final apk = await File(
+        '${updates.path}/Project-Garage-v1.1.0.apk',
+      ).writeAsString('apk');
+      addTearDown(() => root.delete(recursive: true));
+      final provider = _provider(
+        preferencesStore: _PreferencesStore(
+          UpdatePreferences(
+            downloadedVersion: '1.1.0',
+            downloadedPath: apk.path,
+            downloadedSize: 3,
+            downloadedName: 'Project-Garage-v1.1.0.apk',
+            downloadedUrl: 'https://github.com/apk',
+          ),
+        ),
+      );
+      await provider.ready;
+      expect(provider.status, AppUpdateStatus.downloaded);
+      expect(provider.downloadedFile?.path, apk.path);
+    });
+
+    test('corrupt persisted APK is removed', () async {
+      final root = await Directory.systemTemp.createTemp('pass3_');
+      final updates = await Directory('${root.path}/updates').create();
+      final apk = await File('${updates.path}/bad.apk').writeAsString('bad');
+      addTearDown(() async {
+        if (await root.exists()) await root.delete(recursive: true);
+      });
+      final store = _PreferencesStore(
+        UpdatePreferences(
+          downloadedVersion: '1.1.0',
+          downloadedPath: apk.path,
+          downloadedSize: 99,
+        ),
+      );
+      final provider = _provider(preferencesStore: store);
+      await provider.ready;
+      expect(provider.downloadedFile, isNull);
+      expect(await apk.exists(), isFalse);
+      expect(store.value.downloadedVersion, isNull);
+    });
+
+    test('changelog is shown only until marked seen', () async {
+      final provider = _provider(
+        installed: '1.1.0',
+        preferencesStore: _PreferencesStore(
+          const UpdatePreferences(
+            downloadedVersion: '1.1.0',
+            downloadedChangelog: '## Mejoras\n- Más estable',
+          ),
+        ),
+      );
+      await provider.ready;
+      expect(provider.pendingChangelog, contains('Mejoras'));
+      await provider.markChangelogSeen();
+      expect(provider.pendingChangelog, isNull);
+    });
+  });
 }

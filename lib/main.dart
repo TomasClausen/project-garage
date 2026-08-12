@@ -13,6 +13,7 @@ import 'providers/maintenance_provider.dart';
 import 'providers/repair_media_provider.dart';
 import 'providers/repair_provider.dart';
 import 'providers/timeline_provider.dart';
+import 'widgets/update/changelog_view.dart';
 import 'providers/vehicle_provider.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/update_center_screen.dart';
@@ -273,6 +274,28 @@ class _AutomaticUpdateBootstrapState extends State<AutomaticUpdateBootstrap> {
         ).push(MaterialPageRoute(builder: (_) => const UpdateCenterScreen()));
       });
       await Future<void>.delayed(const Duration(milliseconds: 600));
+      await provider.ready;
+      if (mounted && provider.pendingChangelog != null) {
+        await showDialog<void>(
+          context: context,
+          barrierDismissible: false,
+          builder: (dialogContext) => AlertDialog(
+            title: Text(
+              'Qué hay de nuevo en Project Garage ${provider.installed!.version}',
+            ),
+            content: SingleChildScrollView(
+              child: ChangelogView(provider.pendingChangelog!),
+            ),
+            actions: [
+              FilledButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: const Text('Continuar'),
+              ),
+            ],
+          ),
+        );
+        await provider.markChangelogSeen();
+      }
       if (mounted) await provider.check(manual: false);
     });
   }

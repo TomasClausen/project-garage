@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -7,6 +8,7 @@ import '../models/update_preferences.dart';
 import '../services/apk_installer_service.dart';
 import '../services/app_logger.dart';
 import '../services/app_update_service.dart';
+import '../services/github_release_service.dart';
 import '../services/update_notification_service.dart';
 import '../services/update_preferences_service.dart';
 
@@ -50,6 +52,7 @@ class AppUpdateProvider extends ChangeNotifier {
   UpdatePreferences preferences = const UpdatePreferences();
   InstalledAppVersion? installed;
   AppRelease? release;
+  List<AppRelease> history = const [];
   File? downloadedFile;
   DownloadProgress progress = const DownloadProgress(received: 0, total: 0);
   String? errorMessage;
@@ -58,7 +61,34 @@ class AppUpdateProvider extends ChangeNotifier {
 
   Future<void> _loadPreferences() async {
     preferences = await _preferencesStore.load();
+    installed = await _service.readInstalledVersion();
+    await _restoreDownload();
     notifyListeners();
+  }
+
+  Future<void> _restoreDownload() async {
+    final path = preferences.downloadedPath;
+    final version = preferences.downloadedVersion;
+    if (path == null || version == null) return;
+    final file = File(path);
+    final safeFolder = file.parent.path.replaceAll('\\', '/').split('/').last == 'updates';
+    final valid =
+        safeFolder &&
+        path.toLowerCase().endsWith('.apk') &&
+        await AppUpdateService.validateDownloadedFile(
+          file,
+          expectedSize: preferences.downloadedSize ?? 0,
+          expectedDigest: preferences.downloadedDigest,
+        );
+    if (!valid ||
+        AppUpdateService.compareVersions(version, installed!.version) <= 0) {
+      if (safeFolder && await file.exists()) await file.delete();
+      preferences = preferences.copyWith(clearDownload: true);
+      await _preferencesStore.save(preferences);
+      return;
+    }
+    downloadedFile = file;
+    status = AppUpdateStatus.downloaded;
   }
 
   Future<bool> check({bool manual = true}) async {
@@ -84,19 +114,45 @@ class AppUpdateProvider extends ChangeNotifier {
       final result = await _service.check(channel: preferences.channel);
       installed = result.installed;
       release = result.release;
+      history = result.history;
+      await _reconcileDownloadedRelease();
       preferences = preferences.copyWith(lastCheckedAt: _clock());
       await _preferencesStore.save(preferences);
-      status = result.updateAvailable
+      status = downloadedFile != null
+          ? AppUpdateStatus.downloaded
+          : result.updateAvailable
           ? AppUpdateStatus.updateAvailable
           : AppUpdateStatus.upToDate;
       if (!manual && result.release != null) {
         await _notifyIfNeeded(result.release!);
       }
     } catch (error) {
-      await _fail('update_check', error);
+      if (downloadedFile != null) {
+        await AppLogger.record('update_check', error);
+        status = AppUpdateStatus.downloaded;
+      } else {
+        await _fail('update_check', error);
+      }
     }
     notifyListeners();
     return true;
+  }
+
+  Future<void> _reconcileDownloadedRelease() async {
+    final file = downloadedFile;
+    final version = preferences.downloadedVersion;
+    final candidate = release;
+    if (file == null || version == null || candidate == null) return;
+    final obsolete =
+        AppUpdateService.compareVersions(candidate.version, version) > 0;
+    final mismatched =
+        preferences.downloadedUrl != candidate.apkDownloadUrl.toString() ||
+        preferences.downloadedName != candidate.apkName;
+    if (!obsolete && !mismatched) return;
+    if (await file.exists()) await file.delete();
+    downloadedFile = null;
+    preferences = preferences.copyWith(clearDownload: true);
+    await _preferencesStore.save(preferences);
   }
 
   Future<void> _notifyIfNeeded(AppRelease candidate) async {
@@ -156,10 +212,64 @@ class AppUpdateProvider extends ChangeNotifier {
           notifyListeners();
         },
       );
+      preferences = preferences.copyWith(
+        downloadedVersion: selected.version,
+        downloadedPath: downloadedFile!.path,
+        downloadedSize: selected.apkSize,
+        downloadedDigest: selected.sha256,
+        downloadedUrl: selected.apkDownloadUrl.toString(),
+        downloadedName: selected.apkName,
+        downloadedChangelog: selected.changelog,
+      );
+      await _preferencesStore.save(preferences);
+      await _cleanupUpdateFolder(downloadedFile!);
       status = AppUpdateStatus.downloaded;
     } catch (error) {
       await _fail('update_download', error);
     }
+    notifyListeners();
+  }
+
+  Future<void> _cleanupUpdateFolder(File keep) async {
+    final directory = keep.parent;
+    if (directory.path.replaceAll('\\', '/').split('/').last != 'updates' ||
+        !await directory.exists()) {
+      return;
+    }
+    await for (final entity in directory.list()) {
+      if (entity is! File || entity.path == keep.path) continue;
+      final path = entity.path.toLowerCase();
+      if (path.endsWith('.apk') || path.endsWith('.partial')) {
+        try {
+          await entity.delete();
+        } catch (error) {
+          await AppLogger.record('update_cleanup', error);
+        }
+      }
+    }
+  }
+
+  bool get canRetryDownload =>
+      status == AppUpdateStatus.error && release != null;
+
+  String? get pendingChangelog {
+    final current = installed?.version;
+    if (current == null || preferences.lastSeenChangelogVersion == current) {
+      return null;
+    }
+    if (preferences.downloadedVersion != current) return null;
+    final text = preferences.downloadedChangelog?.trim();
+    return text?.isNotEmpty == true ? text : null;
+  }
+
+  Future<void> markChangelogSeen() async {
+    final current = installed?.version;
+    if (current == null) return;
+    preferences = preferences.copyWith(
+      lastSeenChangelogVersion: current,
+      clearDownload: true,
+    );
+    await _preferencesStore.save(preferences);
     notifyListeners();
   }
 
@@ -218,6 +328,11 @@ class AppUpdateProvider extends ChangeNotifier {
     status = AppUpdateStatus.error;
     errorMessage = switch (error) {
       AppUpdateException() => error.message,
+      GitHubReleaseException() => error.message,
+      TimeoutException() => 'No pudimos conectarnos. Revisá tu conexión.',
+      SocketException() => 'No pudimos conectarnos. Revisá tu conexión.',
+      FileSystemException() =>
+        'El archivo de actualización ya no está disponible.',
       _ => 'No se pudo completar la operación. Intentá nuevamente.',
     };
     await AppLogger.record(area, error);
